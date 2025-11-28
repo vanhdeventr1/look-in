@@ -3,36 +3,40 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("location_submissions", {
+    await queryInterface.createTable("permits", {
       id: {
         type: Sequelize.BIGINT,
         autoIncrement: true,
         primaryKey: true,
       },
-      business_unit_id: {
+      user_id: {
         type: Sequelize.BIGINT,
-        allowNull: true,
-      },
-      gps_lat: {
-        type: Sequelize.STRING,
         allowNull: false,
+        references: {
+          model: "users",
+          key: "id",
+        },
       },
-      gps_lng: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      address: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      note: {
+      description: {
         type: Sequelize.TEXT,
         allowNull: true,
+      },
+      type: {
+        type: Sequelize.TINYINT,
+        allowNull: true
       },
       status: {
         type: Sequelize.TINYINT,
         allowNull: true,
         defaultValue: 0,
+      },
+      date_start: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      date_end: {
+        type: Sequelize.DATE,
+        allowNull: false,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -60,6 +64,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("location_submissions");
+    await queryInterface.dropTable("permits");
   },
 };

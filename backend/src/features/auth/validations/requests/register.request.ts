@@ -30,6 +30,5 @@ export const registerSchema = Joi.object({
       return value;
     }),
   password: Joi.string().min(8),
-  status: Joi.number().optional().allow(null),
   role: Joi.number().optional().allow(null).default(0),
 }).options({ abortEarly: false });

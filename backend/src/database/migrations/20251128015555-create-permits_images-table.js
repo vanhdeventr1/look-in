@@ -1,42 +1,44 @@
 "use strict";
 
-const sequelize = require("sequelize");
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("branches", {
+    await queryInterface.createTable("permit_images", {
       id: {
-        primaryKey: true,
-        autoIncrement: true,
         type: Sequelize.BIGINT,
+        autoIncrement: true,
+        primaryKey: true,
       },
-      address: {
-        type: sequelize.TEXT,
+      permit_id: {
+        type: Sequelize.BIGINT,
         allowNull: false,
+        references: {
+          model: "permits",
+          key: "id",
+        },
       },
-      note: {
-        type: sequelize.TEXT,
+      url: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      file_path: {
+        type: Sequelize.STRING,
         allowNull: true,
       },
       created_at: {
-        type: sequelize.DATE,
+        type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
       updated_at: {
-        type: sequelize.DATE,
+        type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
-      },
-      deleted_at: {
-        type: sequelize.DATE,
-        allowNull: true,
       },
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("branches");
+    await queryInterface.dropTable("permit_images");
   },
 };

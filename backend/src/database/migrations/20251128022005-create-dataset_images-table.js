@@ -1,37 +1,29 @@
-'use strict';
+"use strict";
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
-    await queryInterface.createTable("user_devices", {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable("dataset_images", {
       id: {
         type: Sequelize.BIGINT,
         autoIncrement: true,
         primaryKey: true,
       },
-      user_id: {
+      dataset_id: {
         type: Sequelize.BIGINT,
         allowNull: false,
         references: {
-          model: "users",
+          model: "datasets",
           key: "id",
         },
       },
-      token: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      retry_total: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      label: {
+      url: {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      is_active: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
+      file_path: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -46,7 +38,7 @@ module.exports = {
     });
   },
 
-  async down (queryInterface, Sequelize) {
-    await queryInterface.dropTable("user_devices");
-  }
+  async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable("dataset_images");
+  },
 };

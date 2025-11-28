@@ -5,6 +5,5 @@ export class CreateUserDto {
   username: string;
   is_verified: boolean;
   phone_no: string;
-  status: number;
   role: number;
 }

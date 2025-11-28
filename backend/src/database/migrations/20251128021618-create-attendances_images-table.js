@@ -3,18 +3,26 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("companies", {
+    await queryInterface.createTable("attendance_images", {
       id: {
-        primaryKey: true,
-        autoIncrement: true,
         type: Sequelize.BIGINT,
+        autoIncrement: true,
+        primaryKey: true,
       },
-      name: {
-        type: Sequelize.STRING,
+      attendance_id: {
+        type: Sequelize.BIGINT,
         allowNull: false,
+        references: {
+          model: "attendances",
+          key: "id",
+        },
       },
-      note: {
-        type: Sequelize.TEXT,
+      url: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      file_path: {
+        type: Sequelize.STRING,
         allowNull: true,
       },
       created_at: {
@@ -27,14 +35,10 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
-      deleted_at: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("companies");
+    await queryInterface.dropTable("attendance_images");
   },
 };

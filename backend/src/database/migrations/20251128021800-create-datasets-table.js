@@ -3,46 +3,54 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("business_units", {
+    await queryInterface.createTable("datasets", {
       id: {
         type: Sequelize.BIGINT,
-        primaryKey: true,
         autoIncrement: true,
+        primaryKey: true,
       },
-      company_id: {
-        type: Sequelize.BIGINT,
+      user_id: {
+       type: Sequelize.BIGINT,
         allowNull: false,
         references: {
-          model: "companies",
+          model: "users",
           key: "id",
         },
       },
-      branch_id: {
+      name: {
         type: Sequelize.BIGINT,
         allowNull: false,
         references: {
-          model: "branches",
+          model: "users",
           key: "id",
         },
-      },
-      code: {
-        type: Sequelize.STRING,
-        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      created_by: {
+        type: Sequelize.BIGINT,
+        allowNull: false,
+        references: {
+          model: "users",
+          key: "id",
+        },
+      },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("business_units");
+    await queryInterface.dropTable("datasets");
   },
 };
