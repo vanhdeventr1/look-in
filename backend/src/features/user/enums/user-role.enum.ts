@@ -1,17 +1,20 @@
 enum UserRoleEnum {
   USER = 0,
-  ADMIN = 1,
-  MANAGER = 2,
+  HIRING_MANAGER = 1,
+  EMPLOYEE = 2,
+  INTERN = 3,
 }
 
 export const getUserRoleEnumLabel = (userRoleEnum: UserRoleEnum) => {
   switch (userRoleEnum) {
     case UserRoleEnum.USER:
       return "User";
-    case UserRoleEnum.ADMIN:
-      return "Admin";
-    case UserRoleEnum.MANAGER:
-      return "Manager";
+    case UserRoleEnum.HIRING_MANAGER:
+      return "Hiring Manager";
+    case UserRoleEnum.EMPLOYEE:
+      return "Employee";
+    case UserRoleEnum.INTERN:
+      return "Intern";
     default:
       return "Unknown";
   }

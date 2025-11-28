@@ -12,11 +12,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      username: {
+      email: {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      email: {
+      username: {
         type: Sequelize.STRING,
         allowNull: true,
       },
@@ -24,29 +24,36 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      is_verified: {
-        type: Sequelize.BOOLEAN,
-        allowNull: true,
-        defaultValue: false,
-      },
       phone_no: {
         type: Sequelize.STRING,
         allowNull: true,
         defaultValue: null,
       },
-      status: {
-        type: Sequelize.TINYINT,
-        allowNull: false,
-        defaultValue: 1,
-      },
-      business_unit_id: {
-        type: Sequelize.BIGINT,
-        allowNull: true,
-      },
       role: {
         type: Sequelize.TINYINT,
         allowNull: true,
         defaultValue: 0,
+      },
+      file_path: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      url: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      is_active: {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+        defaultValue: true,
+      },
+      created_by: {
+        type: Sequelize.BIGINT,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
       },
       created_at: {
         type: Sequelize.DATE,
@@ -66,12 +73,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
     await queryInterface.dropTable("users");
   },
 };
