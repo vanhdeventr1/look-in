@@ -11,18 +11,18 @@ import {
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { CurrentUser } from "src/cores/decorators/current-user.decorator";
 import { JwtAuthGuard } from "src/cores/guards/jwt-auth.guard";
 import { JoiValidationParamPipe } from "src/cores/validators/pipes/joi-validation-param.pipe";
+import { JoiValidationPipe } from "src/cores/validators/pipes/joi-validation.pipe";
 import { userIdParamSchema } from "../auth/validations/params/user-id.param";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { User } from "./entities/user.entity";
 import { UserService } from "./user.service";
-import { updateUserSchema } from "./validations/requests/update-user.request";
-import { FileInterceptor } from "@nestjs/platform-express";
 import { changePasswordSchema } from "./validations/requests/change-password.request";
-import { JoiValidationPipe } from "src/cores/validators/pipes/joi-validation.pipe";
-import { ChangePasswordDto } from "./dto/change-password.dto";
+import { updateUserSchema } from "./validations/requests/update-user.request";
 
 @Controller()
 export class UserController {

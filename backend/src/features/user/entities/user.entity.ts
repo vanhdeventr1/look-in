@@ -8,6 +8,7 @@ import {
   Table,
 } from "sequelize-typescript";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
+import { getUserRoleEnumLabel } from "../enums/user-role.enum";
 
 @Table({
   timestamps: true,
@@ -41,6 +42,14 @@ export class User extends Model {
 
   @Column({ type: DataType.TINYINT, allowNull: true })
   role: number;
+
+   @Column({
+    type: DataType.VIRTUAL,
+    get(this: User) {
+      return getUserRoleEnumLabel(this.getDataValue('role'));
+    },
+  })
+  role_name: string;
 
   @Column({ type: DataType.STRING, allowNull: true })
   file_path: string;

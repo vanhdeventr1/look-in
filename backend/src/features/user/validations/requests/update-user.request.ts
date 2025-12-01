@@ -4,7 +4,7 @@ import { getUserRoleEnums } from "../../enums/user-role.enum";
 const userRoleEnum = getUserRoleEnums().map((value) => +value.id);
 
 export const updateUserSchema = Joi.object({
-  name: Joi.string().required(),
+  name: Joi.string().optional(),
   phone_no: Joi.string().optional().allow(null, ""),
   role: Joi.number()
     .optional()

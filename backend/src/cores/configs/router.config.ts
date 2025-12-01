@@ -3,9 +3,9 @@ import { AuthModule } from "src/features/auth/auth.module";
 import { BranchModule } from "src/features/branch/branch.module";
 import { BusinessUnitModule } from "src/features/business-unit/business-unit.module";
 import { CompanyModule } from "src/features/companies/company.module";
-import { LocationSubmissionImageModule } from "src/features/location-submission-image/location-submission-image.module";
-import { LocationSubmissionModule } from "src/features/location-submission/location-submission.module";
 import { NotificationModule } from "src/features/notification/public/notification.module";
+import { PermitImageModule } from "src/features/permit-image/permit-image.module";
+import { PermitModule } from "src/features/permit/permit.module";
 import { UserDeviceModule } from "src/features/user-device/user-device.module";
 import { UserModule } from "src/features/user/user.module";
 
@@ -42,12 +42,12 @@ export default RouterModule.register([
         module: BusinessUnitModule,
       },
       {
-        path: "location-submissions",
-        module: LocationSubmissionModule,
+        path: "permits",
+        module: PermitModule,
         children: [
           {
-            path: ":submissionId/images",
-            module: LocationSubmissionImageModule,
+            path: ":permitId/images",
+            module: PermitImageModule,
           },
         ],
       },

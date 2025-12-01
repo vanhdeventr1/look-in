@@ -17,6 +17,8 @@ import { CompanyModule } from "./features/companies/company.module";
 import { LocationSubmissionImageModule } from "./features/location-submission-image/location-submission-image.module";
 import { LocationSubmissionModule } from "./features/location-submission/location-submission.module";
 import { NotificationModule } from "./features/notification/public/notification.module";
+import { PermitImageModule } from "./features/permit-image/permit-image.module";
+import { PermitModule } from "./features/permit/permit.module";
 import { UserDeviceModule } from "./features/user-device/user-device.module";
 import { UserModule } from "./features/user/user.module";
 
@@ -43,6 +45,8 @@ import { UserModule } from "./features/user/user.module";
     BusinessUnitModule,
     LocationSubmissionModule,
     LocationSubmissionImageModule,
+    PermitModule,
+    PermitImageModule,
   ],
   controllers: [AppController],
   providers: [AppService, NotificationListener],
