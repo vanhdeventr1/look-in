@@ -14,8 +14,6 @@ import { AuthModule } from "./features/auth/auth.module";
 import { BranchModule } from "./features/branch/branch.module";
 import { BusinessUnitModule } from "./features/business-unit/business-unit.module";
 import { CompanyModule } from "./features/companies/company.module";
-import { LocationSubmissionImageModule } from "./features/location-submission-image/location-submission-image.module";
-import { LocationSubmissionModule } from "./features/location-submission/location-submission.module";
 import { NotificationModule } from "./features/notification/public/notification.module";
 import { PermitImageModule } from "./features/permit-image/permit-image.module";
 import { PermitModule } from "./features/permit/permit.module";
@@ -43,8 +41,6 @@ import { UserModule } from "./features/user/user.module";
     CompanyModule,
     BranchModule,
     BusinessUnitModule,
-    LocationSubmissionModule,
-    LocationSubmissionImageModule,
     PermitModule,
     PermitImageModule,
   ],
