@@ -9,14 +9,6 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true,
       },
-      user_id: {
-       type: Sequelize.BIGINT,
-        allowNull: false,
-        references: {
-          model: "users",
-          key: "id",
-        },
-      },
       name: {
         type: Sequelize.BIGINT,
         allowNull: false,

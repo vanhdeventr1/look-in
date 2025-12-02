@@ -14,11 +14,13 @@ import { AuthModule } from "./features/auth/auth.module";
 import { BranchModule } from "./features/branch/branch.module";
 import { BusinessUnitModule } from "./features/business-unit/business-unit.module";
 import { CompanyModule } from "./features/companies/company.module";
+import { DatasetModule } from './features/dataset/dataset.module';
 import { NotificationModule } from "./features/notification/public/notification.module";
 import { PermitImageModule } from "./features/permit-image/permit-image.module";
 import { PermitModule } from "./features/permit/permit.module";
 import { UserDeviceModule } from "./features/user-device/user-device.module";
 import { UserModule } from "./features/user/user.module";
+
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { UserModule } from "./features/user/user.module";
     BusinessUnitModule,
     PermitModule,
     PermitImageModule,
+    DatasetModule,
   ],
   controllers: [AppController],
   providers: [AppService, NotificationListener],
