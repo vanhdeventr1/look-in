@@ -4,23 +4,23 @@ import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { SharpHelper } from "src/cores/helpers/sharp.helper";
-import { Permit } from "../permit/entities/permit.entity";
-import { CreatePermitImageDto } from "./dto/create-permit-image.dto";
-import { UpdatePermitImageDto } from "./dto/update-permit-image.dto";
-import { PermitImage } from "./entities/permit-image.entity";
+import { Dataset } from "../dataset/entities/dataset.entity";
+import { CreateDatasetImageDto } from "./dto/create-dataset-image.dto";
+import { UpdateDatasetImageDto } from "./dto/update-dataset-image.dto";
+import { DatasetImage } from "./entities/dataset-image.entity";
 
 @Injectable()
-export class PermitImageService {
+export class DatasetImageService {
   constructor(
     private response: ResponseHelper,
     private sequelize: Sequelize,
-    @InjectModel(PermitImage)
-    private permitImageModel: typeof PermitImage,
+    @InjectModel(DatasetImage)
+    private datasetImageModel: typeof DatasetImage,
   ) {}
 
   async create(
-    permit: Permit,
-    createPermitImageDto: CreatePermitImageDto,
+    dataset: Dataset,
+    createDatasetImageDto: CreateDatasetImageDto,
     files: Array<Express.Multer.File>,
   ) {
     if (!files.length) {
@@ -31,8 +31,8 @@ export class PermitImageService {
       const sharpHelper = new SharpHelper();
       for (const [
         index,
-        permitImage,
-      ] of createPermitImageDto.permit_images.entries()) {
+        datasetImage,
+      ] of createDatasetImageDto.dataset_images.entries()) {
         const file = files[index];
         if (!files[index]) {
           return this.response.fail(`Image at index ${index} is required`, 400);
@@ -40,26 +40,26 @@ export class PermitImageService {
 
         const uploadResult = await sharpHelper.resizeAndUpload(
           file,
-          this.permitImageModel.imageDimension.permitImage,
+          this.datasetImageModel.imageDimension.datasetImage,
         );
 
         const imageUrl = new URL(uploadResult.url);
-        permitImage.file_path = imageUrl.pathname.substring(1);
-        permitImage.url = imageUrl.href;
-        permitImage.permit_id = permit.id;
+        datasetImage.file_path = imageUrl.pathname.substring(1);
+        datasetImage.url = imageUrl.href;
+        datasetImage.dataset_id = dataset.id;
       }
 
-      const permitImages =
-        await this.permitImageModel.bulkCreate(
-          createPermitImageDto.permit_images,
+      const datasetImages =
+        await this.datasetImageModel.bulkCreate(
+          createDatasetImageDto.dataset_images,
           { transaction },
         );
 
       await transaction.commit();
       return this.response.success(
-        permitImages,
+        datasetImages,
         201,
-        "Successfully create permit image",
+        "Successfully create dataset image",
       );
     } catch (error) {
       await transaction.rollback();
@@ -67,41 +67,41 @@ export class PermitImageService {
     }
   }
 
-  async findAll(permit: Permit, query: any) {
+  async findAll(dataset: Dataset, query: any) {
     const { count, data } = await new QueryBuilderHelper(
-      this.permitImageModel,
+      this.datasetImageModel,
       query,
     )
-      .where({ permit_id: permit.id })
+      .where({ dataset_id: dataset.id })
       .getResult();
 
     const result = {
       count: count,
-      permit_images: data,
+      dataset_images: data,
     };
 
     return this.response.success(
       result,
       200,
-      "Successfully get permit images",
+      "Successfully get dataset images",
     );
   }
 
   async update(
-    permitImage: PermitImage,
-    updatePermitImageDto: UpdatePermitImageDto,
+    datasetImage: DatasetImage,
+    updateDatasetImageDto: UpdateDatasetImageDto,
   ) {
     const transaction = await this.sequelize.transaction();
     try {
-      await permitImage.update(updatePermitImageDto, {
+      await datasetImage.update(updateDatasetImageDto, {
         transaction,
       });
 
       await transaction.commit();
       return this.response.success(
-        permitImage,
+        datasetImage,
         200,
-        "Successfully update permit image",
+        "Successfully update dataset image",
       );
     } catch (error) {
       await transaction.rollback();
@@ -109,29 +109,29 @@ export class PermitImageService {
     }
   }
 
-  async remove(permitImage: PermitImage) {
+  async remove(datasetImage: DatasetImage) {
     const transaction = await this.sequelize.transaction();
     try {
-      if (permitImage.file_path) {
+      if (datasetImage.file_path) {
         const sharpHelper = new SharpHelper();
         await sharpHelper.delete(
-          permitImage.file_path,
-          this.permitImageModel.imageDimension.permitImage,
+          datasetImage.file_path,
+          this.datasetImageModel.imageDimension.datasetImage,
         );
       }
 
-      await permitImage.destroy({ transaction });
+      await datasetImage.destroy({ transaction });
       await transaction.commit();
 
       return this.response.success(
         {},
         200,
-        "Successfully delete permit image",
+        "Successfully delete dataset image",
       );
     } catch (error) {
       console.log(error);
       await transaction.rollback();
-      return this.response.fail("Failed delete permit image", 400);
+      return this.response.fail("Failed delete dataset image", 400);
     }
   }
 }

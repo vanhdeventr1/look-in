@@ -3,10 +3,11 @@ import { InjectModel } from "@nestjs/sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { User } from "./entities/user.entity";
 import { S3Helper } from "src/cores/helpers/s3.helper";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { User } from "./entities/user.entity";
+import UserRoleEnum from "./enums/user-role.enum";
 
 @Injectable()
 export class UserService {
@@ -47,6 +48,32 @@ export class UserService {
     } catch (error) {
       await transaction.rollback();
       return this.response.fail(error, 400);
+    }
+  }
+
+  async create(createUserDto: any, creator: User) {
+    const transaction = await this.sequelize.transaction();
+    try {
+      // 1. Hash the password (using Bun as per your changePassword method)
+      const hashedPassword = await Bun.password.hash(createUserDto.password, {
+        algorithm: "bcrypt",
+        cost: 10,
+      });
+
+      // 2. Create the user record
+      const newUser = await this.userModel.create({
+        ...createUserDto,
+        password: hashedPassword,
+        created_by: creator.id, // LINKING TO HR MANAGER
+        role: UserRoleEnum.EMPLOYEE, // Default role for added users
+        is_active: true,
+      }, { transaction });
+
+      await transaction.commit();
+      return this.response.success(newUser, 201, "Employee created successfully");
+    } catch (error) {
+      await transaction.rollback();
+      return this.response.fail(error.message, 400);
     }
   }
 

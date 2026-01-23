@@ -1,0 +1,67 @@
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from "sequelize-typescript";
+import { ResizeOption } from "src/cores/helpers/sharp.helper";
+import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
+import { Dataset } from "src/features/dataset/entities/dataset.entity";
+
+@Table({
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+  timestamps: true,
+  tableName: "dataset_images",
+  modelName: "dataset_images",
+})
+export class DatasetImage extends Model {
+  @Column({
+    type: DataType.BIGINT,
+    primaryKey: true,
+    autoIncrement: true,
+  })
+  id: number;
+
+  @ForeignKey(() => Dataset)
+  @Column({
+    type: DataType.BIGINT,
+    allowNull: false,
+  })
+  dataset_id: number;
+
+  @BelongsTo(() => Dataset)
+  dataset: TypeWrapper<Dataset>;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  url: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  file_path: string;
+
+  static imageDimension: { datasetImage: ResizeOption } = {
+    datasetImage: {
+      dimensions: [
+        {
+          width: 100,
+          fit: "inside",
+          prefix: "100",
+        },
+        {
+          width: 500,
+          fit: "inside",
+          prefix: "500",
+        },
+      ],
+      path: "dataset/images",
+    },
+  };
+}

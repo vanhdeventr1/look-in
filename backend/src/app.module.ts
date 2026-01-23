@@ -14,6 +14,7 @@ import { AuthModule } from "./features/auth/auth.module";
 import { BranchModule } from "./features/branch/branch.module";
 import { BusinessUnitModule } from "./features/business-unit/business-unit.module";
 import { CompanyModule } from "./features/companies/company.module";
+import { DatasetImageModule } from './features/dataset-image/dataset-image.module';
 import { DatasetModule } from './features/dataset/dataset.module';
 import { NotificationModule } from "./features/notification/public/notification.module";
 import { PermitImageModule } from "./features/permit-image/permit-image.module";
@@ -46,6 +47,7 @@ import { UserModule } from "./features/user/user.module";
     PermitModule,
     PermitImageModule,
     DatasetModule,
+    DatasetImageModule,
   ],
   controllers: [AppController],
   providers: [AppService, NotificationListener],
