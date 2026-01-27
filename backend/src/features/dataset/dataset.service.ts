@@ -28,32 +28,32 @@ async create(createDatasetDto: CreateDatasetDto, user: User, files: Array<Expres
 
   const transaction = await this.sequelize.transaction();
   try {
-    const data = [];
+    const imageData = [];
     const sharpHelper = new SharpHelper();
 
     for (const file of files) {
       const uploadFile = await sharpHelper.resizeAndUpload(file, Dataset.imageDimension.datasetImage);
       const image = new URL(uploadFile.url);
-      data.push({
+      imageData.push({
         url: image.href,
         file_path: image.pathname.substring(1),
       });
     }
 
-    const dataset = await this.datasetModel.create(
-      {
-        name: createDatasetDto.name, // This is the ID of the employee selected from your table
-        created_by: user.id,         // This is the ID of the HR performing the action
-        dataset_images: data,
-      },
-      {
-        transaction,
-        include: ["dataset_images"],
-      },
-    );
+const dataset = await this.datasetModel.create(
+  {
+    name: createDatasetDto.name, 
+    created_by: user.id,         
+    dataset_images: imageData,
+  },
+  {
+    transaction,
+    include: ["dataset_images"],
+  },
+);
 
     await transaction.commit();
-    await dataset.reload({ include: ["name_user"] });
+    await dataset.reload({ include: ["name_user", "dataset_images"] });
 
     return this.response.success(dataset, 201, "Successfully created dataset for employee");
   } catch (error) {
@@ -62,20 +62,18 @@ async create(createDatasetDto: CreateDatasetDto, user: User, files: Array<Expres
   }
 }
 
-// src/features/dataset/dataset.service.ts
-
-async findAllUsersByHR(user: User, query: any) {
+async findAll(user: User, query: any) {
+   if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+    return this.response.fail("Only hiring manager can see dataset", 403);
+  }
   try {
-    // 1. Log the user ID to your terminal to verify who is logged in
-    console.log("Logged in HR ID:", user.id);
-
     const { count, data } = await new QueryBuilderHelper(this.userModel, query)
-      // .where({ created_by: user.id }) <--- Temporarily comment this out to test
       .load("datasets")
       .getResult();
 
     const formattedData = data.map((employee: any) => {
-      const plainUser = employee.get({ plain: true });
+      const plainUser = employee.get ? employee.get({ plain: true }) : employee;
+      
       return {
         ...plainUser,
         has_dataset: !!(plainUser.datasets && plainUser.datasets.length > 0)

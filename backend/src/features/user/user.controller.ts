@@ -42,14 +42,14 @@ export class UserController {
     return this.userService.findOne(user);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async create(
-    @Body() createUserDto: any, // You can create a CreateUserDto for validation
-    @CurrentUser() hrManager: User,
-  ) {
-    return this.userService.create(createUserDto, hrManager);
-  }
+  //@UseGuards(JwtAuthGuard)
+  //@Post()
+  //async create(
+    //@Body() createEmployeeDto: CreateEmployeeDto, 
+    //@CurrentUser() hrManager: User,
+  //) {
+    //return this.userService.create(createEmployeeDto, hrManager);
+  //}
 
   @UseInterceptors(FileInterceptor("file"))
   @UseGuards(JwtAuthGuard)

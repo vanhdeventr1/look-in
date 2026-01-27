@@ -50,14 +50,14 @@ export class DatasetController {
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@CurrentUser() user: User, @Query() query) {
-    return this.datasetService.findAllUsersByHR(user, query);
+    return this.datasetService.findAll(user, query);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(":id")
   async findOne(
     @Param("id", new JoiValidationParamPipe(datasetIdParamSchema))
-    dataset: Dataset,
+    dataset: Dataset
   ) {
     return this.datasetService.findOne(dataset);
   }
@@ -87,4 +87,6 @@ export class DatasetController {
   ) {
     return this.datasetService.remove(dataset, user);
   }
+
+
 }
