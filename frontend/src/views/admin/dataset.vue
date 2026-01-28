@@ -1,4 +1,3 @@
-dataset
 <template>
   <SidebarLayout>
     <div class="space-y-6">
