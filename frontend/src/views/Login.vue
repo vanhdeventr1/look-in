@@ -76,15 +76,23 @@
           <div class="relative">
             <input
               v-model="form.password"
-              type="password"
+              :type="showPassword ? 'text' : 'password'"
               placeholder="Kata Sandi"
-              class="w-full h-11 pl-11 pr-4 rounded-lg border border-[#e6bdb7] bg-[#fff3f1] text-sm focus:outline-none focus:ring-2 focus:ring-[#8b3a32]"
+              class="w-full h-11 pl-11 pr-11 rounded-lg border border-[#e6bdb7] bg-[#fff3f1] text-sm focus:outline-none focus:ring-2 focus:ring-[#8b3a32]"
             />
             <span
               class="absolute left-4 top-1/2 -translate-y-1/2 text-[#8b3a32]"
             >
               <LockIcon :size="18" />
             </span>
+            <button
+              type="button"
+              @click="showPassword = !showPassword"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b3a32] hover:text-[#742f28] transition-colors focus:outline-none"
+            >
+              <EyeIcon v-if="!showPassword" :size="18" />
+              <EyeOffIcon v-else :size="18" />
+            </button>
           </div>
 
           <button
@@ -122,12 +130,16 @@
 import { useAuth } from "@/composables/useAuth";
 import {
   Camera as CameraIcon,
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon,
   Lock as LockIcon,
   Mail as MailIcon,
 } from "lucide-vue-next";
-import { reactive, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 
 const { login, error, clearError, loading } = useAuth();
+
+const showPassword = ref(false);
 
 const form = reactive({
   username: "",

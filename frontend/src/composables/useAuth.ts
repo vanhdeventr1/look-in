@@ -1,6 +1,6 @@
+import { login as loginApi, register as registerApi } from '@/api/auth.api';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { login as loginApi, register as registerApi } from '@/api/auth.api';
 
 const user = ref<any>(JSON.parse(localStorage.getItem('user') || 'null'));
 const isAuthenticated = ref(!!localStorage.getItem('access_token'));
@@ -24,7 +24,7 @@ export function useAuth() {
             user.value = userData;
             isAuthenticated.value = true;
 
-            router.push('/dashboard');
+            router.push('/admin/dashboard');
         } catch (err: any) {
             error.value =
                 err.response?.data?.message ||
