@@ -4,9 +4,12 @@ import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { S3Helper } from "src/cores/helpers/s3.helper";
+import { HttpStatus } from "@nestjs/common";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { User } from "./entities/user.entity";
+import UserRoleEnum from "./enums/user-role.enum";
 
 @Injectable()
 export class UserService {
@@ -17,12 +20,14 @@ export class UserService {
     private readonly sequelize: Sequelize,
   ) {}
 
-  async findAll(query: any) {
+  async findAll(query: any, user: User) {
     try {
-      const { count, data } = await new QueryBuilderHelper(
-        this.userModel,
-        query,
-      ).getResult();
+      const queryBuilder = new QueryBuilderHelper(this.userModel, query);
+      if (user.role === UserRoleEnum.HIRING_MANAGER) {
+        queryBuilder.where({ created_by: user.id });
+      }
+
+      const { count, data } = await queryBuilder.getResult();
 
       const result = {
         count: count,
@@ -50,35 +55,48 @@ export class UserService {
     }
   }
 
-  //async create(dto: CreateEmployeeDto, creator: User) {
-  //const transaction = await this.sequelize.transaction();
-  //try {
-    //const hashedPassword = await Bun.password.hash(dto.password, {
-      //algorithm: "bcrypt",
-      //cost: 10,
-    //});
+  async updateById(targetUser: User, updateUserDto: UpdateUserDto, user: User) {
+    if (
+      user.role === UserRoleEnum.HIRING_MANAGER &&
+      targetUser.created_by !== user.id
+    ) {
+      return this.response.fail("Forbidden", HttpStatus.FORBIDDEN);
+    }
 
-    //const newUser = await this.userModel.create({
-      //name: dto.name,      
-      //email: dto.email,
-      //username: dto.username,
-      //phone_no: dto.phone_no,
-      //password: hashedPassword,
-      //created_by: creator.id, 
-      //role: UserRoleEnum.EMPLOYEE, 
-      //is_active: true,
-    //}, { transaction });
+    return this.update(targetUser, updateUserDto);
+  }
 
-    //await transaction.commit();
-    
-    //const { password, ...result } = newUser.get({ plain: true });
-    //return this.response.success(result, 201, "Employee created successfully");
-    
-  //} catch (error) {
-    //await transaction.rollback();
-    //return this.response.fail(error.message, 400);
-  //}
-//}
+  async create(dto: CreateEmployeeDto, creator: User) {
+    const transaction = await this.sequelize.transaction();
+    try {
+      const hashedPassword = await Bun.password.hash(dto.password, {
+        algorithm: "bcrypt",
+        cost: 10,
+      });
+
+      const newUser = await this.userModel.create(
+        {
+          name: dto.name,
+          email: dto.email,
+          username: dto.username,
+          phone_no: dto.phone_no ?? null,
+          password: hashedPassword,
+          created_by: creator.id,
+          role: dto.role ?? UserRoleEnum.EMPLOYEE,
+          is_active: dto.is_active ?? true,
+        },
+        { transaction },
+      );
+
+      await transaction.commit();
+
+      const { password, ...result } = newUser.get({ plain: true });
+      return this.response.success(result, 201, "Employee created successfully");
+    } catch (error) {
+      await transaction.rollback();
+      return this.response.fail(error.message, 400);
+    }
+  }
 
   async updatePhotoProfile(user: User, file: Express.Multer.File) {
     const transaction = await this.sequelize.transaction();

@@ -4,5 +4,7 @@ export class CreateEmployeeDto {
   username: string;
   password: string; 
   phone_no?: string;
+  role?: number;
+  is_active?: boolean;
 }
 
