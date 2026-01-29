@@ -58,9 +58,13 @@ export function useAuth() {
         }
     };
 
-    const logout = async() =>{
-        
-    }
+    const logout = async () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        user.value = null;
+        isAuthenticated.value = false;
+        await router.push('/login');
+    };
 
     const clearError = () => {
         error.value = null;

@@ -17,6 +17,7 @@ export const register = (payload: {
     password: string;
     name: string;
     email: string;
+    role?: number;
 }) => {
     return api.post('/auth/register', payload);
 };
