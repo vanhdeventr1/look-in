@@ -60,9 +60,9 @@
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="text-[#8C352D] font-semibold text-sm"
-                >Nama Lengkap</label
-              >
+              <label class="text-[#8C352D] font-semibold text-sm">
+                Nama Lengkap
+              </label>
               <input
                 type="text"
                 v-model="form.name"
@@ -71,9 +71,9 @@
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="text-[#8C352D] font-semibold text-sm"
-                >Nomor Telepon</label
-              >
+              <label class="text-[#8C352D] font-semibold text-sm">
+                Nomor Telepon
+              </label>
               <input
                 type="text"
                 v-model="form.phone_no"
@@ -84,9 +84,9 @@
 
           <div class="space-y-6">
             <div class="flex flex-col gap-2">
-              <label class="text-[#8C352D] font-semibold text-sm"
-                >Kata Sandi Lama</label
-              >
+              <label class="text-[#8C352D] font-semibold text-sm">
+                Kata Sandi Lama
+              </label>
               <div class="relative">
                 <input
                   :type="showOld ? 'text' : 'password'"
@@ -104,9 +104,9 @@
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="text-[#8C352D] font-semibold text-sm"
-                >Kata Sandi Baru</label
-              >
+              <label class="text-[#8C352D] font-semibold text-sm">
+                Kata Sandi Baru
+              </label>
               <div class="relative">
                 <input
                   :type="showNew ? 'text' : 'password'"
@@ -124,9 +124,9 @@
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="text-[#8C352D] font-semibold text-sm"
-                >Konfirmasi Kata Sandi</label
-              >
+              <label class="text-[#8C352D] font-semibold text-sm">
+                Konfirmasi Kata Sandi
+              </label>
               <div class="relative">
                 <input
                   :type="showConfirm ? 'text' : 'password'"
@@ -179,7 +179,11 @@
           <CheckIcon :size="40" class="text-[#8C352D] stroke-[4]" />
         </div>
       </template>
-      <template #title>Data Berhasil<br />Diperbarui!</template>
+      <template #title>
+        Data Berhasil
+        <br />
+        Diperbarui!
+      </template>
       <template #actions>
         <button
           @click="isSuccessAlertOpen = false"
@@ -198,7 +202,11 @@
           <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
         </div>
       </template>
-      <template #title>Kata Sandi Lama<br />Tidak Valid!</template>
+      <template #title>
+        Kata Sandi Lama
+        <br />
+        Tidak Valid!
+      </template>
       <template #actions>
         <button
           @click="isErrorAlertOpen = false"
@@ -217,7 +225,11 @@
           <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
         </div>
       </template>
-      <template #title>Konfirmasi Kata Sandi<br />Tidak Cocok!</template>
+      <template #title>
+        Konfirmasi Kata Sandi
+        <br />
+        Tidak Cocok!
+      </template>
       <template #actions>
         <button
           @click="isMismatchAlertOpen = false"
@@ -236,7 +248,11 @@
           <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
         </div>
       </template>
-      <template #title>Kata Sandi Minimal<br />8 Karakter!</template>
+      <template #title>
+        Kata Sandi Minimal
+        <br />
+        8 Karakter!
+      </template>
       <template #actions>
         <button
           @click="isLengthAlertOpen = false"
@@ -255,7 +271,11 @@
           <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
         </div>
       </template>
-      <template #title>Lengkapi Semua Field<br />Kata Sandi!</template>
+      <template #title>
+        Lengkapi Semua Field
+        <br />
+        Kata Sandi!
+      </template>
       <template #actions>
         <button
           @click="isMissingFieldsAlertOpen = false"
@@ -274,9 +294,11 @@
           <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
         </div>
       </template>
-      <template #title
-        >Kata Sandi Baru Tidak Boleh<br />Sama Dengan Yang Lama!</template
-      >
+      <template #title>
+        Kata Sandi Baru Tidak Boleh
+        <br />
+        Sama Dengan Yang Lama!
+      </template>
       <template #actions>
         <button
           @click="isSamePasswordAlertOpen = false"

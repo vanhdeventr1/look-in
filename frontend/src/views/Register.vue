@@ -130,8 +130,9 @@
             <a
               href="/login"
               class="text-[#8b3a32] font-semibold hover:underline"
-              >Masuk di sini</a
             >
+              Masuk di sini
+            </a>
           </p>
         </div>
 

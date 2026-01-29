@@ -14,7 +14,8 @@
         <p
           class="text-white/80 text-xs md:text-sm text-center mb-6 md:mb-10 leading-snug"
         >
-          Buka kamera, wajah terdeteksi,<br />
+          Buka kamera, wajah terdeteksi,
+          <br />
           absen beres.
         </p>
 
@@ -54,7 +55,8 @@
         <p
           class="text-center text-xs md:text-sm text-gray-600 mb-6 md:mb-8 leading-relaxed"
         >
-          Silahkan Masuk untuk Melakukan<br />
+          Silahkan Masuk untuk Melakukan
+          <br />
           Absensi
         </p>
 
@@ -118,8 +120,9 @@
           <a
             href="/register"
             class="text-[#8b3a32] font-semibold hover:underline"
-            >Daftar di sini</a
           >
+            Daftar di sini
+          </a>
         </p>
       </div>
     </div>

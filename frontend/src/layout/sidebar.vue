@@ -125,9 +125,9 @@
               :src="user.url"
               class="w-full h-full object-cover"
             />
-            <span v-else>{{
-              user?.name ? user.name.charAt(0).toUpperCase() : "D"
-            }}</span>
+            <span v-else>
+              {{ user?.name ? user.name.charAt(0).toUpperCase() : "D" }}
+            </span>
           </div>
         </div>
       </header>

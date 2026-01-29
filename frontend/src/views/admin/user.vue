@@ -142,29 +142,27 @@
               ]"
               :key="field"
             >
-              <label class="text-sm font-bold text-[#8C352D] block mb-1">{{
-                field
-              }}</label>
+              <label class="text-sm font-bold text-[#8C352D] block mb-1">
+                {{ field }}
+              </label>
               <div
                 class="w-full px-5 py-3 rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 text-[#8C352D]"
               >
-                <template v-if="field === 'Nama Lengkap'">{{
-                  selectedUser?.name
-                }}</template>
-                <template v-else-if="field === 'Username'">{{
-                  selectedUser?.username
-                }}</template>
-                <template v-else-if="field === 'Email'">{{
-                  selectedUser?.email
-                }}</template>
-                <template v-else-if="field === 'Peran'">{{
-                  selectedUser ? getRoleLabel(selectedUser) : ""
-                }}</template>
-                <template v-else
-                  ><span class="tracking-widest font-mono"
-                    >••••••••••</span
-                  ></template
-                >
+                <template v-if="field === 'Nama Lengkap'">
+                  {{ selectedUser?.name }}
+                </template>
+                <template v-else-if="field === 'Username'">
+                  {{ selectedUser?.username }}
+                </template>
+                <template v-else-if="field === 'Email'">
+                  {{ selectedUser?.email }}
+                </template>
+                <template v-else-if="field === 'Peran'">
+                  {{ selectedUser ? getRoleLabel(selectedUser) : "" }}
+                </template>
+                <template v-else>
+                  <span class="tracking-widest font-mono">••••••••••</span>
+                </template>
               </div>
             </div>
           </div>
@@ -185,7 +183,8 @@
             @click="isModalOpen = false"
             class="flex items-center gap-2 text-[#8C352D] font-bold mb-6 hover:opacity-70"
           >
-            <ArrowLeftIcon :size="20" /> Kembali
+            <ArrowLeftIcon :size="20" />
+            Kembali
           </button>
           <form @submit.prevent="handleCreateUser" class="space-y-5">
             <div class="space-y-2">
@@ -199,9 +198,9 @@
               />
             </div>
             <div class="space-y-2">
-              <label class="text-sm font-bold text-[#8C352D]"
-                >Nama Lengkap</label
-              >
+              <label class="text-sm font-bold text-[#8C352D]">
+                Nama Lengkap
+              </label>
               <input
                 v-model="newUser.name"
                 type="text"
@@ -276,7 +275,8 @@
             @click="isEditModalOpen = false"
             class="flex items-center gap-2 text-[#8C352D] font-bold mb-6 hover:opacity-70"
           >
-            <ArrowLeftIcon :size="20" /> Batal Edit
+            <ArrowLeftIcon :size="20" />
+            Batal Edit
           </button>
           <form @submit.prevent="handleUpdateUser" class="space-y-5">
             <div class="space-y-2">
@@ -289,9 +289,9 @@
               />
             </div>
             <div class="space-y-2">
-              <label class="text-sm font-bold text-[#8C352D]"
-                >Nama Lengkap</label
-              >
+              <label class="text-sm font-bold text-[#8C352D]">
+                Nama Lengkap
+              </label>
               <input
                 v-model="editUserData.name"
                 type="text"
@@ -354,7 +354,11 @@
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
-      <template #title>Anda Ingin Menghapus<br />Akun Ini?</template>
+      <template #title>
+        Anda Ingin Menghapus
+        <br />
+        Akun Ini?
+      </template>
       <template #actions>
         <button
           @click="handleDeleteUser"
