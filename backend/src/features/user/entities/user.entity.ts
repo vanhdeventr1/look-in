@@ -45,10 +45,10 @@ export class User extends Model {
   @Column({ type: DataType.TINYINT, allowNull: true })
   role: number;
 
-   @Column({
+  @Column({
     type: DataType.VIRTUAL,
     get(this: User) {
-      return getUserRoleEnumLabel(this.getDataValue('role'));
+      return getUserRoleEnumLabel(this.getDataValue("role"));
     },
   })
   role_name: string;
@@ -56,24 +56,24 @@ export class User extends Model {
   @Column({ type: DataType.STRING, allowNull: true })
   file_path: string;
 
- @Column({ type: DataType.STRING, allowNull: true })
+  @Column({ type: DataType.STRING, allowNull: true })
   url: string;
 
   @Column({ type: DataType.BOOLEAN, allowNull: true, defaultValue: true })
   is_active: boolean;
 
-   @ForeignKey(() => User)
-    @Column({ type: DataType.BIGINT, allowNull: true })
-    created_by: number;
-  
-    @BelongsTo(() => User, {
-      foreignKey: "created_by",
-    })
-    created_by_user: TypeWrapper<User>;
-    // Inside the User class:
-@HasMany(() => Dataset, { 
-  foreignKey: "name", // This matches the 'name' column in your Dataset entity
-  as: "datasets" 
-})
-datasets: TypeWrapper<Dataset[]>;
+  @ForeignKey(() => User)
+  @Column({ type: DataType.BIGINT, allowNull: true })
+  created_by: number;
+
+  @BelongsTo(() => User, {
+    foreignKey: "created_by",
+  })
+  created_by_user: TypeWrapper<User>;
+  // Inside the User class:
+  @HasMany(() => Dataset, {
+    foreignKey: "name", // This matches the 'name' column in your Dataset entity
+    as: "datasets",
+  })
+  datasets: TypeWrapper<Dataset[]>;
 }

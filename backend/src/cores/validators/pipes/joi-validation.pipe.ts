@@ -4,8 +4,8 @@ import {
   Injectable,
   PipeTransform,
   UnprocessableEntityException,
-} from '@nestjs/common';
-import * as Joi from 'joi';
+} from "@nestjs/common";
+import * as Joi from "joi";
 
 @Injectable()
 export class JoiValidationPipe implements PipeTransform {

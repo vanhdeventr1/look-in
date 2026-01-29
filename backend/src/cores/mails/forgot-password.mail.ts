@@ -1,6 +1,5 @@
 import { User } from "src/features/user/entities/user.entity";
 
-
 export const forgotPasswordMailHtml = (user: User, url: string) => {
   return `
   <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">

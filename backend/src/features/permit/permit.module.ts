@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { Permit } from './entities/permit.entity';
-import { PermitController } from './permit.controller';
-import { PermitService } from './permit.service';
+import { Permit } from "./entities/permit.entity";
+import { PermitController } from "./permit.controller";
+import { PermitService } from "./permit.service";
 
 @Module({
   imports: [SequelizeModule.forFeature([Permit])],

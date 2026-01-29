@@ -49,11 +49,10 @@ export class PermitImageService {
         permitImage.permit_id = permit.id;
       }
 
-      const permitImages =
-        await this.permitImageModel.bulkCreate(
-          createPermitImageDto.permit_images,
-          { transaction },
-        );
+      const permitImages = await this.permitImageModel.bulkCreate(
+        createPermitImageDto.permit_images,
+        { transaction },
+      );
 
       await transaction.commit();
       return this.response.success(
@@ -80,11 +79,7 @@ export class PermitImageService {
       permit_images: data,
     };
 
-    return this.response.success(
-      result,
-      200,
-      "Successfully get permit images",
-    );
+    return this.response.success(result, 200, "Successfully get permit images");
   }
 
   async update(
@@ -123,11 +118,7 @@ export class PermitImageService {
       await permitImage.destroy({ transaction });
       await transaction.commit();
 
-      return this.response.success(
-        {},
-        200,
-        "Successfully delete permit image",
-      );
+      return this.response.success({}, 200, "Successfully delete permit image");
     } catch (error) {
       console.log(error);
       await transaction.rollback();

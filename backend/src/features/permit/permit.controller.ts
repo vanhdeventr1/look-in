@@ -28,9 +28,7 @@ import { updatePermitSchema } from "./validations/requests/update-permit.request
 
 @Controller()
 export class PermitController {
-  constructor(
-    private readonly permitService: PermitService,
-  ) {}
+  constructor(private readonly permitService: PermitService) {}
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(AnyFilesInterceptor())
@@ -42,11 +40,7 @@ export class PermitController {
     @UploadedFiles()
     files: Array<Express.Multer.File>,
   ) {
-    return this.permitService.create(
-      createPermitDto,
-      user,
-      files,
-    );
+    return this.permitService.create(createPermitDto, user, files);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -73,11 +67,7 @@ export class PermitController {
     @Body(new JoiValidationPipe(updatePermitSchema))
     updatePermitDto: UpdatePermitDto,
   ) {
-    return this.permitService.update(
-      permit,
-      updatePermitDto,
-      user,
-    );
+    return this.permitService.update(permit, updatePermitDto, user);
   }
 
   @UseGuards(JwtAuthGuard)

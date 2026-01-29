@@ -6,13 +6,12 @@ import {
   HasMany,
   Model,
   PrimaryKey,
-  Table
+  Table,
 } from "sequelize-typescript";
 import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { DatasetImage } from "src/features/dataset-image/entities/dataset-image.entity";
 import { User } from "src/features/user/entities/user.entity";
-
 
 @Table({
   timestamps: true,
@@ -50,20 +49,20 @@ export class Dataset extends Model {
   dataset_images: TypeWrapper<DatasetImage[]>;
 
   static imageDimension: { datasetImage: ResizeOption } = {
-      datasetImage: {
-        dimensions: [
-          {
-            width: 100,
-            fit: "inside",
-            prefix: "100",
-          },
-          {
-            width: 500,
-            fit: "inside",
-            prefix: "500",
-          },
-        ],
-        path: "dataset/images",
-      },
-    };
+    datasetImage: {
+      dimensions: [
+        {
+          width: 100,
+          fit: "inside",
+          prefix: "100",
+        },
+        {
+          width: 500,
+          fit: "inside",
+          prefix: "500",
+        },
+      ],
+      path: "dataset/images",
+    },
+  };
 }

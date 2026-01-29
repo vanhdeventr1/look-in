@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { Sequelize } from 'sequelize-typescript';
-import { Notification } from 'src/features/notification/entities/notification.entity';
+import { Injectable } from "@nestjs/common";
+import { OnEvent } from "@nestjs/event-emitter";
+import { Sequelize } from "sequelize-typescript";
+import { Notification } from "src/features/notification/entities/notification.entity";
 import { User } from "src/features/user/entities/user.entity";
 
 @Injectable()
@@ -11,15 +11,15 @@ export class NotificationListener {
     this.sequelize = sequelize;
   }
 
-  @OnEvent('notification')
+  @OnEvent("notification")
   async notification(options: Array<string>, data: any) {
     try {
-      if (options.includes('system')) {
+      if (options.includes("system")) {
         await this.system(data);
       }
       return true;
     } catch (error) {
-      console.log('error', error);
+      console.log("error", error);
     }
   }
 
@@ -31,7 +31,7 @@ export class NotificationListener {
       await Notification.create({
         type: data.type,
         data: JSON.stringify({ id: data.data.id }),
-        message: data.message || '',
+        message: data.message || "",
         notified_user_id: data.notified_user_id,
       });
     }

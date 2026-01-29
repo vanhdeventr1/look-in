@@ -21,80 +21,96 @@ export class DatasetService {
     private readonly userModel: typeof User,
   ) {}
 
-async create(createDatasetDto: CreateDatasetDto, user: User, files: Array<Express.Multer.File>) {
-  if (user.role !== UserRoleEnum.HIRING_MANAGER) {
-    return this.response.fail("Only hiring manager can create dataset", 403);
-  }
-
-  const transaction = await this.sequelize.transaction();
-  try {
-    const imageData = [];
-    const sharpHelper = new SharpHelper();
-
-    for (const file of files) {
-      const uploadFile = await sharpHelper.resizeAndUpload(file, Dataset.imageDimension.datasetImage);
-      const image = new URL(uploadFile.url);
-      imageData.push({
-        url: image.href,
-        file_path: image.pathname.substring(1),
-      });
+  async create(
+    createDatasetDto: CreateDatasetDto,
+    user: User,
+    files: Array<Express.Multer.File>,
+  ) {
+    if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+      return this.response.fail("Only hiring manager can create dataset", 403);
     }
 
-const dataset = await this.datasetModel.create(
-  {
-    name: createDatasetDto.name, 
-    created_by: user.id,         
-    dataset_images: imageData,
-  },
-  {
-    transaction,
-    include: ["dataset_images"],
-  },
-);
+    const transaction = await this.sequelize.transaction();
+    try {
+      const imageData = [];
+      const sharpHelper = new SharpHelper();
 
-    await transaction.commit();
-    await dataset.reload({ include: ["name_user", "dataset_images"] });
+      for (const file of files) {
+        const uploadFile = await sharpHelper.resizeAndUpload(
+          file,
+          Dataset.imageDimension.datasetImage,
+        );
+        const image = new URL(uploadFile.url);
+        imageData.push({
+          url: image.href,
+          file_path: image.pathname.substring(1),
+        });
+      }
 
-    return this.response.success(dataset, 201, "Successfully created dataset for employee");
-  } catch (error) {
-    await transaction.rollback();
-    return this.response.fail(error.message || error, 400);
+      const dataset = await this.datasetModel.create(
+        {
+          name: createDatasetDto.name,
+          created_by: user.id,
+          dataset_images: imageData,
+        },
+        {
+          transaction,
+          include: ["dataset_images"],
+        },
+      );
+
+      await transaction.commit();
+      await dataset.reload({ include: ["name_user", "dataset_images"] });
+
+      return this.response.success(
+        dataset,
+        201,
+        "Successfully created dataset for employee",
+      );
+    } catch (error) {
+      await transaction.rollback();
+      return this.response.fail(error.message || error, 400);
+    }
   }
-}
 
-async findAll(user: User, query: any) {
-   if (user.role !== UserRoleEnum.HIRING_MANAGER) {
-    return this.response.fail("Only hiring manager can see dataset", 403);
+  async findAll(user: User, query: any) {
+    if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+      return this.response.fail("Only hiring manager can see dataset", 403);
+    }
+    try {
+      const { count, data } = await new QueryBuilderHelper(
+        this.userModel,
+        query,
+      )
+        .load("datasets")
+        .getResult();
+
+      const formattedData = data.map((employee: any) => {
+        const plainUser = employee.get
+          ? employee.get({ plain: true })
+          : employee;
+
+        return {
+          ...plainUser,
+          has_dataset: !!(plainUser.datasets && plainUser.datasets.length > 0),
+        };
+      });
+
+      return this.response.success(
+        { count, employees: formattedData },
+        200,
+        "Successfully retrieved employees",
+      );
+    } catch (error) {
+      return this.response.fail(error.message, 400);
+    }
   }
-  try {
-    const { count, data } = await new QueryBuilderHelper(this.userModel, query)
-      .load("datasets")
-      .getResult();
-
-    const formattedData = data.map((employee: any) => {
-      const plainUser = employee.get ? employee.get({ plain: true }) : employee;
-      
-      return {
-        ...plainUser,
-        has_dataset: !!(plainUser.datasets && plainUser.datasets.length > 0)
-      };
-    });
-
-    return this.response.success(
-      { count, employees: formattedData },
-      200,
-      "Successfully retrieved employees",
-    );
-  } catch (error) {
-    return this.response.fail(error.message, 400);
-  }
-}
 
   async findOne(dataset: Dataset) {
     try {
       await dataset.reload({
         include: [
-          { association: "dataset_images"},
+          { association: "dataset_images" },
           {
             association: "created_by_user",
             attributes: { exclude: ["password"] },
@@ -108,7 +124,11 @@ async findAll(user: User, query: any) {
     }
   }
 
-  async update(dataset: Dataset, updateDatasetDto: UpdateDatasetDto, user: User) {
+  async update(
+    dataset: Dataset,
+    updateDatasetDto: UpdateDatasetDto,
+    user: User,
+  ) {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Only hiring manager can update dataset", 403);
     }

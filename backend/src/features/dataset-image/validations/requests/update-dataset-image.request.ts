@@ -1,4 +1,3 @@
 import * as Joi from "joi";
 
-export const updateDatasetImageSchema = Joi.object({
-});
+export const updateDatasetImageSchema = Joi.object({});

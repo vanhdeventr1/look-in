@@ -19,7 +19,7 @@ const EnumArrayHelper = (enumObj: any) => {
 
 const EnumKeyReadebleHelper = (enumObj: any, value: any) => {
   return Object.keys(enumObj)
-    [Object.values(enumObj).indexOf(value)].replace(/_/g, ' ')
+    [Object.values(enumObj).indexOf(value)].replace(/_/g, " ")
     .toLocaleUpperCase();
 };
 

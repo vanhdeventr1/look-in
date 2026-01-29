@@ -91,7 +91,11 @@ export class UserService {
       await transaction.commit();
 
       const { password, ...result } = newUser.get({ plain: true });
-      return this.response.success(result, 201, "Employee created successfully");
+      return this.response.success(
+        result,
+        201,
+        "Employee created successfully",
+      );
     } catch (error) {
       await transaction.rollback();
       return this.response.fail(error.message, 400);

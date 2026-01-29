@@ -4,9 +4,7 @@ enum PermitType {
   LEAVE = 2,
 }
 
-export const getPermitTypeLabel = (
-  permitType: PermitType,
-) => {
+export const getPermitTypeLabel = (permitType: PermitType) => {
   switch (permitType) {
     case PermitType.SICK:
       return "Sick";

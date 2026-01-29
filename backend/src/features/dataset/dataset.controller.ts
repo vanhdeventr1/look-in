@@ -26,9 +26,7 @@ import { User } from "../user/entities/user.entity";
 
 @Controller()
 export class DatasetController {
-  constructor(
-    private readonly datasetService: DatasetService,
-  ) {}
+  constructor(private readonly datasetService: DatasetService) {}
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(AnyFilesInterceptor())
@@ -40,11 +38,7 @@ export class DatasetController {
     @UploadedFiles()
     files: Array<Express.Multer.File>,
   ) {
-    return this.datasetService.create(
-      createDatasetDto,
-      user,
-      files,
-    );
+    return this.datasetService.create(createDatasetDto, user, files);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -57,7 +51,7 @@ export class DatasetController {
   @Get(":id")
   async findOne(
     @Param("id", new JoiValidationParamPipe(datasetIdParamSchema))
-    dataset: Dataset
+    dataset: Dataset,
   ) {
     return this.datasetService.findOne(dataset);
   }
@@ -71,11 +65,7 @@ export class DatasetController {
     @Body(new JoiValidationPipe(createDatasetSchema))
     updateDatasetDto: UpdateDatasetDto,
   ) {
-    return this.datasetService.update(
-      dataset,
-      updateDatasetDto,
-      user,
-    );
+    return this.datasetService.update(dataset, updateDatasetDto, user);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -87,6 +77,4 @@ export class DatasetController {
   ) {
     return this.datasetService.remove(dataset, user);
   }
-
-
 }

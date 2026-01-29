@@ -5,9 +5,7 @@ enum PermitStatus {
   DUPLICATED = 3,
 }
 
-export const getPermitStatusLabel = (
-  permitStatus: PermitStatus,
-) => {
+export const getPermitStatusLabel = (permitStatus: PermitStatus) => {
   switch (permitStatus) {
     case PermitStatus.PENDING:
       return "Pending";

@@ -86,7 +86,8 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Put(":id")
   updateById(
-    @Param("id", new JoiValidationParamPipe(userIdParamSchema)) targetUser: User,
+    @Param("id", new JoiValidationParamPipe(userIdParamSchema))
+    targetUser: User,
     @Body(new JoiValidationPipe(updateUserSchema)) updateUserDto: UpdateUserDto,
     @CurrentUser() user: User,
   ) {

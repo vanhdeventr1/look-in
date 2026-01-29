@@ -3,8 +3,8 @@ import {
   Injectable,
   NotFoundException,
   PipeTransform,
-} from '@nestjs/common';
-import * as Joi from 'joi';
+} from "@nestjs/common";
+import * as Joi from "joi";
 
 @Injectable()
 export class JoiValidationParamPipe implements PipeTransform {

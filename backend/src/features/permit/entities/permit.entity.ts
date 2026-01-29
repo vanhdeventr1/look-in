@@ -28,11 +28,11 @@ export class Permit extends Model {
   @PrimaryKey
   @Column({ type: DataType.BIGINT, autoIncrement: true })
   id: number;
-  
+
   @ForeignKey(() => User)
   @Column({ type: DataType.BIGINT, allowNull: false })
   user_id: number;
-  
+
   @BelongsTo(() => User, {
     foreignKey: "user_id",
   })
@@ -47,12 +47,12 @@ export class Permit extends Model {
   @Column({
     type: DataType.VIRTUAL,
     get() {
-      return getPermitStatusLabel (this.getDataValue("status"));
+      return getPermitStatusLabel(this.getDataValue("status"));
     },
   })
   status_name: string;
-  
-  @Column({ type: DataType.TINYINT, allowNull: false})
+
+  @Column({ type: DataType.TINYINT, allowNull: false })
   type: number;
 
   @Column({
@@ -65,7 +65,7 @@ export class Permit extends Model {
 
   @Column({ type: DataType.DATE, allowNull: false })
   date_start: Date;
-  
+
   @Column({ type: DataType.DATE, allowNull: false })
   date_end: Date;
 

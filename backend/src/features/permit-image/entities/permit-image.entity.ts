@@ -1,10 +1,10 @@
 import {
-    BelongsTo,
-    Column,
-    DataType,
-    ForeignKey,
-    Model,
-    Table,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
 } from "sequelize-typescript";
 import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";

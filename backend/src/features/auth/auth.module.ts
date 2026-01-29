@@ -1,13 +1,13 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { SequelizeModule } from '@nestjs/sequelize';
-import { JwtStrategy } from 'src/cores/strategies/jwt.strategy';
-import { LocalStrategy } from 'src/cores/strategies/local.strategy';
-import { User } from '../user/entities/user.entity';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { Module } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
+import { PassportModule } from "@nestjs/passport";
+import { SequelizeModule } from "@nestjs/sequelize";
+import { JwtStrategy } from "src/cores/strategies/jwt.strategy";
+import { LocalStrategy } from "src/cores/strategies/local.strategy";
+import { User } from "../user/entities/user.entity";
+import { AuthController } from "./auth.controller";
+import { AuthService } from "./auth.service";
 
 @Module({
   imports: [
@@ -16,8 +16,8 @@ import { AuthService } from './auth.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('SECRET_KEY'),
-        signOptions: { expiresIn: '1y' },
+        secret: configService.get<string>("SECRET_KEY"),
+        signOptions: { expiresIn: "1y" },
       }),
       inject: [ConfigService],
     }),

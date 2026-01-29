@@ -7,11 +7,11 @@ export const createDatasetSchema = Joi.object({
   name: Joi.number()
     .required()
     .external(async (value) => {
-      const employee = await User.findOne({ 
-        where: { 
-          id: value, 
-          role: UserRoleEnum.EMPLOYEE // Ensure we only add datasets to Employees
-        } 
+      const employee = await User.findOne({
+        where: {
+          id: value,
+          role: UserRoleEnum.EMPLOYEE, // Ensure we only add datasets to Employees
+        },
       });
 
       if (!employee) {
@@ -25,7 +25,7 @@ export const createDatasetSchema = Joi.object({
               context: { key: "name", value },
             },
           ],
-          value
+          value,
         );
       }
       return value; // Joi external needs to return the value

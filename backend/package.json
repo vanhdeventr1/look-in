@@ -58,6 +58,8 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/sequelize": "^4.28.20",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "bun-types": "^1.2.19",
     "eslint": "^8.57.1",
     "prettier": "^3.6.2",
@@ -65,7 +67,7 @@
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.2",
     "tsconfig-paths": "4.2.0",
-    "typescript": "^5.8.3",
+    "typescript": "^5.5.4",
     "typescript-eslint": "^7.18.0"
   },
   "trustedDependencies": [

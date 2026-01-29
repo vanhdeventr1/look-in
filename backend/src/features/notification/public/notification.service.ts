@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { QueryBuilderHelper } from 'src/cores/helpers/query-builder.helper';
-import { ResponseHelper } from 'src/cores/helpers/response.helper';
-import { User } from 'src/features/user/entities/user.entity';
-import { Notification } from '../entities/notification.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/sequelize";
+import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
+import { ResponseHelper } from "src/cores/helpers/response.helper";
+import { User } from "src/features/user/entities/user.entity";
+import { Notification } from "../entities/notification.entity";
 
 @Injectable()
 export class NotificationService {
@@ -29,7 +29,7 @@ export class NotificationService {
     return this.response.success(
       result,
       200,
-      'Successfully retrieve notification',
+      "Successfully retrieve notification",
     );
   }
 
@@ -47,7 +47,7 @@ export class NotificationService {
       return this.response.success(
         [],
         200,
-        'Successfully marked all notifications as read',
+        "Successfully marked all notifications as read",
       );
     } catch (error) {
       return this.response.fail(error, 400);
@@ -68,7 +68,7 @@ export class NotificationService {
       return this.response.success(
         [],
         200,
-        'Successfully marked notifications as read',
+        "Successfully marked notifications as read",
       );
     } catch (error) {
       return this.response.fail(error, 400);

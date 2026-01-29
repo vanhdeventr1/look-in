@@ -49,11 +49,10 @@ export class DatasetImageService {
         datasetImage.dataset_id = dataset.id;
       }
 
-      const datasetImages =
-        await this.datasetImageModel.bulkCreate(
-          createDatasetImageDto.dataset_images,
-          { transaction },
-        );
+      const datasetImages = await this.datasetImageModel.bulkCreate(
+        createDatasetImageDto.dataset_images,
+        { transaction },
+      );
 
       await transaction.commit();
       return this.response.success(

@@ -1,4 +1,4 @@
-import { SESV2 } from 'aws-sdk';
+import { SESV2 } from "aws-sdk";
 
 export class MailHelper {
   protected ses: SESV2;
@@ -10,7 +10,7 @@ export class MailHelper {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
       region: process.env.AWS_DEFAULT_REGION,
-      apiVersion: '2019-09-27',
+      apiVersion: "2019-09-27",
     });
   }
 
@@ -25,16 +25,16 @@ export class MailHelper {
             Body: {
               Html: {
                 Data: body,
-                Charset: 'utf-8',
+                Charset: "utf-8",
               },
             },
             Subject: {
               Data: subject,
-              Charset: 'utf-8',
+              Charset: "utf-8",
             },
           },
         },
-        FromEmailAddress: 'no-reply@liszthoven.id',
+        FromEmailAddress: "no-reply@liszthoven.id",
       },
       (error, data) => {
         console.log(error, data);

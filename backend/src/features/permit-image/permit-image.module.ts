@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { PermitImage } from './entities/permit-image.entity';
-import { PermitImageController } from './permit-image.controller';
-import { PermitImageService } from './permit-image.service';
+import { PermitImage } from "./entities/permit-image.entity";
+import { PermitImageController } from "./permit-image.controller";
+import { PermitImageService } from "./permit-image.service";
 
 @Module({
   imports: [SequelizeModule.forFeature([PermitImage])],
@@ -10,5 +10,3 @@ import { PermitImageService } from './permit-image.service';
   providers: [PermitImageService],
 })
 export class PermitImageModule {}
-
-
