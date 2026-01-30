@@ -1,14 +1,28 @@
 <template>
   <SidebarLayout>
     <div class="space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div
-          v-for="stat in summaryStats"
-          :key="stat.label"
-          class="bg-white border border-[#E8D5D2] rounded-2xl p-6 flex flex-col justify-center min-h-[140px] shadow-sm"
-        >
-          <p class="text-4xl font-bold text-[#8C352D]">{{ stat.value }}</p>
-          <p class="text-lg font-bold text-[#8C352D] mt-1">{{ stat.label }}</p>
+      <div class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div
+            class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
+          >
+            <p class="text-3xl font-bold text-[#8C352D]">24</p>
+            <p class="text-[#8C352D] font-medium">Absen Hari Ini</p>
+          </div>
+
+          <div
+            class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
+          >
+            <p class="text-3xl font-bold text-[#8C352D]">12</p>
+            <p class="text-[#8C352D] font-medium">Terlambat</p>
+          </div>
+
+          <div
+            class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
+          >
+            <p class="text-3xl font-bold text-[#8C352D]">3</p>
+            <p class="text-[#8C352D] font-medium">Sakit</p>
+          </div>
         </div>
       </div>
 
