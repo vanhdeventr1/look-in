@@ -71,10 +71,10 @@
 
       <div class="px-3 py-6 space-y-1 border-t border-[#E8D5D2]">
         <button
-          @click="handleNavigation('/admin/setting')"
+          @click="handleNavigation('/public/setting')"
           :class="[
             'flex items-center w-full px-4 py-3 font-medium rounded-xl transition-colors',
-            route.path === '/setting'
+            route.path === 'public/setting'
               ? 'bg-[#8C352D] text-white'
               : 'text-[#8C352D] hover:bg-[#8C352D]/5',
           ]"
@@ -142,15 +142,14 @@
 <script setup lang="ts">
 import { useAuth } from "@/composables/useAuth";
 import {
-  FileCheckCorner as ApprovalIcon,
-  CalendarDays as AttendanceIcon,
+  CalendarClock as AttendanceIcon,
   Bell as BellIcon,
-  ScanFace as FaceIcon,
   Home as HomeIcon,
   LogOut as LogOutIcon,
   Menu as MenuIcon,
+  FilePlusCorner as PermitIcon,
+  ScanFace as ScanIcon,
   Settings as SettingsIcon,
-  UserPlus as UsersAddIcon,
   X as XIcon,
 } from "lucide-vue-next";
 import { computed, markRaw, ref } from "vue";
@@ -179,19 +178,18 @@ const isSidebarOpen = ref(false);
 // Navigation Data
 const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/public/dashboard" },
-  { icon: markRaw(UsersAddIcon), label: "Pengguna", path: "" },
-  { icon: markRaw(FaceIcon), label: "Data", path: "" },
-  {
-    icon: markRaw(ApprovalIcon),
-    label: "Persetujuan",
-    path: "",
-  },
+  { icon: markRaw(ScanIcon), label: "Absen", path: "" },
+  { icon: markRaw(PermitIcon), label: "Perizinan", path: "/public/permit" },
   {
     icon: markRaw(AttendanceIcon),
     label: "Riwayat Absen",
     path: "",
   },
-  { icon: markRaw(BellIcon), label: "Notifikasi", path: "/admin/notification" },
+  {
+    icon: markRaw(BellIcon),
+    label: "Notifikasi",
+    path: "/public/notification",
+  },
 ]);
 
 const handleNavigation = (path: string) => {

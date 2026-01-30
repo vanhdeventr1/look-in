@@ -4,7 +4,7 @@
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="bg-white border border-[#E8D5D2] rounded-2xl p-6 shadow-sm"
+        class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm"
       >
         <p class="text-4xl font-bold text-[#8C352D]">{{ stat.value }}</p>
         <p class="text-[#8C352D] font-semibold mt-2">{{ stat.label }}</p>
@@ -13,7 +13,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div class="lg:col-span-5 space-y-8">
-        <div class="bg-white border border-[#E8D5D2] rounded-2xl p-6 shadow-sm">
+        <div class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm">
           <div class="flex justify-between items-center mb-6">
             <h4 class="text-[#8C352D] font-bold">Presentase Rekapan Absensi</h4>
             <select
@@ -45,7 +45,7 @@
           </div>
         </div>
 
-        <div class="bg-white border border-[#E8D5D2] rounded-2xl p-6 shadow-sm">
+        <div class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm">
           <h4 class="text-[#8C352D] font-bold mb-6">MVP Absensi Bulan Ini</h4>
           <div class="space-y-4">
             <div
@@ -79,7 +79,7 @@
 
       <div class="lg:col-span-7">
         <div
-          class="bg-white border border-[#E8D5D2] rounded-2xl p-6 shadow-sm h-full"
+          class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm h-full"
         >
           <div
             class="flex border border-[#8C352D] rounded-xl overflow-hidden mb-8 w-fit mx-auto lg:mx-0"
