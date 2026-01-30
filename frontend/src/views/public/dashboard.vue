@@ -53,17 +53,17 @@
               :key="mvp.name"
               class="flex items-center gap-4"
             >
-              <span class="text-xs font-bold text-[#8C352D] w-4">{{
-                index + 1
-              }}</span>
+              <span class="text-xs font-bold text-[#8C352D] w-4">
+                {{ index + 1 }}
+              </span>
               <div class="flex-1">
                 <div class="flex justify-between mb-1">
-                  <span class="text-xs font-bold text-[#8C352D]">{{
-                    mvp.name
-                  }}</span>
-                  <span class="text-xs font-bold text-[#8C352D]"
-                    >{{ mvp.percent }}%</span
-                  >
+                  <span class="text-xs font-bold text-[#8C352D]">
+                    {{ mvp.name }}
+                  </span>
+                  <span class="text-xs font-bold text-[#8C352D]">
+                    {{ mvp.percent }}%
+                  </span>
                 </div>
                 <div class="w-full bg-[#E8D5D2]/50 rounded-full h-2">
                   <div
@@ -104,16 +104,16 @@
               :key="bar.month"
               class="flex-1 flex flex-col items-center gap-2"
             >
-              <span class="text-[10px] font-bold text-[#8C352D]"
-                >{{ bar.value }}%</span
-              >
+              <span class="text-[10px] font-bold text-[#8C352D]">
+                {{ bar.value }}%
+              </span>
               <div
                 :class="['w-full rounded-lg transition-all', bar.color]"
                 :style="`height: ${bar.value * 3}px`"
               ></div>
-              <span class="text-[10px] font-bold text-[#8C352D]">{{
-                bar.month
-              }}</span>
+              <span class="text-[10px] font-bold text-[#8C352D]">
+                {{ bar.month }}
+              </span>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import SidebarLayout from "@/layout/sidebar.vue";
+import SidebarLayout from "@/layout/sidebarpublic.vue";
 
 const stats = [
   { label: "Absen Hari Ini", value: 24 },
