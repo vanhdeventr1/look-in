@@ -18,14 +18,14 @@
           <h2
             class="text-xl md:text-2xl font-bold text-[#8b3a32] mb-2 text-center md:text-left"
           >
-            Daftar dan Mulai Sekarang
+            Daftar Akun Hiring Manager
           </h2>
 
           <p
             class="text-xs md:text-sm text-gray-600 mb-6 md:mb-8 leading-relaxed text-center md:text-left"
           >
-            Buat akun khusus HR untuk mengelola absensi dan data karyawan dengan
-            lebih mudah, cepat, dan aman
+            Pendaftaran ini khusus untuk Hiring Manager (HR) yang akan mengelola
+            absensi dan data karyawan.
           </p>
 
           <form @submit.prevent="handleRegister" class="space-y-3 md:space-y-4">
@@ -72,22 +72,6 @@
             </div>
 
             <div class="relative">
-              <select
-                v-model="form.role"
-                class="w-full h-11 pl-11 pr-4 rounded-lg border border-[#e6bdb7] bg-[#fff3f1] text-sm focus:outline-none focus:ring-2 focus:ring-[#8b3a32] appearance-none cursor-pointer"
-              >
-                <option value="">Pilih Peran</option>
-                <option value="hr">HR</option>
-                <option value="admin">Admin</option>
-              </select>
-              <span
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-[#8b3a32]"
-              >
-                <BriefcaseIcon :size="18" />
-              </span>
-            </div>
-
-            <div class="relative">
               <input
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'"
@@ -102,7 +86,7 @@
               <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b3a32] hover:text-[#742f28] transition-colors focus:outline-none"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b3a32]"
               >
                 <EyeIcon v-if="!showPassword" :size="18" />
                 <EyeOffIcon v-else :size="18" />
@@ -112,9 +96,9 @@
             <button
               type="submit"
               :disabled="loading"
-              class="w-full h-11 bg-[#8C352D] text-white rounded-lg text-sm font-semibold hover:bg-[#742f28] transition-colors shadow-sm cursor-pointer mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full h-11 bg-[#8C352D] text-white rounded-lg text-sm font-semibold hover:bg-[#742f28] transition-colors shadow-sm mt-2 disabled:opacity-60"
             >
-              {{ loading ? "Memproses..." : "Daftar" }}
+              {{ loading ? "Memproses..." : "Daftar sebagai HR" }}
             </button>
           </form>
 
@@ -151,8 +135,8 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from "@/composables/useAuth";
 import {
-  Briefcase as BriefcaseIcon,
   Contact as ContactIcon,
   Eye as EyeIcon,
   EyeOff as EyeOffIcon,
@@ -162,18 +146,14 @@ import {
 } from "lucide-vue-next";
 import { reactive, ref, watch } from "vue";
 
-import { useAuth } from "@/composables/useAuth";
-
 const { register, error, loading, clearError } = useAuth();
 
-// New visibility state
 const showPassword = ref(false);
 
 const form = reactive({
   username: "",
   fullName: "",
   email: "",
-  role: "",
   password: "",
 });
 

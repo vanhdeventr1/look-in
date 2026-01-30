@@ -27,10 +27,8 @@ export function useAuth() {
 
       if (userData.role === 1) {
         router.push("/admin/dashboard");
-      } else if (userData.role === 2) {
+      } else if (userData.role === 2 || userData.role === 3) {
         router.push("/public/dashboard");
-      } else {
-        router.push("/login");
       }
     } catch (err: any) {
       error.value =
@@ -52,7 +50,11 @@ export function useAuth() {
     error.value = null;
 
     try {
-      await registerApi(payload);
+      await registerApi({
+        ...payload,
+        role: 1,
+      });
+
       router.push("/login");
     } catch (err: any) {
       error.value =

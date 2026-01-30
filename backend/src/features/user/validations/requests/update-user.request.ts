@@ -10,7 +10,6 @@ export const updateUserSchema = Joi.object({
   phone_no: Joi.string().optional().allow(null, ""),
   role: Joi.number()
     .optional()
-    .default(0)
     .valid(...userRoleEnum),
   is_active: Joi.boolean().optional().default(true),
 });

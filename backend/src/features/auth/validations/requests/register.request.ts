@@ -5,19 +5,18 @@ import { User } from "src/features/user/entities/user.entity";
 export const registerSchema = Joi.object({
   name: Joi.string().required(),
   username: Joi.string()
-    .allow("", null)
+    .required()
     .external(async (value, helper) => {
-      if (value) {
-        const user = await User.findOne({
-          where: { username: value },
-        });
+      const user = await User.findOne({
+        where: { username: value },
+      });
 
-        if (user) {
-          throw JoiException.handle("Username already exists", helper);
-        }
+      if (user) {
+        throw JoiException.handle("Username already exists", helper);
       }
       return value;
     }),
+
   email: Joi.string()
     .required()
     .external(async (value, helper) => {
@@ -29,6 +28,6 @@ export const registerSchema = Joi.object({
       }
       return value;
     }),
-  password: Joi.string().min(8),
+  password: Joi.string().min(8).required(),
   role: Joi.number().optional().allow(null).default(0),
 }).options({ abortEarly: false });
