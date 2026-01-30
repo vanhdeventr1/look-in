@@ -176,7 +176,6 @@ const formattedDate = computed(() => {
 
 const isSidebarOpen = ref(false);
 
-// Navigation Data
 const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/admin/dashboard" },
   { icon: markRaw(UsersAddIcon), label: "Pengguna", path: "/admin/user" },

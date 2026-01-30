@@ -155,15 +155,12 @@ import {
 import { computed, markRaw, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-// Auth Logic
 const { user: userState, logout } = useAuth();
 const user = computed(() => userState.value);
 
-// Router Logic
 const router = useRouter();
 const route = useRoute();
 
-// Native Indonesian Date Formatting
 const formattedDate = computed(() => {
   return new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
@@ -175,7 +172,6 @@ const formattedDate = computed(() => {
 
 const isSidebarOpen = ref(false);
 
-// Navigation Data
 const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/public/dashboard" },
   { icon: markRaw(ScanIcon), label: "Absen", path: "" },

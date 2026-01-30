@@ -73,7 +73,6 @@ import {
 } from "lucide-vue-next";
 import { ref } from "vue";
 
-// Mock Data matching your image
 const notifications = ref([
   {
     message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
