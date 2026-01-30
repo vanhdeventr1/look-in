@@ -147,12 +147,6 @@
 <script setup lang="ts">
 import SidebarLayout from "@/layout/sidebar.vue";
 
-const stats = [
-  { label: "Absen Hari Ini", value: 24 },
-  { label: "Terlambat", value: 12 },
-  { label: "Sakit", value: 3 },
-];
-
 const chartLabels = [
   { text: "Hadir", color: "bg-[#00E396]" },
   { text: "Terlambat", color: "bg-[#FEB019]" },

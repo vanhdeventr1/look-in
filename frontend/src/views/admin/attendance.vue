@@ -140,14 +140,6 @@ import {
 } from "lucide-vue-next";
 import { ref } from "vue";
 
-// Top Summary Mock Data
-const summaryStats = [
-  { label: "Absen Hari Ini", value: 12 },
-  { label: "Terlambat", value: 6 },
-  { label: "Sakit", value: 1 },
-  { label: "Menunggu Perizinan", value: 1 },
-];
-
 // Table Mock Data
 const attendanceRecords = ref([
   {
