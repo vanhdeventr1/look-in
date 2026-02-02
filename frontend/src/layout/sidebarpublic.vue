@@ -1,17 +1,20 @@
 <template>
-  <div class="min-h-screen bg-[#FFF0EE] flex font-sans overflow-x-hidden">
+  <div class="h-screen bg-[#FFF0EE] flex font-sans overflow-hidden">
+    <!-- Overlay (mobile) -->
     <div
       v-if="isSidebarOpen"
       @click="isSidebarOpen = false"
       class="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm"
     ></div>
 
+    <!-- Sidebar -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E8D5D2] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0',
+        'fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white border-r border-[#E8D5D2] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
       ]"
     >
+      <!-- Logo -->
       <div
         class="px-6 py-8 border-b border-[#E8D5D2] flex justify-between items-center"
       >
@@ -28,6 +31,7 @@
         </button>
       </div>
 
+      <!-- Profile -->
       <div class="flex flex-col items-center py-8">
         <div
           class="w-24 h-24 rounded-full overflow-hidden border-2 border-[#8C352D]/20 bg-gray-100 shadow-sm"
@@ -52,6 +56,7 @@
         </p>
       </div>
 
+      <!-- Navigation (scrollable) -->
       <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
         <button
           v-for="item in navItems"
@@ -69,12 +74,13 @@
         </button>
       </nav>
 
+      <!-- Bottom actions (fixed) -->
       <div class="px-3 py-6 space-y-1 border-t border-[#E8D5D2]">
         <button
           @click="handleNavigation('/public/setting')"
           :class="[
             'flex items-center w-full px-4 py-3 font-medium rounded-xl transition-colors',
-            route.path === 'public/setting'
+            route.path === '/public/setting'
               ? 'bg-[#8C352D] text-white'
               : 'text-[#8C352D] hover:bg-[#8C352D]/5',
           ]"
@@ -82,6 +88,7 @@
           <SettingsIcon :size="20" class="mr-3" />
           <span class="text-sm font-semibold">Pengaturan</span>
         </button>
+
         <button
           @click="logout"
           class="flex items-center w-full px-4 py-3 text-[#8C352D] font-medium rounded-xl hover:bg-red-50 transition-colors"
@@ -92,7 +99,9 @@
       </div>
     </aside>
 
-    <div class="flex-1 flex flex-col min-w-0">
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <!-- Header -->
       <header
         class="h-20 bg-white border-b border-[#E8D5D2] flex items-center justify-between px-4 md:px-8"
       >
@@ -132,7 +141,8 @@
         </div>
       </header>
 
-      <main class="p-4 md:p-8">
+      <!-- Scrollable page content -->
+      <main class="flex-1 p-4 md:p-8 overflow-y-auto">
         <slot />
       </main>
     </div>

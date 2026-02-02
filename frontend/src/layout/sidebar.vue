@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#FFF0EE] flex font-sans overflow-x-hidden">
+  <div class="h-screen bg-[#FFF0EE] flex font-sans overflow-hidden">
     <div
       v-if="isSidebarOpen"
       @click="isSidebarOpen = false"
@@ -8,7 +8,7 @@
 
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E8D5D2] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0',
+        'fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white border-r border-[#E8D5D2] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
       ]"
     >
@@ -74,7 +74,7 @@
           @click="handleNavigation('/admin/setting')"
           :class="[
             'flex items-center w-full px-4 py-3 font-medium rounded-xl transition-colors',
-            route.path === '/setting'
+            route.path === '/admin/setting'
               ? 'bg-[#8C352D] text-white'
               : 'text-[#8C352D] hover:bg-[#8C352D]/5',
           ]"
@@ -82,6 +82,7 @@
           <SettingsIcon :size="20" class="mr-3" />
           <span class="text-sm font-semibold">Pengaturan</span>
         </button>
+
         <button
           @click="logout"
           class="flex items-center w-full px-4 py-3 text-[#8C352D] font-medium rounded-xl hover:bg-red-50 transition-colors"
@@ -92,7 +93,7 @@
       </div>
     </aside>
 
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
       <header
         class="h-20 bg-white border-b border-[#E8D5D2] flex items-center justify-between px-4 md:px-8"
       >
@@ -132,7 +133,7 @@
         </div>
       </header>
 
-      <main class="p-4 md:p-8">
+      <main class="flex-1 p-4 md:p-8 overflow-y-auto">
         <slot />
       </main>
     </div>
@@ -156,15 +157,12 @@ import {
 import { computed, markRaw, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-// Auth Logic
 const { user: userState, logout } = useAuth();
 const user = computed(() => userState.value);
 
-// Router Logic
 const router = useRouter();
 const route = useRoute();
 
-// Native Indonesian Date Formatting
 const formattedDate = computed(() => {
   return new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
@@ -180,11 +178,7 @@ const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/admin/dashboard" },
   { icon: markRaw(UsersAddIcon), label: "Pengguna", path: "/admin/user" },
   { icon: markRaw(FaceIcon), label: "Data", path: "/admin/dataset" },
-  {
-    icon: markRaw(ApprovalIcon),
-    label: "Persetujuan",
-    path: "/admin/permit",
-  },
+  { icon: markRaw(ApprovalIcon), label: "Persetujuan", path: "/admin/permit" },
   {
     icon: markRaw(AttendanceIcon),
     label: "Riwayat Absen",
