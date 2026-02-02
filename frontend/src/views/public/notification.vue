@@ -16,12 +16,13 @@
 
       <div class="space-y-4">
         <div
-          v-for="(note, index) in notifications"
-          :key="index"
+          v-for="note in notifications"
+          :key="note.id"
           :class="[
             'group flex items-center justify-between p-4 rounded-2xl border border-[#E8D5D2] transition-all cursor-pointer hover:shadow-md',
             note.isUnread ? 'bg-[#E8D5D2]/50' : 'bg-white',
           ]"
+          @click="markAsRead(note)"
         >
           <div class="flex items-center gap-4">
             <div
@@ -64,6 +65,11 @@
 </template>
 
 <script setup lang="ts">
+import {
+  getNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+} from "@/api/notification.api";
 import SidebarLayout from "@/layout/sidebarpublic.vue";
 import {
   Bell as BellIcon,
@@ -71,43 +77,73 @@ import {
   CheckCheck as CheckCheckIcon,
   ChevronRight as ChevronRightIcon,
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 
-// Mock Data matching your image
-const notifications = ref([
-  {
-    message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
-    date: "7 Oktober 2025 11:06 AM",
-    isUnread: true,
-  },
-  {
-    message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
-    date: "7 Oktober 2025 11:06 AM",
-    isUnread: true,
-  },
-  {
-    message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
-    date: "7 Oktober 2025 11:06 AM",
-    isUnread: true,
-  },
-  {
-    message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
-    date: "7 Oktober 2025 11:06 AM",
-    isUnread: true,
-  },
-  {
-    message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
-    date: "7 Oktober 2025 11:06 AM",
-    isUnread: true,
-  },
-  {
-    message: "Status Perizinan berubah dari Menunggu Perizinan ke Disetujui",
-    date: "7 Oktober 2025 11:06 AM",
-    isUnread: true,
-  },
-]);
-
-const markAllAsRead = () => {
-  notifications.value.forEach((n) => (n.isUnread = false));
+type NotificationApi = {
+  id: string;
+  message?: string | null;
+  data?: string | null;
+  read_at?: string | Date | null;
+  created_at?: string | Date;
 };
+
+type NotificationRow = {
+  id: string;
+  message: string;
+  date: string;
+  isUnread: boolean;
+};
+
+const notifications = ref<NotificationRow[]>([]);
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("id-ID");
+};
+
+const mapNotification = (note: NotificationApi): NotificationRow => ({
+  id: note.id,
+  message: note.message || note.data || "-",
+  date: formatDate(note.created_at),
+  isUnread: !note.read_at,
+});
+
+const fetchNotifications = async () => {
+  try {
+    const response = await getNotifications();
+    const data = response?.data?.data?.notifications ?? [];
+    notifications.value = data.map(mapNotification);
+  } catch (error) {
+    console.error(error);
+    notifications.value = [];
+  }
+};
+
+const markAllAsRead = async () => {
+  try {
+    await markAllNotificationsAsRead();
+    notifications.value = notifications.value.map((note) => ({
+      ...note,
+      isUnread: false,
+    }));
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const markAsRead = async (note: NotificationRow) => {
+  if (!note.isUnread) return;
+  try {
+    await markNotificationAsRead(note.id);
+    note.isUnread = false;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+onMounted(() => {
+  fetchNotifications();
+});
 </script>
