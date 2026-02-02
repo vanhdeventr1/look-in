@@ -31,4 +31,5 @@ export const getPermitTypeEnums = () => {
   }
   return result;
 };
+
 export default PermitType;
