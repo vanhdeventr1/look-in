@@ -24,6 +24,16 @@ export class PermitService {
     private readonly permitModel: typeof Permit,
   ) {}
 
+  private calculateTotalDays(start: Date, end: Date): number {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    const diffTime =
+      endDate.setHours(0, 0, 0, 0) - startDate.setHours(0, 0, 0, 0);
+
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  }
+
   async create(
     createPermitDto: CreatePermitDto,
     user: User,
@@ -52,14 +62,18 @@ export class PermitService {
 
       await Promise.all(permitImageInstance);
 
+      const totalDays = this.calculateTotalDays(
+        createPermitDto.date_start,
+        createPermitDto.date_end,
+      );
+
       const permit = await this.permitModel.create(
         {
           ...createPermitDto,
-          description: createPermitDto.description,
+          total_days: totalDays,
           created_by: user.id,
           user_id: user.id,
           permit_images: data,
-          type: createPermitDto.type,
         },
         {
           transaction,
@@ -77,6 +91,7 @@ export class PermitService {
 
   async findAll(user: User, query: any) {
     const condition = {};
+
     if (user.role === UserRoleEnum.HIRING_MANAGER) {
       Object.assign(condition, {
         created_by: { [Op.ne]: user.id },
@@ -89,6 +104,7 @@ export class PermitService {
         "$permits.user_id$": user.id,
       });
     }
+
     try {
       const { count, data } = await new QueryBuilderHelper(
         this.permitModel,
@@ -105,19 +121,16 @@ export class PermitService {
       });
 
       for (const permit of data) {
-        const permitImage = permitImages.filter(
+        permit.permit_images = permitImages.filter(
           (image) => image.permit_id === permit.id,
         );
-
-        permit.permit_images = permitImage;
       }
 
-      const result = {
-        count,
-        permits: data,
-      };
-
-      return this.response.success(result, 200, "Successfully get permits");
+      return this.response.success(
+        { count, permits: data },
+        200,
+        "Successfully get permits",
+      );
     } catch (error) {
       return this.response.fail(error, 400);
     }
@@ -144,17 +157,23 @@ export class PermitService {
   async update(permit: Permit, updatePermitDto: UpdatePermitDto, user: User) {
     const transaction = await this.sequelize.transaction();
     try {
-      const status = updatePermitDto.status !== undefined;
-      if (status) {
-        if (user.role !== UserRoleEnum.HIRING_MANAGER) {
-          throw this.response.fail(
-            "Only hiring managers can approve or change status",
-            403,
-          );
-        }
+      const statusChanged = updatePermitDto.status !== undefined;
+
+      if (statusChanged && user.role !== UserRoleEnum.HIRING_MANAGER) {
+        throw this.response.fail(
+          "Only hiring managers can approve or change status",
+          403,
+        );
       }
 
-      if (status && permit.status !== updatePermitDto.status) {
+      if (updatePermitDto.date_start || updatePermitDto.date_end) {
+        const start = updatePermitDto.date_start ?? permit.date_start;
+        const end = updatePermitDto.date_end ?? permit.date_end;
+
+        updatePermitDto["total_days"] = this.calculateTotalDays(start, end);
+      }
+
+      if (statusChanged && permit.status !== updatePermitDto.status) {
         this.eventEmitter.emit("notification", ["system"], {
           type: "PERMIT",
           data: { id: permit.id },
@@ -163,6 +182,7 @@ export class PermitService {
           title: "Update Permit Status",
         });
       }
+
       await permit.update(updatePermitDto, { transaction });
       await transaction.commit();
 

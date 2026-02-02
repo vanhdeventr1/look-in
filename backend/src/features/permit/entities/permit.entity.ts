@@ -69,6 +69,13 @@ export class Permit extends Model {
   @Column({ type: DataType.DATE, allowNull: false })
   date_end: Date;
 
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  })
+  total_days: number;
+
   @ForeignKey(() => User)
   @Column({ type: DataType.BIGINT, allowNull: false })
   created_by: number;
