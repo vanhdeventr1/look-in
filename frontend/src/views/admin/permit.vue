@@ -1,4 +1,3 @@
-permit
 <template>
   <SidebarLayout>
     <div class="space-y-6">
@@ -177,13 +176,13 @@ permit
                   <div
                     class="flex-1 p-3 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm text-center"
                   >
-                    {{ selectedPermit?.startDate || "7/10/2025" }}
+                    {{ selectedPermit?.startDate || "-" }}
                   </div>
                   <span class="text-[#8C352D] font-bold text-sm">Sampai</span>
                   <div
                     class="flex-1 p-3 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm text-center"
                   >
-                    {{ selectedPermit?.endDate || "8/10/2025" }}
+                    {{ selectedPermit?.endDate || "-" }}
                   </div>
                 </div>
               </div>
@@ -316,6 +315,7 @@ permit
 </template>
 
 <script setup lang="ts">
+import { getPermits, updatePermit } from "@/api/permit.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebar.vue";
 import {
@@ -328,7 +328,40 @@ import {
   XCircle as XCircleIcon,
   X as XIcon,
 } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+
+type PermitImage = {
+  url: string;
+};
+
+type PermitApi = {
+  id: number;
+  description?: string | null;
+  status: number;
+  status_name?: string;
+  reason: number;
+  type_name?: string;
+  date_start?: string | Date;
+  date_end?: string | Date;
+  permit_images?: PermitImage[];
+  created_by_user?: {
+    id: number;
+    name: string;
+  };
+};
+
+type PermitRow = {
+  id: number;
+  name: string;
+  reason: string;
+  date: string;
+  startDate: string;
+  endDate: string;
+  description?: string | null;
+  status: string;
+  status_code: number;
+  evidenceImg?: string | null;
+};
 
 const isViewModalOpen = ref(false);
 const isConfirmApproveOpen = ref(false);
@@ -336,77 +369,70 @@ const isConfirmRejectOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
 
 const searchQuery = ref("");
-const selectedPermit = ref<any>(null);
+const selectedPermit = ref<PermitRow | null>(null);
 const successAlertTitle = ref("");
 const statusType = ref<"check" | "x">("check");
 
-const permits = ref([
-  {
-    id: 1,
-    name: "Johnny Marr",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    startDate: "7/10/2025",
-    endDate: "8/10/2025",
-    description: "Lorem ipsum dolor sit amet...",
-    status: "Menunggu Persetujuan",
-    evidenceImg: "https://via.placeholder.com/150",
-  },
-  {
-    id: 2,
-    name: "Morrissey",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Menunggu Persetujuan",
-  },
-  {
-    id: 3,
-    name: "Mark Mckenna",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Sudah Persetujuan",
-  },
-  {
-    id: 4,
-    name: "Damon Albarn",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Sudah Persetujuan",
-  },
-  {
-    id: 5,
-    name: "Hayley William",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Menunggu Persetujuan",
-  },
-  {
-    id: 6,
-    name: "Hayley William",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Menunggu Persetujuan",
-  },
-  {
-    id: 7,
-    name: "Hayley William",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Menunggu Persetujuan",
-  },
-  {
-    id: 8,
-    name: "Hayley William",
-    reason: "Sakit",
-    date: "7/10/25 - 8/10/25",
-    status: "Menunggu Persetujuan",
-  },
-]);
+const permits = ref<PermitRow[]>([]);
+
+const statusLabelMap: Record<number, string> = {
+  0: "Menunggu Persetujuan",
+  1: "Sudah Persetujuan",
+  2: "Ditolak",
+  3: "Duplikat",
+};
+
+const typeLabelMap: Record<number, string> = {
+  0: "Sakit",
+  1: "Izin",
+  2: "Cuti",
+};
+
+const typeNameMap: Record<string, string> = {
+  Sick: "Sakit",
+  Permit: "Izin",
+  Leave: "Cuti",
+};
+
+const formatDate = (value?: string | Date) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("id-ID");
+};
+
+const getTypeLabel = (permit: PermitApi) => {
+  if (permit.type_name && typeNameMap[permit.type_name]) {
+    return typeNameMap[permit.type_name];
+  }
+  return typeLabelMap[permit.reason] ?? "Lainnya";
+};
+
+const mapPermit = (permit: PermitApi): PermitRow => {
+  const startDate = formatDate(permit.date_start);
+  const endDate = formatDate(permit.date_end);
+  return {
+    id: permit.id,
+    name: permit.created_by_user?.name ?? "-",
+    reason: getTypeLabel(permit),
+    date: `${startDate} - ${endDate}`,
+    startDate,
+    endDate,
+    description: permit.description ?? null,
+    status: statusLabelMap[permit.status] ?? permit.status_name ?? "Unknown",
+    status_code: permit.status,
+    evidenceImg: permit.permit_images?.[0]?.url ?? null,
+  };
+};
 
 const filteredPermits = computed(() => {
-  return permits.value.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.value.toLowerCase()),
-  );
+  if (!searchQuery.value.trim()) {
+    return permits.value;
+  }
+  const query = searchQuery.value.toLowerCase();
+  return permits.value.filter((permit) => {
+    return permit.name.toLowerCase().includes(query);
+  });
 });
 
 const openViewDetail = (permit: any) => {
@@ -424,24 +450,50 @@ const triggerReject = (permit: any) => {
   isConfirmRejectOpen.value = true;
 };
 
-const confirmAction = (type: "Approved" | "Rejected") => {
-  const index = permits.value.findIndex(
-    (p) => p.id === selectedPermit.value.id,
-  );
-  if (index !== -1) {
-    permits.value[index].status =
-      type === "Approved" ? "Sudah Persetujuan" : "Ditolak";
+const fetchPermits = async () => {
+  try {
+    const response = await getPermits();
+    const data = response?.data?.data?.permits ?? [];
+    permits.value = data.map(mapPermit);
+  } catch (error) {
+    console.error(error);
+    permits.value = [];
   }
-
-  isConfirmApproveOpen.value = false;
-  isConfirmRejectOpen.value = false;
-  isViewModalOpen.value = false;
-
-  statusType.value = type === "Approved" ? "check" : "x";
-  successAlertTitle.value =
-    type === "Approved" ? "Izin Berhasil Disetujui!" : "Izin Berhasil Ditolak!";
-  isSuccessAlertOpen.value = true;
 };
+
+const confirmAction = async (type: "Approved" | "Rejected") => {
+  const selected = selectedPermit.value;
+  if (!selected) return;
+
+  const nextStatus = type === "Approved" ? 1 : 2;
+
+  try {
+    await updatePermit(selected.id, { status: nextStatus });
+    const index = permits.value.findIndex((p) => p.id === selected.id);
+    if (index !== -1) {
+      permits.value[index].status =
+        statusLabelMap[nextStatus] ?? selected.status;
+      permits.value[index].status_code = nextStatus;
+    }
+
+    statusType.value = type === "Approved" ? "check" : "x";
+    successAlertTitle.value =
+      type === "Approved"
+        ? "Izin Berhasil Disetujui!"
+        : "Izin Berhasil Ditolak!";
+    isSuccessAlertOpen.value = true;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isConfirmApproveOpen.value = false;
+    isConfirmRejectOpen.value = false;
+    isViewModalOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchPermits();
+});
 </script>
 
 <style scoped>
