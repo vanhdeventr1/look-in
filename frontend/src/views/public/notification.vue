@@ -1,7 +1,7 @@
 <template>
   <SidebarLayout>
     <div
-      class="bg-white border border-[#E8D5D2] rounded-2xl p-6 md:p-8 shadow-sm min-h-[500px]"
+      class="bg-white border border-[#E8D5D2] rounded-2xl p-6 md:p-8 shadow-sm min-h-[500px] animate-in"
     >
       <div class="flex items-center justify-between mb-8">
         <h3 class="text-[#8C352D] font-bold text-lg">Notifikasi</h3>
@@ -147,3 +147,18 @@ onMounted(() => {
   fetchNotifications();
 });
 </script>
+<style>
+.animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

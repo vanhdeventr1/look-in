@@ -1,6 +1,6 @@
 <template>
   <SidebarLayout>
-    <div class="space-y-6">
+    <div class="space-y-6 animate-in">
       <div class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div
@@ -169,3 +169,18 @@ const barData = [
   { month: "Jan", value: 100, color: "bg-[#00E396]" },
 ];
 </script>
+<style>
+.animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

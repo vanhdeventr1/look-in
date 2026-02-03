@@ -1,7 +1,7 @@
 <template>
   <SidebarLayout>
     <div
-      class="bg-white border border-[#E8D5D2] rounded-2xl overflow-hidden shadow-sm"
+      class="bg-white border border-[#E8D5D2] rounded-2xl overflow-hidden shadow-sm animate-in"
     >
       <div class="h-16 bg-[#8C352D]"></div>
 
@@ -319,7 +319,7 @@ import {
 } from "@/api/users.api";
 import { useAuth } from "@/composables/useAuth";
 import AlertLayout from "@/layout/alert.vue";
-import SidebarLayout from "@/layout/sidebar.vue";
+import SidebarLayout from "@/layout/sidebarpublic.vue";
 import {
   Camera as CameraIcon,
   Check as CheckIcon,
@@ -477,3 +477,18 @@ const handleFileChange = async (event: Event) => {
   }
 };
 </script>
+<style>
+.animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

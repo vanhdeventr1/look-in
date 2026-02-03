@@ -81,8 +81,8 @@
           :class="[
             'flex items-center w-full px-4 py-3 font-medium rounded-xl transition-colors',
             route.path === '/public/setting'
-              ? 'bg-[#8C352D] text-white'
-              : 'text-[#8C352D] hover:bg-[#8C352D]/5',
+              ? 'bg-[#8C352D] text-white cursor-pointer'
+              : 'text-[#8C352D] hover:bg-[#8C352D]/5 cursor-pointer',
           ]"
         >
           <SettingsIcon :size="20" class="mr-3" />
@@ -91,7 +91,7 @@
 
         <button
           @click="logout"
-          class="flex items-center w-full px-4 py-3 text-[#8C352D] font-medium rounded-xl hover:bg-red-50 transition-colors"
+          class="flex items-center w-full px-4 py-3 text-[#8C352D] font-medium rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
         >
           <LogOutIcon :size="20" class="mr-3" />
           <span class="text-sm font-semibold">Keluar</span>

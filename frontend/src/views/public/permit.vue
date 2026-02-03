@@ -455,7 +455,7 @@
         </button>
         <button
           @click="isDeleteAlertOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer"
         >
           Batalkan
         </button>

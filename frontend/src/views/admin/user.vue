@@ -1,6 +1,6 @@
 <template>
   <SidebarLayout>
-    <div class="space-y-6">
+    <div class="space-y-6 animate-in">
       <div
         class="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
@@ -572,11 +572,11 @@ onMounted(() => {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 </style>

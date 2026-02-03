@@ -1,6 +1,6 @@
 <template>
   <SidebarLayout>
-    <div class="space-y-6">
+    <div class="space-y-6 animate-in">
       <div
         class="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >

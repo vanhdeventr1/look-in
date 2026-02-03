@@ -1,6 +1,6 @@
 <template>
   <SidebarLayout>
-    <div class="space-y-6">
+    <div class="space-y-6 animate-in">
       <div
         class="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
@@ -121,5 +121,18 @@ table {
 .overflow-x-auto::-webkit-scrollbar-thumb {
   background: #e8d5d2;
   border-radius: 10px;
+}
+.animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
