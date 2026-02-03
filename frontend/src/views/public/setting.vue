@@ -26,7 +26,7 @@
             <button
               type="button"
               @click="triggerFilePicker"
-              class="absolute bottom-1 right-1 bg-[#8C352D] p-2 rounded-full border-2 border-white text-white hover:scale-110 transition-transform"
+              class="absolute bottom-1 right-1 bg-[#8C352D] p-2 rounded-full border-2 border-white text-white hover:scale-110 transition-transform cursor-pointer"
             >
               <CameraIcon :size="18" />
             </button>
@@ -96,7 +96,7 @@
                 />
                 <button
                   @click.prevent="showOld = !showOld"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/40"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/40 cursor-pointer"
                 >
                   <component :is="showOld ? EyeOffIcon : EyeIcon" :size="20" />
                 </button>
@@ -116,7 +116,7 @@
                 />
                 <button
                   @click.prevent="showNew = !showNew"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/40"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/40 cursor-pointer"
                 >
                   <component :is="showNew ? EyeOffIcon : EyeIcon" :size="20" />
                 </button>
@@ -136,7 +136,7 @@
                 />
                 <button
                   @click.prevent="showConfirm = !showConfirm"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/40"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/40 cursor-pointer"
                 >
                   <component
                     :is="showConfirm ? EyeOffIcon : EyeIcon"
@@ -159,7 +159,7 @@
           <div class="md:col-span-2 pt-8">
             <button
               type="submit"
-              class="px-10 py-4 bg-[#8C352D] text-white font-bold rounded-2xl hover:bg-[#a24a42] transition-colors shadow-lg shadow-[#8C352D]/20 active:scale-95"
+              class="px-10 py-4 bg-[#8C352D] text-white font-bold rounded-2xl hover:bg-[#a24a42] transition-colors shadow-lg shadow-[#8C352D]/20 active:scale-95 cursor-pointer"
             >
               Perbarui Profil
             </button>
@@ -319,7 +319,7 @@ import {
 } from "@/api/users.api";
 import { useAuth } from "@/composables/useAuth";
 import AlertLayout from "@/layout/alert.vue";
-import SidebarLayout from "@/layout/sidebarpublic.vue";
+import SidebarLayout from "@/layout/sidebar.vue";
 import {
   Camera as CameraIcon,
   Check as CheckIcon,
