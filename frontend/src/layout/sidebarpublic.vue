@@ -65,8 +65,8 @@
           :class="[
             'flex items-center w-full px-4 py-3 font-medium rounded-xl transition-all mb-1',
             route.path === item.path
-              ? 'bg-[#8C352D] text-white shadow-md shadow-[#8C352D]/20'
-              : 'text-[#8C352D] hover:bg-[#8C352D]/5',
+              ? 'bg-[#8C352D] text-white shadow-md shadow-[#8C352D]/20 cursor-pointer'
+              : 'text-[#8C352D] hover:bg-[#8C352D]/5 cursor-pointer',
           ]"
         >
           <component :is="item.icon" :size="20" class="mr-3" />
