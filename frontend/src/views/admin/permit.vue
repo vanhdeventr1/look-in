@@ -45,6 +45,9 @@
                 <th class="px-6 py-4 font-bold text-sm">Nama Lengkap</th>
                 <th class="px-6 py-4 font-bold text-sm">Alasan</th>
                 <th class="px-6 py-4 font-bold text-sm">Tanggal Izin</th>
+                <th class="px-6 py-4 font-bold text-sm text-center">
+                  Jumlah Hari
+                </th>
                 <th class="px-6 py-4 font-bold text-sm">Status</th>
                 <th class="px-6 py-4 font-bold text-sm text-center">
                   Persetujuan
@@ -72,6 +75,11 @@
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80">
                   {{ permit.date }}
                 </td>
+                <td
+                  class="px-6 py-4 text-sm text-[#8C352D] font-bold text-center"
+                >
+                  {{ permit.totalDays }} Hari
+                </td>
                 <td class="px-6 py-4 text-sm font-bold text-[#8C352D]">
                   {{ permit.status }}
                 </td>
@@ -82,13 +90,13 @@
                   >
                     <button
                       @click="triggerApprove(permit)"
-                      class="text-green-600 hover:scale-110 transition-transform"
+                      class="text-green-600 hover:scale-110 transition-transform cursor-pointer"
                     >
                       <CheckCircleIcon :size="20" />
                     </button>
                     <button
                       @click="triggerReject(permit)"
-                      class="text-red-600 hover:scale-110 transition-transform"
+                      class="text-red-600 hover:scale-110 transition-transform cursor-pointer"
                     >
                       <XCircleIcon :size="20" />
                     </button>
@@ -100,7 +108,7 @@
                 <td class="px-6 py-4 text-center">
                   <button
                     @click="openViewDetail(permit)"
-                    class="text-[#8C352D] hover:scale-110 transition-transform"
+                    class="text-[#8C352D] hover:scale-110 transition-transform cursor-pointer"
                   >
                     <EyeIcon :size="18" />
                   </button>
@@ -124,7 +132,7 @@
         >
           <button
             @click="isViewModalOpen = false"
-            class="text-white hover:opacity-70 transition-opacity"
+            class="text-white hover:opacity-70 transition-opacity cursor-pointer"
           >
             <XIcon :size="24" />
           </button>
@@ -170,7 +178,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
               <div>
                 <label class="text-sm font-bold text-[#8C352D] mb-1 block">
-                  Tanggal Perizinan
+                  Tanggal Perizinan ({{ selectedPermit?.totalDays }} Hari)
                 </label>
                 <div class="flex items-center gap-3">
                   <div
@@ -221,13 +229,13 @@
           >
             <button
               @click="triggerApprove(selectedPermit)"
-              class="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+              class="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors cursor-pointer"
             >
               <CheckIcon :size="24" />
             </button>
             <button
               @click="triggerReject(selectedPermit)"
-              class="p-3 bg-[#8C352D] text-white rounded-xl hover:bg-[#a24a42] transition-colors"
+              class="p-3 bg-[#8C352D] text-white rounded-xl hover:bg-[#a24a42] transition-colors cursor-pointer"
             >
               <XIcon :size="24" />
             </button>
@@ -252,7 +260,7 @@
       <template #actions>
         <button
           @click="confirmAction('Approved')"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42] transition-all"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42]"
         >
           Ya, Setujui
         </button>
@@ -293,6 +301,7 @@
         </button>
       </template>
     </AlertLayout>
+
     <AlertLayout v-if="isSuccessAlertOpen">
       <template #icon>
         <div
@@ -305,7 +314,7 @@
       <template #actions>
         <button
           @click="isSuccessAlertOpen = false"
-          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all"
+          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold hover:bg-[#a24a42]"
         >
           OK
         </button>
@@ -330,9 +339,7 @@ import {
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 
-type PermitImage = {
-  url: string;
-};
+type PermitImage = { url: string };
 
 type PermitApi = {
   id: number;
@@ -344,10 +351,7 @@ type PermitApi = {
   date_start?: string | Date;
   date_end?: string | Date;
   permit_images?: PermitImage[];
-  created_by_user?: {
-    id: number;
-    name: string;
-  };
+  created_by_user?: { id: number; name: string };
 };
 
 type PermitRow = {
@@ -357,6 +361,7 @@ type PermitRow = {
   date: string;
   startDate: string;
   endDate: string;
+  totalDays: number;
   description?: string | null;
   status: string;
   status_code: number;
@@ -401,6 +406,16 @@ const formatDate = (value?: string | Date) => {
   return date.toLocaleDateString("id-ID");
 };
 
+// Frontend helper to calculate days until backend provides it
+const calculateTotalDays = (start?: string | Date, end?: string | Date) => {
+  if (!start || !end) return 0;
+  const s = new Date(start);
+  const e = new Date(end);
+  const diffTime = Math.abs(e.getTime() - s.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return diffDays;
+};
+
 const getTypeLabel = (permit: PermitApi) => {
   if (permit.type_name && typeNameMap[permit.type_name]) {
     return typeNameMap[permit.type_name];
@@ -418,6 +433,7 @@ const mapPermit = (permit: PermitApi): PermitRow => {
     date: `${startDate} - ${endDate}`,
     startDate,
     endDate,
+    totalDays: calculateTotalDays(permit.date_start, permit.date_end),
     description: permit.description ?? null,
     status: statusLabelMap[permit.status] ?? permit.status_name ?? "Unknown",
     status_code: permit.status,
@@ -426,13 +442,11 @@ const mapPermit = (permit: PermitApi): PermitRow => {
 };
 
 const filteredPermits = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return permits.value;
-  }
+  if (!searchQuery.value.trim()) return permits.value;
   const query = searchQuery.value.toLowerCase();
-  return permits.value.filter((permit) => {
-    return permit.name.toLowerCase().includes(query);
-  });
+  return permits.value.filter((permit) =>
+    permit.name.toLowerCase().includes(query),
+  );
 });
 
 const openViewDetail = (permit: any) => {
@@ -464,9 +478,7 @@ const fetchPermits = async () => {
 const confirmAction = async (type: "Approved" | "Rejected") => {
   const selected = selectedPermit.value;
   if (!selected) return;
-
   const nextStatus = type === "Approved" ? 1 : 2;
-
   try {
     await updatePermit(selected.id, { status: nextStatus });
     const index = permits.value.findIndex((p) => p.id === selected.id);
@@ -475,7 +487,6 @@ const confirmAction = async (type: "Approved" | "Rejected") => {
         statusLabelMap[nextStatus] ?? selected.status;
       permits.value[index].status_code = nextStatus;
     }
-
     statusType.value = type === "Approved" ? "check" : "x";
     successAlertTitle.value =
       type === "Approved"

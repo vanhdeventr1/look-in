@@ -6,7 +6,7 @@
       >
         <button
           @click="isModalOpen = true"
-          class="flex items-center justify-center gap-2 bg-[#8C352D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#a24a42] transition-colors shadow-lg shadow-[#8C352D]/20 w-fit"
+          class="flex items-center justify-center gap-2 bg-[#8C352D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#a24a42] transition-colors shadow-lg shadow-[#8C352D]/20 w-fit cursor-pointer"
         >
           <PlusIcon :size="20" />
           Tambah Data
@@ -75,19 +75,19 @@
                   <div class="flex items-center justify-center gap-3">
                     <button
                       @click="viewUserDetails(user)"
-                      class="text-[#8C352D] hover:scale-110 transition-transform"
+                      class="text-[#8C352D] hover:scale-110 transition-transform cursor-pointer"
                     >
                       <EyeIcon :size="18" />
                     </button>
                     <button
                       @click="openEditModal(user)"
-                      class="text-[#8C352D] hover:scale-110 transition-transform"
+                      class="text-[#8C352D] hover:scale-110 transition-transform cursor-pointer"
                     >
                       <EditIcon :size="18" />
                     </button>
                     <button
                       @click="confirmDelete(user)"
-                      class="text-[#8C352D] hover:scale-110 transition-transform"
+                      class="text-[#8C352D] hover:scale-110 transition-transform cursor-pointer"
                     >
                       <TrashIcon :size="18" />
                     </button>
@@ -120,7 +120,7 @@
         >
           <button
             @click="isViewModalOpen = false"
-            class="text-white hover:opacity-70"
+            class="text-white hover:opacity-70 cursor-pointer"
           >
             <XIcon :size="24" />
           </button>
@@ -181,7 +181,7 @@
         <div class="p-8">
           <button
             @click="isModalOpen = false"
-            class="flex items-center gap-2 text-[#8C352D] font-bold mb-6 hover:opacity-70"
+            class="flex items-center gap-2 text-[#8C352D] font-bold mb-6 hover:opacity-70 cursor-pointer"
           >
             <ArrowLeftIcon :size="20" />
             Kembali
@@ -232,7 +232,7 @@
                 <button
                   type="button"
                   @click="showPassword = !showPassword"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/50"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C352D]/50 cursor-pointer"
                 >
                   <EyeIcon v-if="!showPassword" :size="20" />
                   <EyeOffIcon v-else :size="20" />
@@ -243,7 +243,7 @@
               <label class="text-sm font-bold text-[#8C352D]">Peran</label>
               <select
                 v-model.number="newUser.role"
-                class="w-full px-5 py-3 rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 text-[#8C352D] focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238C352D%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_1.25rem_center] bg-no-repeat"
+                class="w-full px-5 py-3 rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 text-[#8C352D] focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238C352D%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_1.25rem_center] bg-no-repeat cursor-pointer"
               >
                 <option :value="2">Karyawan</option>
                 <option :value="3">Magang</option>
@@ -252,7 +252,7 @@
             <div class="flex justify-end pt-4">
               <button
                 type="submit"
-                class="bg-[#8C352D] text-white px-10 py-3 rounded-2xl font-bold hover:bg-[#a24a42] transition-all active:scale-95"
+                class="bg-[#8C352D] text-white px-10 py-3 rounded-2xl font-bold hover:bg-[#a24a42] transition-all active:scale-95 cursor-pointer"
               >
                 Tambah Data Pengguna
               </button>
@@ -273,7 +273,7 @@
         <div class="p-8">
           <button
             @click="isEditModalOpen = false"
-            class="flex items-center gap-2 text-[#8C352D] font-bold mb-6 hover:opacity-70"
+            class="flex items-center gap-2 text-[#8C352D] font-bold mb-6 hover:opacity-70 cursor-pointer"
           >
             <ArrowLeftIcon :size="20" />
             Batal Edit
@@ -312,7 +312,7 @@
               <label class="text-sm font-bold text-[#8C352D]">Peran</label>
               <select
                 v-model.number="editUserData.role"
-                class="w-full px-5 py-3 rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 text-[#8C352D] focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238C352D%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_1.25rem_center] bg-no-repeat"
+                class="w-full px-5 py-3 rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 text-[#8C352D] focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238C352D%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_1.25rem_center] bg-no-repeat cursor-pointer"
               >
                 <option :value="2">Karyawan</option>
                 <option :value="3">Magang</option>
@@ -321,7 +321,7 @@
             <div class="flex justify-end pt-4">
               <button
                 type="submit"
-                class="bg-[#8C352D] text-white px-10 py-3 rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-lg active:scale-95"
+                class="bg-[#8C352D] text-white px-10 py-3 rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-lg active:scale-95 cursor-pointer"
               >
                 Simpan Perubahan
               </button>
@@ -343,7 +343,7 @@
       <template #actions>
         <button
           @click="isSuccessAlertOpen = false"
-          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all"
+          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all cursor-pointer"
         >
           OK
         </button>
@@ -362,13 +362,13 @@
       <template #actions>
         <button
           @click="handleDeleteUser"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42]"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42] cursor-pointer"
         >
           Ya, Hapus!
         </button>
         <button
           @click="isDeleteAlertOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer"
         >
           Batalkan
         </button>

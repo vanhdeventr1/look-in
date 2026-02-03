@@ -7,7 +7,7 @@
         <h3 class="text-[#8C352D] font-bold text-lg">Notifikasi</h3>
         <button
           @click="markAllAsRead"
-          class="flex items-center gap-2 text-[#8C352D] text-sm font-semibold hover:opacity-70 transition-opacity"
+          class="flex items-center gap-2 text-[#8C352D] text-sm font-semibold hover:opacity-70 transition-opacity cursor-pointer"
         >
           <CheckCheckIcon :size="18" />
           Tandai baca
