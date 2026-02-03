@@ -90,7 +90,7 @@
             <button
               type="button"
               @click="showPassword = !showPassword"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b3a32] hover:text-[#742f28] transition-colors focus:outline-none"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b3a32] hover:text-[#742f28] transition-colors focus:outline-none cursor-pointer"
             >
               <EyeIcon v-if="!showPassword" :size="18" />
               <EyeOffIcon v-else :size="18" />
@@ -100,7 +100,7 @@
           <button
             type="submit"
             :disabled="loading"
-            class="w-full h-11 bg-[#8C352D] text-white rounded-lg text-sm font-semibold hover:bg-[#742f28] transition-colors shadow-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full h-11 bg-[#8C352D] text-white rounded-lg text-sm font-semibold hover:bg-[#742f28] transition-colors shadow-sm mt-2 disabled:opacity-60 cursor-pointer"
           >
             {{ loading ? "Memproses..." : "Masuk" }}
           </button>
