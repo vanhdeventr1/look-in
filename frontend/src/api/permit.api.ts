@@ -20,4 +20,3 @@ export const updatePermit = (
 ) => {
   return api.put(`/permits/${id}`, payload);
 };
-
