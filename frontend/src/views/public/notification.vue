@@ -22,7 +22,7 @@
             'group flex items-center justify-between p-4 rounded-2xl border border-[#E8D5D2] transition-all cursor-pointer hover:shadow-md',
             note.isUnread ? 'bg-[#E8D5D2]/50' : 'bg-white',
           ]"
-          @click="markAsRead(note)"
+          @click="handleNotificationClick(note)"
         >
           <div class="flex items-center gap-4">
             <div
@@ -78,9 +78,11 @@ import {
   ChevronRight as ChevronRightIcon,
 } from "lucide-vue-next";
 import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
 type NotificationApi = {
   id: string;
+  type?: string | null;
   message?: string | null;
   data?: string | null;
   read_at?: string | Date | null;
@@ -89,12 +91,15 @@ type NotificationApi = {
 
 type NotificationRow = {
   id: string;
+  type?: string | null;
   message: string;
   date: string;
   isUnread: boolean;
+  permitId?: number | null;
 };
 
 const notifications = ref<NotificationRow[]>([]);
+const router = useRouter();
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) return "-";
@@ -105,9 +110,24 @@ const formatDate = (value?: string | Date | null) => {
 
 const mapNotification = (note: NotificationApi): NotificationRow => ({
   id: note.id,
+  type: note.type ?? null,
   message: note.message || note.data || "-",
   date: formatDate(note.created_at),
   isUnread: !note.read_at,
+  permitId: (() => {
+    if (!note.data) return null;
+    try {
+      const parsed = JSON.parse(note.data);
+      if (parsed && typeof parsed === "object") {
+        const idValue = (parsed as any).id ?? (parsed as any).permit_id;
+        const asNumber = Number(idValue);
+        return Number.isFinite(asNumber) ? asNumber : null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })(),
 });
 
 const fetchNotifications = async () => {
@@ -140,6 +160,16 @@ const markAsRead = async (note: NotificationRow) => {
     note.isUnread = false;
   } catch (error) {
     console.error(error);
+  }
+};
+
+const handleNotificationClick = async (note: NotificationRow) => {
+  await markAsRead(note);
+  if (note.type === "PERMIT" && note.permitId) {
+    router.push({
+      path: "/public/permit",
+      query: { permitId: String(note.permitId) },
+    });
   }
 };
 

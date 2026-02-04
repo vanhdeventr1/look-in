@@ -9,14 +9,14 @@
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
-            <p class="text-3xl font-bold text-[#8C352D]">24</p>
-            <p class="text-[#8C352D] font-medium">Absen Hari Ini</p>
+            <p class="text-3xl font-bold text-[#8C352D]">{{ pendingCount }}</p>
+            <p class="text-[#8C352D] font-medium">Menunggu Perizinan</p>
           </div>
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
-            <p class="text-3xl font-bold text-[#8C352D]">12</p>
-            <p class="text-[#8C352D] font-medium">Terlambat</p>
+            <p class="text-3xl font-bold text-[#8C352D]">{{ approvedCount }}</p>
+            <p class="text-[#8C352D] font-medium">Diterima</p>
           </div>
         </div>
       </div>
@@ -38,7 +38,6 @@
               {{ formMode === "add" ? "Tambah Perizinan" : "Edit Perizinan" }}
             </span>
           </div>
-
           <div class="p-8 md:p-12 space-y-8">
             <div class="space-y-2">
               <label class="text-[#8C352D] font-bold ml-1">
@@ -60,7 +59,6 @@
                 />
               </div>
             </div>
-
             <div class="space-y-2">
               <label class="text-[#8C352D] font-bold ml-1">
                 Tambahkan Deskripsi
@@ -72,7 +70,6 @@
                 placeholder="Tulis deskripsi di sini..."
               ></textarea>
             </div>
-
             <div class="space-y-2">
               <div class="flex items-center justify-between ml-1">
                 <label class="text-[#8C352D] font-bold">
@@ -125,14 +122,13 @@
                 </div>
               </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div class="space-y-2">
                 <label class="text-[#8C352D] font-bold ml-1">
                   Tambah Bukti Foto Perizinan
                 </label>
                 <div
-                  @click="$refs.fileInput.click()"
+                  @click="fileInput?.click()"
                   class="border-2 border-dashed border-[#E8D5D2] bg-[#FFF0EE]/50 rounded-3xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-[#FFF0EE] transition-colors"
                 >
                   <UploadIcon class="text-[#8C352D]" :size="48" />
@@ -149,7 +145,6 @@
                   />
                 </div>
               </div>
-
               <div class="space-y-2">
                 <label class="text-[#8C352D] font-bold ml-1">
                   Uploaded File ({{ uploadedFiles.length }})
@@ -187,7 +182,6 @@
                 </div>
               </div>
             </div>
-
             <div class="flex justify-end pt-4">
               <button
                 @click="submitForm"
@@ -213,18 +207,50 @@
             <PlusIcon :size="20" />
             Tambah Data
           </button>
+
           <div class="flex items-center gap-3">
-            <div
-              class="flex items-center gap-2 px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white font-bold text-sm cursor-pointer"
-            >
-              <CalendarIcon :size="18" />
-              <span>Oktober</span>
+            <div class="relative group">
+              <CalendarIcon
+                :size="18"
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-[#8C352D] pointer-events-none z-10"
+              />
+              <select
+                v-model="selectedMonth"
+                class="pl-10 pr-8 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
+              >
+                <option :value="null">Semua Bulan</option>
+                <option
+                  v-for="(month, index) in months"
+                  :key="index"
+                  :value="index"
+                >
+                  {{ month }}
+                </option>
+              </select>
             </div>
+
+            <div class="relative group">
+              <select
+                v-model="selectedYear"
+                class="px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
+              >
+                <option :value="null">Semua Tahun</option>
+                <option v-for="year in years" :key="year" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+
             <div
-              class="flex items-center gap-2 px-4 py-2 text-[#8C352D] font-bold text-sm cursor-pointer"
+              @click="toggleSort"
+              class="flex items-center gap-2 px-4 py-2 text-[#8C352D] font-bold text-sm cursor-pointer hover:opacity-70"
             >
-              <FilterIcon :size="18" />
-              <span>Terbaru</span>
+              <FilterIcon
+                :size="18"
+                :class="{ 'rotate-180': !isNewest }"
+                class="transition-transform"
+              />
+              <span>{{ isNewest ? "Terbaru" : "Terlama" }}</span>
             </div>
           </div>
         </div>
@@ -249,7 +275,7 @@
               </thead>
               <tbody class="divide-y divide-[#E8D5D2]">
                 <tr
-                  v-for="(permit, index) in permits"
+                  v-for="(permit, index) in filteredPermits"
                   :key="permit.id"
                   class="hover:bg-[#FFF0EE]/30 transition-colors"
                 >
@@ -283,19 +309,31 @@
                       >
                         <EyeIcon :size="18" />
                       </button>
+
                       <button
+                        v-if="permit.status === 'Menunggu Persetujuan'"
                         @click="openEditForm(permit)"
                         class="text-[#8C352D] hover:scale-110 cursor-pointer"
                       >
                         <EditIcon :size="18" />
                       </button>
+
                       <button
+                        v-if="permit.status === 'Menunggu Persetujuan'"
                         @click="confirmDelete(permit.id)"
                         class="text-[#8C352D] hover:scale-110 cursor-pointer"
                       >
                         <TrashIcon :size="18" />
                       </button>
                     </div>
+                  </td>
+                </tr>
+                <tr v-if="filteredPermits.length === 0">
+                  <td
+                    colspan="7"
+                    class="px-6 py-10 text-center text-[#8C352D]/50 italic text-sm"
+                  >
+                    Tidak ada data ditemukan untuk periode ini.
                   </td>
                 </tr>
               </tbody>
@@ -364,7 +402,6 @@
               }}
             </div>
           </div>
-
           <div>
             <label
               class="text-xs font-bold text-[#8C352D] mb-2 block uppercase"
@@ -372,10 +409,7 @@
               Bukti Foto ({{ selectedPermit?.evidenceImgs?.length || 0 }})
             </label>
             <div
-              v-if="
-                selectedPermit?.evidenceImgs &&
-                selectedPermit.evidenceImgs.length > 0
-              "
+              v-if="selectedPermit?.evidenceImgs?.length > 0"
               class="flex gap-4 overflow-x-auto pb-4 snap-x"
             >
               <div
@@ -407,7 +441,6 @@
               <span class="text-xs italic">Tidak ada foto terlampir</span>
             </div>
           </div>
-
           <div class="flex justify-end">
             <button
               @click="isViewModalOpen = false"
@@ -419,7 +452,6 @@
         </div>
       </div>
     </div>
-
     <div
       v-if="fullScreenImg"
       class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in"
@@ -436,7 +468,6 @@
         @click.stop
       />
     </div>
-
     <AlertLayout v-if="isDeleteAlertOpen">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
@@ -461,7 +492,6 @@
         </button>
       </template>
     </AlertLayout>
-
     <AlertLayout v-if="isValidationAlertOpen">
       <template #icon>
         <InfoIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
@@ -480,7 +510,6 @@
         </button>
       </template>
     </AlertLayout>
-
     <AlertLayout v-if="isSuccessAlertOpen">
       <template #icon>
         <div
@@ -503,6 +532,12 @@
 </template>
 
 <script setup lang="ts">
+import {
+  createPermit,
+  deletePermit,
+  getPermits,
+  updatePermit,
+} from "@/api/permit.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebarpublic.vue";
 import {
@@ -512,7 +547,7 @@ import {
   ChevronDown as ChevronDownIcon,
   Pencil as EditIcon,
   Eye as EyeIcon,
-  ListFilter as FilterIcon,
+  Settings2 as FilterIcon,
   Image as ImageIcon,
   Info as InfoIcon,
   Plus as PlusIcon,
@@ -520,38 +555,53 @@ import {
   Upload as UploadIcon,
   X as XIcon,
 } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
-// State
 const viewState = ref<"list" | "form">("list");
 const formMode = ref<"add" | "edit">("add");
 const isDeleteAlertOpen = ref(false);
 const isValidationAlertOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
 const isViewModalOpen = ref(false);
-const fullScreenImg = ref<string | null>(null); // State for Full Screen
+const fullScreenImg = ref<string | null>(null);
 const successAlertTitle = ref("");
 const selectedId = ref<number | null>(null);
 const selectedPermit = ref<any>(null);
+const isNewest = ref(true);
+
+const selectedMonth = ref<number | null>(null);
+const selectedYear = ref<number | null>(new Date().getFullYear());
+
+const months = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+const years = computed(() => {
+  const currentYear = new Date().getFullYear();
+  const yearList = [];
+  for (let i = 0; i <= 5; i++) {
+    yearList.push(currentYear + i);
+  }
+  return yearList;
+});
 
 const fileInput = ref<HTMLInputElement | null>(null);
-const uploadedFiles = ref<{ name: string; url: string }[]>([]);
-
-const todayDate = new Date().toISOString().split("T")[0];
-
-const permits = ref([
-  {
-    id: 1,
-    name: "Ryan Ross",
-    reason: "Sakit",
-    description: "Izin karena demam tinggi.",
-    date: "07/10/2025 - 08/10/2025",
-    totalDays: 2,
-    status: "Menunggu Persetujuan",
-    evidenceImgs: [],
-  },
-]);
-
+const uploadedFiles = ref<{ name: string; url: string; file?: File }[]>([]);
+const todayDate = new Date().toISOString().slice(0, 10);
+const permits = ref<any[]>([]);
+const route = useRoute();
 const newPermit = ref({
   reason: "",
   description: "",
@@ -568,6 +618,36 @@ const computedTotalDays = computed(() => {
   return diffDays > 0 ? diffDays : 0;
 });
 
+const filteredPermits = computed(() => {
+  let list = [...permits.value];
+
+  list = list.filter((p) => {
+    const permitDate = new Date(p.createdAt);
+    const matchMonth =
+      selectedMonth.value === null ||
+      permitDate.getMonth() === selectedMonth.value;
+    const matchYear =
+      selectedYear.value === null ||
+      permitDate.getFullYear() === selectedYear.value;
+    return matchMonth && matchYear;
+  });
+
+  list.sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return isNewest.value ? dateB - dateA : dateA - dateB;
+  });
+
+  return list;
+});
+
+const pendingCount = computed(
+  () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
+);
+const approvedCount = computed(
+  () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
+);
+
 const formatDateForDisplay = (dateStr: string) => {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.split("-");
@@ -579,7 +659,58 @@ const parseDateForInput = (dateStr: string) => {
   return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : "";
 };
 
-// File & Image Logic
+const statusLabelMap: Record<number, string> = {
+  0: "Menunggu Persetujuan",
+  1: "Sudah Persetujuan",
+  2: "Ditolak",
+};
+const typeNameMap: Record<string, string> = {
+  Sick: "Sakit",
+  Permit: "Izin",
+  Leave: "Cuti",
+};
+const typeValueMap: Record<string, number> = { Sakit: 0, Izin: 1, Cuti: 2 };
+
+const mapPermit = (permit: any) => ({
+  id: permit.id,
+  name: permit.created_by_user?.name ?? "-",
+  reason: typeNameMap[permit.type_name] ?? "Lainnya",
+  description: permit.description ?? "",
+  date: `${formatDate(permit.date_start)} - ${formatDate(permit.date_end)}`,
+  totalDays: calculateTotalDays(permit.date_start, permit.date_end),
+  status: statusLabelMap[permit.status] ?? "Unknown",
+  evidenceImgs: permit.permit_images ?? [],
+  createdAt: permit.created_at,
+  raw: permit,
+});
+
+const parsePermitId = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return parsePermitId(value[0]);
+  }
+  const asNumber = Number(value);
+  return Number.isFinite(asNumber) ? asNumber : null;
+};
+
+const formatDate = (value?: string | Date) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("id-ID");
+};
+
+const calculateTotalDays = (start?: string | Date, end?: string | Date) => {
+  if (!start || !end) return 0;
+  const s = new Date(start);
+  const e = new Date(end);
+  return (
+    Math.ceil(Math.abs(e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  );
+};
+
+const toggleSort = () => {
+  isNewest.value = !isNewest.value;
+};
+
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files) {
@@ -589,6 +720,7 @@ const handleFileUpload = (event: Event) => {
         uploadedFiles.value.push({
           name: file.name,
           url: reader.result as string,
+          file,
         });
       };
       reader.readAsDataURL(file);
@@ -600,18 +732,15 @@ const handleFileUpload = (event: Event) => {
 const removeFile = (index: number) => {
   uploadedFiles.value.splice(index, 1);
 };
-
 const openFullScreen = (url: string) => {
   fullScreenImg.value = url;
 };
-
-// Form Logic
 const openViewDetail = (permit: any) => {
   selectedPermit.value = permit;
   isViewModalOpen.value = true;
 };
 
-const openAddForm = () => {
+const openAddForm = (): void => {
   formMode.value = "add";
   newPermit.value = {
     reason: "",
@@ -633,7 +762,12 @@ const openEditForm = (permit: any) => {
     startDate: parseDateForInput(dates[0]),
     endDate: parseDateForInput(dates[1] || dates[0]),
   };
-  uploadedFiles.value = permit.evidenceImgs ? [...permit.evidenceImgs] : [];
+  uploadedFiles.value = permit.evidenceImgs
+    ? permit.evidenceImgs.map((img: any) => ({
+        name: img.file_path?.split("/").pop() ?? "Bukti Foto",
+        url: img.url,
+      }))
+    : [];
   viewState.value = "form";
 };
 
@@ -641,49 +775,48 @@ const cancelForm = () => {
   viewState.value = "list";
 };
 
-const submitForm = () => {
+const submitForm = async () => {
   if (!newPermit.value.reason || !newPermit.value.startDate) {
     isValidationAlertOpen.value = true;
     return;
   }
+  try {
+    const typeValue = typeValueMap[newPermit.value.reason] ?? 0;
+    const dateStart = newPermit.value.startDate;
+    const dateEnd = newPermit.value.endDate || newPermit.value.startDate;
 
-  const dateRange = `${formatDateForDisplay(newPermit.value.startDate)} - ${formatDateForDisplay(newPermit.value.endDate || newPermit.value.startDate)}`;
-  const evidenceList = [...uploadedFiles.value];
-
-  if (formMode.value === "add") {
-    permits.value.unshift({
-      id: Date.now(),
-      name: "User Default",
-      reason: newPermit.value.reason,
-      description: newPermit.value.description,
-      date: dateRange,
-      totalDays: computedTotalDays.value || 1,
-      status: "Menunggu Persetujuan",
-      evidenceImgs: evidenceList,
-    });
-    successAlertTitle.value = "Data Perizinan\nBerhasil Ditambahkan!";
-  } else {
-    const index = permits.value.findIndex((p) => p.id === selectedId.value);
-    if (index !== -1) {
-      permits.value[index] = {
-        ...permits.value[index],
-        reason: newPermit.value.reason,
+    if (formMode.value === "add") {
+      const files = uploadedFiles.value
+        .map((item) => item.file)
+        .filter((file): file is File => Boolean(file));
+      await createPermit({
         description: newPermit.value.description,
-        date: dateRange,
-        totalDays: computedTotalDays.value || 1,
-        evidenceImgs: evidenceList,
-      };
+        type: typeValue,
+        date_start: dateStart,
+        date_end: dateEnd,
+        files,
+      });
+      successAlertTitle.value = "Data Perizinan\nBerhasil Ditambahkan!";
+    } else if (selectedId.value !== null) {
+      await updatePermit(selectedId.value, {
+        description: newPermit.value.description,
+        type: typeValue,
+        date_start: dateStart,
+        date_end: dateEnd,
+      });
+      successAlertTitle.value = "Data Perizinan\nBerhasil Diperbarui!";
     }
-    successAlertTitle.value = "Data Perizinan\nBerhasil Diperbarui!";
+    await fetchPermits();
+    isSuccessAlertOpen.value = true;
+  } catch (error) {
+    console.error(error);
   }
-  isSuccessAlertOpen.value = true;
 };
 
 const closeSuccessAlert = () => {
   isSuccessAlertOpen.value = false;
   viewState.value = "list";
 };
-
 const confirmDelete = (id: number) => {
   selectedId.value = id;
   isDeleteAlertOpen.value = true;
@@ -691,12 +824,48 @@ const confirmDelete = (id: number) => {
 
 const handleDeletePermit = () => {
   if (selectedId.value !== null) {
-    permits.value = permits.value.filter((p) => p.id !== selectedId.value);
-    isDeleteAlertOpen.value = false;
-    successAlertTitle.value = "Data Berhasil\nDihapus!";
-    isSuccessAlertOpen.value = true;
+    deletePermit(selectedId.value)
+      .then(fetchPermits)
+      .then(() => {
+        isDeleteAlertOpen.value = false;
+        successAlertTitle.value = "Data Berhasil\nDihapus!";
+        isSuccessAlertOpen.value = true;
+      })
+      .catch((error) => console.error(error));
   }
 };
+
+const fetchPermits = async () => {
+  try {
+    const response = await getPermits();
+    const data = response?.data?.data?.permits ?? [];
+    permits.value = data.map(mapPermit);
+
+    const queryPermitId = parsePermitId(route.query.permitId);
+    if (queryPermitId) {
+      const match = permits.value.find((permit) => permit.id === queryPermitId);
+      if (match) {
+        openViewDetail(match);
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+onMounted(fetchPermits);
+
+watch(
+  () => route.query.permitId,
+  (value) => {
+    const queryPermitId = parsePermitId(value);
+    if (!queryPermitId) return;
+    const match = permits.value.find((permit) => permit.id === queryPermitId);
+    if (match) {
+      openViewDetail(match);
+    }
+  },
+);
 </script>
 
 <style scoped>
@@ -725,8 +894,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transform: translateY(0);
   }
 }
-
-/* Custom Scrollbar */
 .overflow-x-auto::-webkit-scrollbar {
   height: 6px;
 }
