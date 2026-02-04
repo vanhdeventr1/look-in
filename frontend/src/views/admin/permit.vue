@@ -2,20 +2,76 @@
   <SidebarLayout>
     <div class="space-y-6 animate-in">
       <div
+        v-if="viewState === 'list'"
+        class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm animate-in"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
+          >
+            <p class="text-3xl font-bold text-[#8C352D]">
+              {{ pendingCount }}
+            </p>
+            <p class="text-[#8C352D] font-medium">Menunggu Perizinan</p>
+          </div>
+
+          <div
+            class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
+          >
+            <p class="text-3xl font-bold text-[#8C352D]">
+              {{ approvedCount }}
+            </p>
+            <p class="text-[#8C352D] font-medium">Diterima</p>
+          </div>
+        </div>
+      </div>
+
+      <div
         class="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
         <div class="flex items-center gap-3">
-          <div
-            class="flex items-center gap-2 px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm"
-          >
-            <CalendarIcon :size="18" />
-            <span>Oktober</span>
+          <div class="relative">
+            <CalendarIcon
+              :size="18"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-[#8C352D] pointer-events-none z-10"
+            />
+            <select
+              v-model="selectedMonth"
+              class="pl-10 pr-8 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
+            >
+              <option :value="null">Semua Bulan</option>
+              <option
+                v-for="(month, index) in months"
+                :key="index"
+                :value="index"
+              >
+                {{ month }}
+              </option>
+            </select>
           </div>
+
+          <div class="relative">
+            <select
+              v-model="selectedYear"
+              class="px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
+            >
+              <option :value="null">Semua Tahun</option>
+              <option v-for="year in years" :key="year" :value="year">
+                {{ year }}
+              </option>
+            </select>
+          </div>
+
           <div
-            class="flex items-center gap-2 px-4 py-2 text-[#8C352D] cursor-pointer hover:opacity-70 transition-opacity font-bold text-sm"
+            @click="toggleSort"
+            class="flex items-center gap-2 px-4 py-2 border border-transparent rounded-xl text-[#8C352D] cursor-pointer hover:bg-[#8C352D]/5 transition-all font-bold text-sm"
           >
-            <FilterIcon :size="18" />
-            <span>Terbaru</span>
+            <FilterIcon
+              :size="18"
+              :class="{ 'rotate-180': sortOrder === 'oldest' }"
+              class="transition-transform"
+            />
+            <span>{{ sortOrder === "newest" ? "Terbaru" : "Terlama" }}</span>
           </div>
         </div>
 
@@ -44,7 +100,6 @@
                 <th class="px-6 py-4 font-bold text-sm text-center">No</th>
                 <th class="px-6 py-4 font-bold text-sm">Nama Lengkap</th>
                 <th class="px-6 py-4 font-bold text-sm">Alasan</th>
-                <th class="px-6 py-4 font-bold text-sm">Tanggal Izin</th>
                 <th class="px-6 py-4 font-bold text-sm text-center">
                   Jumlah Hari
                 </th>
@@ -72,9 +127,6 @@
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80">
                   {{ permit.reason }}
                 </td>
-                <td class="px-6 py-4 text-sm text-[#8C352D]/80">
-                  {{ permit.date }}
-                </td>
                 <td
                   class="px-6 py-4 text-sm text-[#8C352D] font-bold text-center"
                 >
@@ -86,7 +138,7 @@
                 <td class="px-6 py-4">
                   <div
                     class="flex items-center justify-center gap-2"
-                    v-if="permit.status === 'Menunggu Persetujuan'"
+                    v-if="permit.status_code === 0"
                   >
                     <button
                       @click="triggerApprove(permit)"
@@ -101,7 +153,10 @@
                       <XCircleIcon :size="20" />
                     </button>
                   </div>
-                  <div v-else class="text-center text-xs text-[#8C352D]">
+                  <div
+                    v-else
+                    class="text-center text-xs text-[#8C352D] italic opacity-60"
+                  >
                     Selesai
                   </div>
                 </td>
@@ -112,6 +167,14 @@
                   >
                     <EyeIcon :size="18" />
                   </button>
+                </td>
+              </tr>
+              <tr v-if="filteredPermits.length === 0">
+                <td
+                  colspan="7"
+                  class="px-6 py-10 text-center text-[#8C352D]/50 italic"
+                >
+                  Tidak ada data yang sesuai filter.
                 </td>
               </tr>
             </tbody>
@@ -125,119 +188,139 @@
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     >
       <div
-        class="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl animate-in"
+        class="bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in"
       >
         <div
-          class="h-12 bg-[#8C352D] w-full flex items-center justify-end px-4"
+          class="h-14 bg-[#8C352D] w-full flex items-center justify-between px-8"
         >
+          <span class="text-white font-bold text-sm">Detail Perizinan</span>
           <button
             @click="isViewModalOpen = false"
-            class="text-white hover:opacity-70 transition-opacity cursor-pointer"
+            class="text-white hover:opacity-70 cursor-pointer"
           >
-            <XIcon :size="24" />
+            <XIcon :size="20" />
           </button>
         </div>
-
-        <div class="p-8 space-y-6">
-          <div class="space-y-4">
-            <div>
-              <label class="text-sm font-bold text-[#8C352D] mb-1 block">
-                Nama Pengguna
+        <div class="p-10 space-y-6 max-h-[85vh] overflow-y-auto">
+          <div class="grid grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label
+                class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+              >
+                Nama Lengkap
               </label>
               <div
-                class="w-full p-3 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm"
+                class="p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium"
               >
                 {{ selectedPermit?.name }}
               </div>
             </div>
-
-            <div>
-              <label class="text-sm font-bold text-[#8C352D] mb-1 block">
-                Alasan Perizinan
+            <div class="space-y-2">
+              <label
+                class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+              >
+                Alasan ({{ selectedPermit?.totalDays }} Hari)
               </label>
               <div
-                class="w-full p-3 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm"
+                class="p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium"
               >
                 {{ selectedPermit?.reason }}
               </div>
             </div>
-
-            <div>
-              <label class="text-sm font-bold text-[#8C352D] mb-1 block">
-                Deskripsi
-              </label>
+          </div>
+          <div class="space-y-2">
+            <label
+              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+            >
+              Tanggal Perizinan
+            </label>
+            <div class="flex items-center gap-4">
               <div
-                class="w-full p-4 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm leading-relaxed min-h-[100px]"
+                class="flex-1 p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium text-center"
               >
-                {{
-                  selectedPermit?.description || "Tidak ada deskripsi tersedia."
-                }}
+                {{ selectedPermit?.startDate }}
               </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-              <div>
-                <label class="text-sm font-bold text-[#8C352D] mb-1 block">
-                  Tanggal Perizinan ({{ selectedPermit?.totalDays }} Hari)
-                </label>
-                <div class="flex items-center gap-3">
-                  <div
-                    class="flex-1 p-3 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm text-center"
-                  >
-                    {{ selectedPermit?.startDate || "-" }}
-                  </div>
-                  <span class="text-[#8C352D] font-bold text-sm">Sampai</span>
-                  <div
-                    class="flex-1 p-3 rounded-lg border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm text-center"
-                  >
-                    {{ selectedPermit?.endDate || "-" }}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label class="text-sm font-bold text-[#8C352D] mb-1 block">
-                  Bukti Perizinan
-                </label>
-                <div class="flex gap-4">
-                  <div
-                    class="w-40 h-24 rounded-lg border border-[#e6bdb7] overflow-hidden bg-gray-50 flex items-center justify-center"
-                  >
-                    <img
-                      v-if="selectedPermit?.evidenceImg"
-                      :src="selectedPermit.evidenceImg"
-                      class="w-full h-full object-cover"
-                    />
-                    <div v-else class="text-[#8C352D]/30 text-xs">No Image</div>
-                  </div>
-                  <div class="flex flex-col justify-center">
-                    <span class="text-[#8C352D] font-bold text-sm">
-                      Status :
-                    </span>
-                    <span class="text-[#8C352D] text-sm">
-                      {{ selectedPermit?.status }}
-                    </span>
-                  </div>
-                </div>
+              <span class="text-[#8C352D] font-bold text-[10px] uppercase">
+                Sampai
+              </span>
+              <div
+                class="flex-1 p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium text-center"
+              >
+                {{ selectedPermit?.endDate }}
               </div>
             </div>
           </div>
-
+          <div class="space-y-2">
+            <label
+              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+            >
+              Deskripsi
+            </label>
+            <div
+              class="p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm leading-relaxed min-h-[100px]"
+            >
+              {{ selectedPermit?.description || "-" }}
+            </div>
+          </div>
+          <div class="space-y-3">
+            <label
+              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+            >
+              Bukti Foto ({{ selectedPermit?.evidenceImgs?.length || 0 }})
+            </label>
+            <div
+              v-if="(selectedPermit?.evidenceImgs?.length ?? 0) > 0"
+              class="grid grid-cols-2 gap-4"
+            >
+              <div
+                v-for="(img, idx) in selectedPermit?.evidenceImgs || []"
+                :key="idx"
+                @click="openFullScreen(img.url)"
+                class="group relative aspect-[16/9] rounded-3xl border border-[#e6bdb7] overflow-hidden bg-gray-50 cursor-pointer"
+              >
+                <img :src="img.url" class="w-full h-full object-cover" />
+                <div
+                  class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  <span
+                    class="bg-[#8C352D] text-white text-[10px] font-bold px-4 py-2 rounded-full shadow-lg"
+                  >
+                    Lihat Full Screen
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div
+              v-else
+              class="w-full py-10 rounded-3xl border border-dashed border-[#e6bdb7] bg-[#FFF0EE]/30 flex flex-col items-center justify-center text-[#8C352D]/30"
+            >
+              <ImageIcon :size="32" />
+              <span class="text-xs italic mt-2">Tidak ada bukti foto</span>
+            </div>
+          </div>
           <div
-            v-if="selectedPermit?.status === 'Menunggu Persetujuan'"
-            class="flex justify-end gap-3 pt-4"
+            v-if="selectedPermit?.status_code === 0"
+            class="flex justify-end gap-3 pt-6"
           >
             <button
-              @click="triggerApprove(selectedPermit)"
-              class="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors cursor-pointer"
+              @click="triggerReject(selectedPermit)"
+              class="px-8 py-3.5 bg-white text-[#8C352D] border border-[#8C352D] rounded-2xl font-bold hover:bg-[#FFF0EE] transition-all cursor-pointer"
             >
-              <CheckIcon :size="24" />
+              Tolak
             </button>
             <button
-              @click="triggerReject(selectedPermit)"
-              class="p-3 bg-[#8C352D] text-white rounded-xl hover:bg-[#a24a42] transition-colors cursor-pointer"
+              @click="triggerApprove(selectedPermit)"
+              class="px-8 py-3.5 bg-[#8C352D] text-white rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md cursor-pointer"
             >
-              <XIcon :size="24" />
+              Setujui Izin
+            </button>
+          </div>
+          <div v-else class="flex justify-end pt-6">
+            <button
+              @click="isViewModalOpen = false"
+              class="bg-[#8C352D] text-white px-12 py-3.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              Tutup
             </button>
           </div>
         </div>
@@ -253,51 +336,47 @@
         </div>
       </template>
       <template #title>
-        Setujui Permohonan
+        Setujui Permohonan Izin
         <br />
-        Izin Ini?
+        {{ selectedPermit?.name }}?
       </template>
       <template #actions>
         <button
           @click="confirmAction('Approved')"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42]"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold"
         >
-          Ya, Setujui
+          Ya, Setujui!
         </button>
         <button
           @click="isConfirmApproveOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold"
         >
-          Batal
+          Batalkan
         </button>
       </template>
     </AlertLayout>
 
     <AlertLayout v-if="isConfirmRejectOpen">
       <template #icon>
-        <div
-          class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
-        >
-          <XIcon :size="40" class="text-[#8C352D] stroke-[4]" />
-        </div>
+        <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
       <template #title>
-        Tolak Permohonan
+        Tolak Permohonan Izin
         <br />
-        Izin Ini?
+        {{ selectedPermit?.name }}?
       </template>
       <template #actions>
         <button
           @click="confirmAction('Rejected')"
           class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold"
         >
-          Ya, Tolak
+          Ya, Tolak!
         </button>
         <button
           @click="isConfirmRejectOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold"
         >
-          Batal
+          Batalkan
         </button>
       </template>
     </AlertLayout>
@@ -314,12 +393,29 @@
       <template #actions>
         <button
           @click="isSuccessAlertOpen = false"
-          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold hover:bg-[#a24a42]"
+          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold"
         >
           OK
         </button>
       </template>
     </AlertLayout>
+
+    <Transition name="fade">
+      <div
+        v-if="fullScreenImg"
+        class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+        @click="fullScreenImg = null"
+      >
+        <button class="absolute top-6 right-6 text-white/70 hover:text-white">
+          <XIcon :size="40" />
+        </button>
+        <img
+          :src="fullScreenImg"
+          class="max-w-full max-h-full object-contain animate-zoom"
+          @click.stop
+        />
+      </div>
+    </Transition>
   </SidebarLayout>
 </template>
 
@@ -328,32 +424,21 @@ import { getPermits, updatePermit } from "@/api/permit.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebar.vue";
 import {
+  AlertTriangle as AlertTriangleIcon,
   Calendar as CalendarIcon,
   CheckCircle2 as CheckCircleIcon,
   Check as CheckIcon,
   Eye as EyeIcon,
   Settings2 as FilterIcon,
+  Image as ImageIcon,
   Search as SearchIcon,
   XCircle as XCircleIcon,
   X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 
+// Types
 type PermitImage = { url: string };
-
-type PermitApi = {
-  id: number;
-  description?: string | null;
-  status: number;
-  status_name?: string;
-  reason: number;
-  type_name?: string;
-  date_start?: string | Date;
-  date_end?: string | Date;
-  permit_images?: PermitImage[];
-  created_by_user?: { id: number; name: string };
-};
-
 type PermitRow = {
   id: number;
   name: string;
@@ -365,100 +450,109 @@ type PermitRow = {
   description?: string | null;
   status: string;
   status_code: number;
-  evidenceImg?: string | null;
+  evidenceImgs: PermitImage[];
+  createdAt: Date;
+  raw: any;
 };
 
+// State
+const viewState = ref<"list" | "form">("list");
 const isViewModalOpen = ref(false);
 const isConfirmApproveOpen = ref(false);
 const isConfirmRejectOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
-
+const fullScreenImg = ref<string | null>(null);
 const searchQuery = ref("");
 const selectedPermit = ref<PermitRow | null>(null);
-const successAlertTitle = ref("");
-const statusType = ref<"check" | "x">("check");
-
 const permits = ref<PermitRow[]>([]);
+const successAlertTitle = ref("");
+
+const selectedMonth = ref<number | null>(null);
+const selectedYear = ref<number | null>(new Date().getFullYear());
+const sortOrder = ref<"newest" | "oldest">("newest");
+
+const months = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+const years = computed(() => {
+  const currentYear = new Date().getFullYear();
+  const yearList = [];
+  for (let i = 0; i <= 5; i++) {
+    yearList.push(currentYear + i);
+  }
+  return yearList;
+});
 
 const statusLabelMap: Record<number, string> = {
   0: "Menunggu Persetujuan",
   1: "Sudah Persetujuan",
   2: "Ditolak",
-  3: "Duplikat",
 };
-
-const typeLabelMap: Record<number, string> = {
-  0: "Sakit",
-  1: "Izin",
-  2: "Cuti",
-};
-
 const typeNameMap: Record<string, string> = {
   Sick: "Sakit",
   Permit: "Izin",
   Leave: "Cuti",
 };
 
+// Utils
 const formatDate = (value?: string | Date) => {
   if (!value) return "-";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("id-ID");
+  return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("id-ID");
 };
 
-// Frontend helper to calculate days until backend provides it
 const calculateTotalDays = (start?: string | Date, end?: string | Date) => {
   if (!start || !end) return 0;
   const s = new Date(start);
   const e = new Date(end);
-  const diffTime = Math.abs(e.getTime() - s.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  return diffDays;
-};
-
-const getTypeLabel = (permit: PermitApi) => {
-  if (permit.type_name && typeNameMap[permit.type_name]) {
-    return typeNameMap[permit.type_name];
-  }
-  return typeLabelMap[permit.reason] ?? "Lainnya";
-};
-
-const mapPermit = (permit: PermitApi): PermitRow => {
-  const startDate = formatDate(permit.date_start);
-  const endDate = formatDate(permit.date_end);
-  return {
-    id: permit.id,
-    name: permit.created_by_user?.name ?? "-",
-    reason: getTypeLabel(permit),
-    date: `${startDate} - ${endDate}`,
-    startDate,
-    endDate,
-    totalDays: calculateTotalDays(permit.date_start, permit.date_end),
-    description: permit.description ?? null,
-    status: statusLabelMap[permit.status] ?? permit.status_name ?? "Unknown",
-    status_code: permit.status,
-    evidenceImg: permit.permit_images?.[0]?.url ?? null,
-  };
-};
-
-const filteredPermits = computed(() => {
-  if (!searchQuery.value.trim()) return permits.value;
-  const query = searchQuery.value.toLowerCase();
-  return permits.value.filter((permit) =>
-    permit.name.toLowerCase().includes(query),
+  return (
+    Math.ceil(Math.abs(e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1
   );
+};
+
+const mapPermit = (permit: any) => ({
+  id: permit.id,
+  name: permit.created_by_user?.name ?? "-",
+  reason: typeNameMap[permit.type_name] ?? "Lainnya",
+  date: `${formatDate(permit.date_start)} - ${formatDate(permit.date_end)}`,
+  startDate: formatDate(permit.date_start),
+  endDate: formatDate(permit.date_end),
+  totalDays: calculateTotalDays(permit.date_start, permit.date_end),
+  description: permit.description ?? null,
+  status: statusLabelMap[permit.status] ?? "Unknown",
+  status_code: permit.status,
+  evidenceImgs: permit.permit_images ?? [],
+  createdAt: new Date(permit.created_at || permit.date_start),
+  raw: permit,
 });
 
+// Actions
+const toggleSort = () => {
+  sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
+};
 const openViewDetail = (permit: any) => {
   selectedPermit.value = permit;
   isViewModalOpen.value = true;
 };
-
+const openFullScreen = (url: string) => {
+  fullScreenImg.value = url;
+};
 const triggerApprove = (permit: any) => {
   selectedPermit.value = permit;
   isConfirmApproveOpen.value = true;
 };
-
 const triggerReject = (permit: any) => {
   selectedPermit.value = permit;
   isConfirmRejectOpen.value = true;
@@ -471,23 +565,15 @@ const fetchPermits = async () => {
     permits.value = data.map(mapPermit);
   } catch (error) {
     console.error(error);
-    permits.value = [];
   }
 };
 
 const confirmAction = async (type: "Approved" | "Rejected") => {
-  const selected = selectedPermit.value;
-  if (!selected) return;
+  if (!selectedPermit.value) return;
   const nextStatus = type === "Approved" ? 1 : 2;
   try {
-    await updatePermit(selected.id, { status: nextStatus });
-    const index = permits.value.findIndex((p) => p.id === selected.id);
-    if (index !== -1) {
-      permits.value[index].status =
-        statusLabelMap[nextStatus] ?? selected.status;
-      permits.value[index].status_code = nextStatus;
-    }
-    statusType.value = type === "Approved" ? "check" : "x";
+    await updatePermit(selectedPermit.value.id, { status: nextStatus });
+    await fetchPermits();
     successAlertTitle.value =
       type === "Approved"
         ? "Izin Berhasil Disetujui!"
@@ -502,16 +588,50 @@ const confirmAction = async (type: "Approved" | "Rejected") => {
   }
 };
 
-onMounted(() => {
-  fetchPermits();
+const filteredPermits = computed(() => {
+  let list = [...permits.value];
+
+  // Search filter
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    list = list.filter((p) => p.name.toLowerCase().includes(query));
+  }
+
+  // Date filters (Month & Year)
+  list = list.filter((p) => {
+    const date = new Date(p.createdAt);
+    const matchMonth =
+      selectedMonth.value === null || date.getMonth() === selectedMonth.value;
+    const matchYear =
+      selectedYear.value === null || date.getFullYear() === selectedYear.value;
+    return matchMonth && matchYear;
+  });
+
+  // Sort
+  list.sort((a, b) => {
+    const timeA = a.createdAt.getTime();
+    const timeB = b.createdAt.getTime();
+    return sortOrder.value === "newest" ? timeB - timeA : timeA - timeB;
+  });
+
+  return list;
 });
+
+const pendingCount = computed(
+  () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
+);
+const approvedCount = computed(
+  () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
+);
+
+onMounted(fetchPermits);
 </script>
 
 <style scoped>
 .animate-in {
-  animation: modalIn 0.2s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
-@keyframes modalIn {
+@keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -519,6 +639,27 @@ onMounted(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.animate-zoom {
+  animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 </style>

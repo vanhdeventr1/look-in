@@ -6,7 +6,7 @@
       >
         <button
           @click="isModalOpen = true"
-          class="flex items-center justify-center gap-2 bg-[#8C352D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#a24a42] transition-colors shadow-lg shadow-[#8C352D]/20 w-fit cursor-pointer"
+          class="flex items-center justify-center gap-2 bg-[#8C352D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#a24a42] transition-colors w-fit cursor-pointer"
         >
           <PlusIcon :size="20" />
           Tambah Data
