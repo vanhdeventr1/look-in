@@ -437,7 +437,6 @@ import {
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 
-// Types
 type PermitImage = { url: string };
 type PermitRow = {
   id: number;
@@ -455,7 +454,6 @@ type PermitRow = {
   raw: any;
 };
 
-// State
 const viewState = ref<"list" | "form">("list");
 const isViewModalOpen = ref(false);
 const isConfirmApproveOpen = ref(false);
@@ -497,7 +495,7 @@ const years = computed(() => {
 
 const statusLabelMap: Record<number, string> = {
   0: "Menunggu Persetujuan",
-  1: "Sudah Persetujuan",
+  1: "Diterima",
   2: "Ditolak",
 };
 const typeNameMap: Record<string, string> = {
@@ -506,7 +504,6 @@ const typeNameMap: Record<string, string> = {
   Leave: "Cuti",
 };
 
-// Utils
 const formatDate = (value?: string | Date) => {
   if (!value) return "-";
   const date = new Date(value);
@@ -538,7 +535,6 @@ const mapPermit = (permit: any) => ({
   raw: permit,
 });
 
-// Actions
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
 };
@@ -591,13 +587,11 @@ const confirmAction = async (type: "Approved" | "Rejected") => {
 const filteredPermits = computed(() => {
   let list = [...permits.value];
 
-  // Search filter
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
     list = list.filter((p) => p.name.toLowerCase().includes(query));
   }
 
-  // Date filters (Month & Year)
   list = list.filter((p) => {
     const date = new Date(p.createdAt);
     const matchMonth =
@@ -607,7 +601,6 @@ const filteredPermits = computed(() => {
     return matchMonth && matchYear;
   });
 
-  // Sort
   list.sort((a, b) => {
     const timeA = a.createdAt.getTime();
     const timeB = b.createdAt.getTime();

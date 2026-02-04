@@ -229,18 +229,6 @@
               </select>
             </div>
 
-            <div class="relative group">
-              <select
-                v-model="selectedYear"
-                class="px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
-              >
-                <option :value="null">Semua Tahun</option>
-                <option v-for="year in years" :key="year" :value="year">
-                  {{ year }}
-                </option>
-              </select>
-            </div>
-
             <div
               @click="toggleSort"
               class="flex items-center gap-2 px-4 py-2 text-[#8C352D] font-bold text-sm cursor-pointer hover:opacity-70"
@@ -250,6 +238,7 @@
                 :class="{ 'rotate-180': !isNewest }"
                 class="transition-transform"
               />
+
               <span>{{ isNewest ? "Terbaru" : "Terlama" }}</span>
             </div>
           </div>
@@ -333,7 +322,7 @@
                     colspan="7"
                     class="px-6 py-10 text-center text-[#8C352D]/50 italic text-sm"
                   >
-                    Tidak ada data ditemukan untuk periode ini.
+                    Tidak ada data ditemukan untuk bulan ini.
                   </td>
                 </tr>
               </tbody>
@@ -348,103 +337,132 @@
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     >
       <div
-        class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-in"
+        class="bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in"
       >
         <div
-          class="h-12 bg-[#8C352D] w-full flex items-center justify-between px-6"
+          class="h-14 bg-[#8C352D] w-full flex items-center justify-between px-8"
         >
           <span class="text-white font-bold text-sm">Detail Perizinan</span>
           <button
             @click="isViewModalOpen = false"
-            class="text-white hover:opacity-70 cursor-pointer"
+            class="text-white hover:opacity-70 cursor-pointer transition-opacity"
           >
             <XIcon :size="20" />
           </button>
         </div>
-        <div class="p-8 space-y-6 max-h-[85vh] overflow-y-auto">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+
+        <div
+          class="p-10 space-y-6 max-h-[85vh] overflow-y-auto custom-scrollbar"
+        >
+          <div class="grid grid-cols-2 gap-6">
+            <div class="space-y-2">
               <label
-                class="text-xs font-bold text-[#8C352D] mb-1 block uppercase"
+                class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
               >
                 Nama Lengkap
               </label>
               <div
-                class="p-3 rounded-xl border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm font-medium"
+                class="p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium"
               >
                 {{ selectedPermit?.name }}
               </div>
             </div>
-            <div>
+            <div class="space-y-2">
               <label
-                class="text-xs font-bold text-[#8C352D] mb-1 block uppercase"
+                class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
               >
                 Alasan ({{ selectedPermit?.totalDays }} Hari)
               </label>
               <div
-                class="p-3 rounded-xl border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm font-medium"
+                class="p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium"
               >
                 {{ selectedPermit?.reason }}
               </div>
             </div>
           </div>
-          <div>
+
+          <div class="space-y-2">
             <label
-              class="text-xs font-bold text-[#8C352D] mb-1 block uppercase"
+              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+            >
+              Tanggal Perizinan
+            </label>
+            <div class="flex items-center gap-4">
+              <div
+                class="flex-1 p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium text-center"
+              >
+                {{ selectedPermit?.startDate }}
+              </div>
+              <span class="text-[#8C352D] font-bold text-[10px] uppercase">
+                Sampai
+              </span>
+              <div
+                class="flex-1 p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm font-medium text-center"
+              >
+                {{ selectedPermit?.endDate }}
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
             >
               Deskripsi
             </label>
             <div
-              class="p-4 rounded-xl border border-[#e6bdb7] bg-[#FFF0EE] text-[#8C352D] text-sm min-h-[80px]"
+              class="p-4 rounded-2xl border border-[#e6bdb7] bg-[#FFF0EE]/50 text-[#8C352D] text-sm leading-relaxed min-h-[100px]"
             >
-              {{
-                selectedPermit?.description || "Tidak ada deskripsi tersedia."
-              }}
+              {{ selectedPermit?.description || "-" }}
             </div>
           </div>
-          <div>
+
+          <div class="space-y-3">
             <label
-              class="text-xs font-bold text-[#8C352D] mb-2 block uppercase"
+              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
             >
               Bukti Foto ({{ selectedPermit?.evidenceImgs?.length || 0 }})
             </label>
+
             <div
-              v-if="selectedPermit?.evidenceImgs?.length > 0"
-              class="flex gap-4 overflow-x-auto pb-4 snap-x"
+              v-if="(selectedPermit?.evidenceImgs?.length ?? 0) > 0"
+              class="grid grid-cols-2 gap-4"
             >
               <div
-                v-for="(img, idx) in selectedPermit.evidenceImgs"
+                v-for="(img, idx) in selectedPermit?.evidenceImgs || []"
                 :key="idx"
-                class="shrink-0 w-64 aspect-video rounded-2xl border border-[#e6bdb7] overflow-hidden bg-gray-50 snap-center relative group"
+                @click="openFullScreen(img.url)"
+                class="group relative aspect-[16/9] rounded-3xl border border-[#e6bdb7] overflow-hidden bg-gray-50 cursor-pointer"
               >
                 <img
                   :src="img.url"
-                  class="w-full h-full object-cover transition-transform"
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div
-                  @click="openFullScreen(img.url)"
-                  class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-zoom-in"
+                  class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                 >
                   <span
-                    class="text-white font-bold text-xs bg-[#8C352D] px-3 py-1 rounded-full"
+                    class="bg-[#8C352D] text-white text-[10px] font-bold px-4 py-2 rounded-full shadow-lg"
                   >
                     Lihat Full Screen
                   </span>
                 </div>
               </div>
             </div>
+
             <div
               v-else
-              class="w-full aspect-video rounded-2xl border border-[#e6bdb7] bg-gray-50 flex flex-col items-center justify-center text-[#8C352D]/30"
+              class="w-full py-10 rounded-3xl border border-dashed border-[#e6bdb7] bg-[#FFF0EE]/30 flex flex-col items-center justify-center text-[#8C352D]/30"
             >
               <ImageIcon :size="32" />
-              <span class="text-xs italic">Tidak ada foto terlampir</span>
+              <span class="text-xs italic mt-2">Tidak ada bukti foto</span>
             </div>
           </div>
-          <div class="flex justify-end">
+
+          <div class="flex justify-end pt-6">
             <button
               @click="isViewModalOpen = false"
-              class="bg-[#8C352D] text-white px-10 py-3 rounded-xl font-bold hover:bg-[#a24a42] cursor-pointer"
+              class="bg-[#8C352D] text-white px-12 py-3.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md active:scale-95 cursor-pointer"
             >
               Tutup
             </button>
@@ -568,11 +586,9 @@ const fullScreenImg = ref<string | null>(null);
 const successAlertTitle = ref("");
 const selectedId = ref<number | null>(null);
 const selectedPermit = ref<any>(null);
+
 const isNewest = ref(true);
-
 const selectedMonth = ref<number | null>(null);
-const selectedYear = ref<number | null>(new Date().getFullYear());
-
 const months = [
   "Januari",
   "Februari",
@@ -588,15 +604,6 @@ const months = [
   "Desember",
 ];
 
-const years = computed(() => {
-  const currentYear = new Date().getFullYear();
-  const yearList = [];
-  for (let i = 0; i <= 5; i++) {
-    yearList.push(currentYear + i);
-  }
-  return yearList;
-});
-
 const fileInput = ref<HTMLInputElement | null>(null);
 const uploadedFiles = ref<{ name: string; url: string; file?: File }[]>([]);
 const todayDate = new Date().toISOString().slice(0, 10);
@@ -609,6 +616,7 @@ const newPermit = ref({
   endDate: "",
 });
 
+// Computed
 const computedTotalDays = computed(() => {
   if (!newPermit.value.startDate || !newPermit.value.endDate) return 0;
   const start = new Date(newPermit.value.startDate);
@@ -618,20 +626,19 @@ const computedTotalDays = computed(() => {
   return diffDays > 0 ? diffDays : 0;
 });
 
+// FIXED FILTERING LOGIC
 const filteredPermits = computed(() => {
   let list = [...permits.value];
 
-  list = list.filter((p) => {
-    const permitDate = new Date(p.createdAt);
-    const matchMonth =
-      selectedMonth.value === null ||
-      permitDate.getMonth() === selectedMonth.value;
-    const matchYear =
-      selectedYear.value === null ||
-      permitDate.getFullYear() === selectedYear.value;
-    return matchMonth && matchYear;
-  });
+  // Only filter by month if a specific month is selected (not null)
+  if (selectedMonth.value !== null) {
+    list = list.filter((p) => {
+      const permitDate = new Date(p.createdAt);
+      return permitDate.getMonth() === selectedMonth.value;
+    });
+  }
 
+  // Sort by created_at
   list.sort((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
@@ -641,6 +648,7 @@ const filteredPermits = computed(() => {
   return list;
 });
 
+// UPDATED STATS COMPUTED: Based on filteredPermits
 const pendingCount = computed(
   () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
 );
@@ -648,6 +656,7 @@ const approvedCount = computed(
   () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
 );
 
+// Helper Functions
 const formatDateForDisplay = (dateStr: string) => {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.split("-");
@@ -675,12 +684,15 @@ const mapPermit = (permit: any) => ({
   id: permit.id,
   name: permit.created_by_user?.name ?? "-",
   reason: typeNameMap[permit.type_name] ?? "Lainnya",
-  description: permit.description ?? "",
   date: `${formatDate(permit.date_start)} - ${formatDate(permit.date_end)}`,
+  startDate: formatDate(permit.date_start),
+  endDate: formatDate(permit.date_end),
   totalDays: calculateTotalDays(permit.date_start, permit.date_end),
+  description: permit.description ?? null,
   status: statusLabelMap[permit.status] ?? "Unknown",
+  status_code: permit.status,
   evidenceImgs: permit.permit_images ?? [],
-  createdAt: permit.created_at,
+  createdAt: new Date(permit.created_at || permit.date_start),
   raw: permit,
 });
 
@@ -707,6 +719,7 @@ const calculateTotalDays = (start?: string | Date, end?: string | Date) => {
   );
 };
 
+// Methods
 const toggleSort = () => {
   isNewest.value = !isNewest.value;
 };
