@@ -264,14 +264,14 @@
               </thead>
               <tbody class="divide-y divide-[#E8D5D2]">
                 <tr
-                  v-for="(permit, index) in filteredPermits"
+                  v-for="(permit, index) in paginatedPermits"
                   :key="permit.id"
                   class="hover:bg-[#FFF0EE]/30 transition-colors"
                 >
                   <td
                     class="px-6 py-4 text-sm font-semibold text-[#8C352D] text-center"
                   >
-                    {{ index + 1 }}
+                    {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                   </td>
                   <td class="px-6 py-4 text-sm font-semibold text-[#8C352D]">
                     {{ permit.name }}
@@ -327,6 +327,50 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div
+            v-if="filteredPermits.length > 0"
+            class="flex items-center justify-between px-6 py-4 bg-[#FFF0EE]/30 border-t border-[#E8D5D2]"
+          >
+            <span class="text-sm text-[#8C352D] font-medium">
+              Menampilkan {{ (currentPage - 1) * itemsPerPage + 1 }} -
+              {{ Math.min(currentPage * itemsPerPage, filteredPermits.length) }}
+              dari {{ filteredPermits.length }} data
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                @click="currentPage--"
+                :disabled="currentPage === 1"
+                class="p-2 rounded-lg border border-[#8C352D] text-[#8C352D] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#8C352D] hover:text-white transition-colors cursor-pointer"
+              >
+                <ChevronDownIcon class="rotate-90" :size="16" />
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button
+                  v-for="page in totalPages"
+                  :key="page"
+                  @click="currentPage = page"
+                  :class="[
+                    'w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                    currentPage === page
+                      ? 'bg-[#8C352D] text-white shadow-sm'
+                      : 'text-[#8C352D] hover:bg-[#8C352D]/10',
+                  ]"
+                >
+                  {{ page }}
+                </button>
+              </div>
+
+              <button
+                @click="currentPage++"
+                :disabled="currentPage === totalPages"
+                class="p-2 rounded-lg border border-[#8C352D] text-[#8C352D] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#8C352D] hover:text-white transition-colors cursor-pointer"
+              >
+                <ChevronDownIcon class="-rotate-90" :size="16" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -587,6 +631,10 @@ const successAlertTitle = ref("");
 const selectedId = ref<number | null>(null);
 const selectedPermit = ref<any>(null);
 
+// Pagination State
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
 const isNewest = ref(true);
 const selectedMonth = ref<number | null>(null);
 const months = [
@@ -626,11 +674,9 @@ const computedTotalDays = computed(() => {
   return diffDays > 0 ? diffDays : 0;
 });
 
-// FIXED FILTERING LOGIC
 const filteredPermits = computed(() => {
   let list = [...permits.value];
 
-  // Only filter by month if a specific month is selected (not null)
   if (selectedMonth.value !== null) {
     list = list.filter((p) => {
       const permitDate = new Date(p.createdAt);
@@ -638,7 +684,6 @@ const filteredPermits = computed(() => {
     });
   }
 
-  // Sort by created_at
   list.sort((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
@@ -648,7 +693,17 @@ const filteredPermits = computed(() => {
   return list;
 });
 
-// UPDATED STATS COMPUTED: Based on filteredPermits
+// Added Pagination Logic
+const totalPages = computed(() =>
+  Math.ceil(filteredPermits.value.length / itemsPerPage),
+);
+
+const paginatedPermits = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredPermits.value.slice(start, end);
+});
+
 const pendingCount = computed(
   () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
 );
@@ -656,7 +711,6 @@ const approvedCount = computed(
   () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
 );
 
-// Helper Functions
 const formatDateForDisplay = (dateStr: string) => {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.split("-");
@@ -719,7 +773,6 @@ const calculateTotalDays = (start?: string | Date, end?: string | Date) => {
   );
 };
 
-// Methods
 const toggleSort = () => {
   isNewest.value = !isNewest.value;
 };
@@ -850,23 +903,20 @@ const handleDeletePermit = () => {
 
 const fetchPermits = async () => {
   try {
-    const response = await getPermits();
+    const response = await getPermits({ limit: 1000 });
+
     const data = response?.data?.data?.permits ?? [];
     permits.value = data.map(mapPermit);
-
-    const queryPermitId = parsePermitId(route.query.permitId);
-    if (queryPermitId) {
-      const match = permits.value.find((permit) => permit.id === queryPermitId);
-      if (match) {
-        openViewDetail(match);
-      }
-    }
   } catch (error) {
     console.error(error);
   }
 };
 
 onMounted(fetchPermits);
+
+watch([selectedMonth, isNewest], () => {
+  currentPage.value = 1;
+});
 
 watch(
   () => route.query.permitId,

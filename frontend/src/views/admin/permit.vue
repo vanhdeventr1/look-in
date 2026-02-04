@@ -112,14 +112,14 @@
             </thead>
             <tbody class="divide-y divide-[#E8D5D2]">
               <tr
-                v-for="(permit, index) in filteredPermits"
+                v-for="(permit, index) in paginatedPermits"
                 :key="permit.id"
                 class="hover:bg-[#FFF0EE]/30 transition-colors"
               >
                 <td
                   class="px-6 py-4 text-sm font-semibold text-[#8C352D] text-center"
                 >
-                  {{ index + 1 }}
+                  {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                 </td>
                 <td class="px-6 py-4 text-sm font-semibold text-[#8C352D]">
                   {{ permit.name }}
@@ -179,6 +179,50 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div
+          v-if="filteredPermits.length > 0"
+          class="flex items-center justify-between px-6 py-4 bg-[#FFF0EE]/30 border-t border-[#E8D5D2]"
+        >
+          <span class="text-sm text-[#8C352D] font-medium">
+            Menampilkan {{ (currentPage - 1) * itemsPerPage + 1 }} -
+            {{ Math.min(currentPage * itemsPerPage, filteredPermits.length) }}
+            dari {{ filteredPermits.length }} data
+          </span>
+          <div class="flex items-center gap-2">
+            <button
+              @click="currentPage--"
+              :disabled="currentPage === 1"
+              class="p-2 rounded-lg border border-[#8C352D] text-[#8C352D] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#8C352D] hover:text-white transition-colors cursor-pointer"
+            >
+              <XIcon class="rotate-90 scale-75" :size="16" />
+            </button>
+
+            <div class="flex items-center gap-1">
+              <button
+                v-for="page in totalPages"
+                :key="page"
+                @click="currentPage = page"
+                :class="[
+                  'w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  currentPage === page
+                    ? 'bg-[#8C352D] text-white shadow-sm'
+                    : 'text-[#8C352D] hover:bg-[#8C352D]/10',
+                ]"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              @click="currentPage++"
+              :disabled="currentPage === totalPages"
+              class="p-2 rounded-lg border border-[#8C352D] text-[#8C352D] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#8C352D] hover:text-white transition-colors cursor-pointer"
+            >
+              <XIcon class="-rotate-90 scale-75" :size="16" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -435,7 +479,7 @@ import {
   XCircle as XCircleIcon,
   X as XIcon,
 } from "lucide-vue-next";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 type PermitImage = { url: string };
 type PermitRow = {
@@ -464,7 +508,8 @@ const searchQuery = ref("");
 const selectedPermit = ref<PermitRow | null>(null);
 const permits = ref<PermitRow[]>([]);
 const successAlertTitle = ref("");
-
+const currentPage = ref(1);
+const itemsPerPage = 10;
 const selectedMonth = ref<number | null>(null);
 const selectedYear = ref<number | null>(new Date().getFullYear());
 const sortOrder = ref<"newest" | "oldest">("newest");
@@ -487,7 +532,7 @@ const months = [
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
   const yearList = [];
-  for (let i = 0; i <= 5; i++) {
+  for (let i = -2; i <= 2; i++) {
     yearList.push(currentYear + i);
   }
   return yearList;
@@ -556,7 +601,7 @@ const triggerReject = (permit: any) => {
 
 const fetchPermits = async () => {
   try {
-    const response = await getPermits();
+    const response = await getPermits({ limit: 1000 });
     const data = response?.data?.data?.permits ?? [];
     permits.value = data.map(mapPermit);
   } catch (error) {
@@ -610,12 +655,26 @@ const filteredPermits = computed(() => {
   return list;
 });
 
+const totalPages = computed(() =>
+  Math.ceil(filteredPermits.value.length / itemsPerPage),
+);
+
+const paginatedPermits = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredPermits.value.slice(start, end);
+});
+
 const pendingCount = computed(
   () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
 );
 const approvedCount = computed(
   () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
 );
+
+watch([searchQuery, selectedMonth, selectedYear, sortOrder], () => {
+  currentPage.value = 1;
+});
 
 onMounted(fetchPermits);
 </script>
