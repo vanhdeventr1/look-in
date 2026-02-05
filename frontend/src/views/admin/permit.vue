@@ -239,7 +239,7 @@
         >
           <span class="text-white font-bold text-sm">Detail Perizinan</span>
           <button
-            @click="isViewModalOpen = false"
+            @click="closeViewModal"
             class="text-white hover:opacity-70 cursor-pointer"
           >
             <XIcon :size="20" />
@@ -361,7 +361,7 @@
           </div>
           <div v-else class="flex justify-end pt-6">
             <button
-              @click="isViewModalOpen = false"
+              @click="closeViewModal"
               class="bg-[#8C352D] text-white px-12 py-3.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md active:scale-95 cursor-pointer"
             >
               Tutup
@@ -480,6 +480,7 @@ import {
   X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 type PermitImage = { url: string };
 type PermitRow = {
@@ -498,6 +499,8 @@ type PermitRow = {
   raw: any;
 };
 
+const route = useRoute();
+const router = useRouter();
 const viewState = ref<"list" | "form">("list");
 const isViewModalOpen = ref(false);
 const isConfirmApproveOpen = ref(false);
@@ -580,6 +583,34 @@ const mapPermit = (permit: any) => ({
   raw: permit,
 });
 
+const checkDeepLink = () => {
+  const idFromUrl = route.query.permitId;
+  if (idFromUrl && permits.value.length > 0) {
+    const target = permits.value.find(
+      (p) => String(p.id) === String(idFromUrl),
+    );
+    if (target) {
+      const itemIndex = filteredPermits.value.findIndex(
+        (p) => p.id === target.id,
+      );
+      if (itemIndex !== -1) {
+        currentPage.value = Math.floor(itemIndex / itemsPerPage) + 1;
+      }
+      openViewDetail(target);
+    }
+  }
+};
+
+const closeViewModal = () => {
+  isViewModalOpen.value = false;
+  selectedPermit.value = null;
+
+  router.push({
+    path: route.path,
+    query: {},
+  });
+};
+
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
 };
@@ -604,6 +635,7 @@ const fetchPermits = async () => {
     const response = await getPermits({ limit: 1000 });
     const data = response?.data?.data?.permits ?? [];
     permits.value = data.map(mapPermit);
+    checkDeepLink();
   } catch (error) {
     console.error(error);
   }
@@ -625,7 +657,7 @@ const confirmAction = async (type: "Approved" | "Rejected") => {
   } finally {
     isConfirmApproveOpen.value = false;
     isConfirmRejectOpen.value = false;
-    isViewModalOpen.value = false;
+    closeViewModal();
   }
 };
 
@@ -675,6 +707,13 @@ const approvedCount = computed(
 watch([searchQuery, selectedMonth, selectedYear, sortOrder], () => {
   currentPage.value = 1;
 });
+
+watch(
+  () => route.query.permitId,
+  () => {
+    checkDeepLink();
+  },
+);
 
 onMounted(fetchPermits);
 </script>

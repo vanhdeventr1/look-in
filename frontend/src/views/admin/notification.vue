@@ -16,13 +16,13 @@
 
       <div class="space-y-4">
         <div
-          v-for="note in notifications"
+          v-for="note in sortedNotifications"
           :key="note.id"
           :class="[
             'group flex items-center justify-between p-4 rounded-2xl border border-[#E8D5D2] transition-all cursor-pointer hover:shadow-md',
             note.isUnread ? 'bg-[#E8D5D2]/50' : 'bg-white',
           ]"
-          @click="markAsRead(note)"
+          @click="handleNotificationClick(note)"
         >
           <div class="flex items-center gap-4">
             <div
@@ -77,12 +77,13 @@ import {
   CheckCheck as CheckCheckIcon,
   ChevronRight as ChevronRightIcon,
 } from "lucide-vue-next";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
 type NotificationApi = {
   id: string;
   message?: string | null;
-  data?: string | null;
+  data?: any | null;
   read_at?: string | Date | null;
   created_at?: string | Date;
 };
@@ -91,10 +92,19 @@ type NotificationRow = {
   id: string;
   message: string;
   date: string;
+  rawDate: Date;
   isUnread: boolean;
+  permitId: string | null;
 };
 
 const notifications = ref<NotificationRow[]>([]);
+const router = useRouter();
+
+const sortedNotifications = computed(() => {
+  return [...notifications.value].sort(
+    (a, b) => b.rawDate.getTime() - a.rawDate.getTime(),
+  );
+});
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) return "-";
@@ -103,16 +113,29 @@ const formatDate = (value?: string | Date | null) => {
   return date.toLocaleString("id-ID");
 };
 
-const mapNotification = (note: NotificationApi): NotificationRow => ({
-  id: note.id,
-  message: note.message || note.data || "-",
-  date: formatDate(note.created_at),
-  isUnread: !note.read_at,
-});
+const mapNotification = (note: NotificationApi): NotificationRow => {
+  let permitId = null;
+  try {
+    const extraData =
+      typeof note.data === "string" ? JSON.parse(note.data) : note.data;
+    permitId = extraData?.permit_id || extraData?.id || null;
+  } catch (e) {
+    permitId = null;
+  }
+
+  return {
+    id: note.id,
+    message: note.message || "-",
+    date: formatDate(note.created_at),
+    rawDate: new Date(note.created_at || ""),
+    isUnread: !note.read_at,
+    permitId: permitId,
+  };
+};
 
 const fetchNotifications = async () => {
   try {
-    const response = await getNotifications();
+    const response = await getNotifications({ limit: 1000 });
     const data = response?.data?.data?.notifications ?? [];
     notifications.value = data.map(mapNotification);
   } catch (error) {
@@ -133,13 +156,21 @@ const markAllAsRead = async () => {
   }
 };
 
-const markAsRead = async (note: NotificationRow) => {
-  if (!note.isUnread) return;
-  try {
-    await markNotificationAsRead(note.id);
-    note.isUnread = false;
-  } catch (error) {
-    console.error(error);
+const handleNotificationClick = async (note: NotificationRow) => {
+  if (note.isUnread) {
+    try {
+      await markNotificationAsRead(note.id);
+      note.isUnread = false;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  if (note.permitId) {
+    router.push({
+      path: "/admin/permit",
+      query: { permitId: note.permitId },
+    });
   }
 };
 
@@ -147,6 +178,7 @@ onMounted(() => {
   fetchNotifications();
 });
 </script>
+
 <style>
 .animate-in {
   animation: fadeIn 0.3s ease-out;
