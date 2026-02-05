@@ -83,7 +83,7 @@ export class PermitService {
         type: "PERMIT",
         data: { id: permit.id },
         role: UserRoleEnum.HIRING_MANAGER,
-        message: `${user.name || "An employee"} has created a new permit. Please approve or reject this request.`,
+        message: `${user.name || "Seorang karyawan"} telah mengajukan izin baru. Silakan lakukan persetujuan atau penolakan atas permohonan ini`,
         title: "New Permit Pending Approval",
       });
 
@@ -180,7 +180,7 @@ export class PermitService {
           type: "PERMIT",
           data: { id: permit.id },
           notified_user_id: permit.created_by,
-          message: `Permit status change from ${permit.status_name} to ${getPermitStatusLabel(+updatePermitDto.status)}`,
+          message: `Pengajuan izin berubah dari ${permit.status_name} menjadi ${getPermitStatusLabel(+updatePermitDto.status)}`,
           title: "Update Permit Status",
         });
       }
