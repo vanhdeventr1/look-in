@@ -27,10 +27,8 @@ export class PermitService {
   private calculateTotalDays(start: Date, end: Date): number {
     const startDate = new Date(start);
     const endDate = new Date(end);
-
     const diffTime =
       endDate.setHours(0, 0, 0, 0) - startDate.setHours(0, 0, 0, 0);
-
     return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   }
 
@@ -50,13 +48,11 @@ export class PermitService {
           .resizeAndUpload(file, Permit.imageDimension.permitImage)
           .then((value) => {
             const image = new URL(value.url);
-
             data.push({
               url: image.href,
               file_path: image.pathname.substring(1),
             });
           });
-
         permitImageInstance.push(uploadFile);
       }
 
@@ -82,6 +78,15 @@ export class PermitService {
       );
 
       await transaction.commit();
+
+      this.eventEmitter.emit("notification", ["system"], {
+        type: "PERMIT",
+        data: { id: permit.id },
+        role: UserRoleEnum.HIRING_MANAGER,
+        message: `${user.name || "An employee"} has created a new permit. Please approve or reject this request.`,
+        title: "New Permit Pending Approval",
+      });
+
       return this.response.success(permit, 201, "Successfully create permit");
     } catch (error) {
       await transaction.rollback();
@@ -91,7 +96,6 @@ export class PermitService {
 
   async findAll(user: User, query: any) {
     const condition = {};
-
     if (user.role === UserRoleEnum.HIRING_MANAGER) {
       Object.assign(condition, {
         created_by: { [Op.ne]: user.id },
@@ -147,7 +151,6 @@ export class PermitService {
           },
         ],
       });
-
       return this.response.success(permit, 200, "Successfully get permit");
     } catch (error) {
       return this.response.fail(error, 400);
@@ -169,7 +172,6 @@ export class PermitService {
       if (updatePermitDto.date_start || updatePermitDto.date_end) {
         const start = updatePermitDto.date_start ?? permit.date_start;
         const end = updatePermitDto.date_end ?? permit.date_end;
-
         updatePermitDto["total_days"] = this.calculateTotalDays(start, end);
       }
 
