@@ -1,7 +1,7 @@
 import api from "./axios";
 
-export const getUsers = () => {
-  return api.get("/users");
+export const getUsers = (params?: any) => {
+  return api.get("/users", { params });
 };
 
 export const createUser = (payload: {
