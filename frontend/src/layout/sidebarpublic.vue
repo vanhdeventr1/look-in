@@ -1,20 +1,17 @@
 <template>
   <div class="h-screen bg-[#FFF0EE] flex font-sans overflow-hidden">
-    <!-- Overlay (mobile) -->
     <div
       v-if="isSidebarOpen"
       @click="isSidebarOpen = false"
       class="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm"
     ></div>
 
-    <!-- Sidebar -->
     <aside
       :class="[
         'fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white border-r border-[#E8D5D2] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
       ]"
     >
-      <!-- Logo -->
       <div
         class="px-6 py-8 border-b border-[#E8D5D2] flex justify-between items-center"
       >
@@ -31,7 +28,6 @@
         </button>
       </div>
 
-      <!-- Profile -->
       <div class="flex flex-col items-center py-8">
         <div
           class="w-24 h-24 rounded-full overflow-hidden border-2 border-[#8C352D]/20 bg-gray-100 shadow-sm"
@@ -56,7 +52,6 @@
         </p>
       </div>
 
-      <!-- Navigation (scrollable) -->
       <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
         <button
           v-for="item in navItems"
@@ -69,12 +64,26 @@
               : 'text-[#8C352D] hover:bg-[#8C352D]/5 cursor-pointer',
           ]"
         >
-          <component :is="item.icon" :size="20" class="mr-3" />
+          <div class="relative mr-3">
+            <component :is="item.icon" :size="20" />
+
+            <span
+              v-if="item.label === 'Notifikasi' && hasUnread"
+              class="absolute -top-1 -right-1 flex h-2.5 w-2.5"
+            >
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white"
+              ></span>
+            </span>
+          </div>
+
           <span class="text-sm font-semibold">{{ item.label }}</span>
         </button>
       </nav>
 
-      <!-- Bottom actions (fixed) -->
       <div class="px-3 py-6 space-y-1 border-t border-[#E8D5D2]">
         <button
           @click="handleNavigation('/public/setting')"
@@ -99,9 +108,7 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-      <!-- Header -->
       <header
         class="h-20 bg-white border-b border-[#E8D5D2] flex items-center justify-between px-4 md:px-8"
       >
@@ -141,7 +148,6 @@
         </div>
       </header>
 
-      <!-- Scrollable page content -->
       <main class="flex-1 p-4 md:p-8 overflow-y-auto">
         <slot />
       </main>
@@ -150,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { getNotifications } from "@/api/notification.api";
 import { useAuth } from "@/composables/useAuth";
 import {
   CalendarClock as AttendanceIcon,
@@ -162,7 +169,7 @@ import {
   Settings as SettingsIcon,
   X as XIcon,
 } from "lucide-vue-next";
-import { computed, markRaw, ref } from "vue";
+import { computed, markRaw, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const { user: userState, logout } = useAuth();
@@ -181,6 +188,7 @@ const formattedDate = computed(() => {
 });
 
 const isSidebarOpen = ref(false);
+const hasUnread = ref(false);
 
 const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/public/dashboard" },
@@ -198,12 +206,32 @@ const navItems = ref([
   },
 ]);
 
+const checkNotifications = async () => {
+  try {
+    const response = await getNotifications({ limit: 1000 });
+    const data = response?.data?.data?.notifications ?? [];
+    hasUnread.value = data.some((n: any) => !n.read_at);
+  } catch (error) {
+    console.error("Failed to check notifications badge", error);
+  }
+};
+
 const handleNavigation = (path: string) => {
+  if (!path) return;
   router.push(path);
+
+  if (path === "/public/notification") {
+    hasUnread.value = false;
+  }
+
   if (window.innerWidth < 768) {
     isSidebarOpen.value = false;
   }
 };
+
+onMounted(() => {
+  checkNotifications();
+});
 </script>
 
 <style scoped>

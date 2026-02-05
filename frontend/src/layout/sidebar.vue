@@ -64,7 +64,22 @@
               : 'text-[#8C352D] hover:bg-[#8C352D]/5 cursor-pointer',
           ]"
         >
-          <component :is="item.icon" :size="20" class="mr-3" />
+          <div class="relative mr-3">
+            <component :is="item.icon" :size="20" />
+
+            <span
+              v-if="item.label === 'Notifikasi' && hasUnread"
+              class="absolute -top-1 -right-1 flex h-2.5 w-2.5"
+            >
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white"
+              ></span>
+            </span>
+          </div>
+
           <span class="text-sm font-semibold">{{ item.label }}</span>
         </button>
       </nav>
@@ -141,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { getNotifications } from "@/api/notification.api"; // Import notification API
 import { useAuth } from "@/composables/useAuth";
 import {
   FileCheckCorner as ApprovalIcon,
@@ -154,7 +170,7 @@ import {
   UserPlus as UsersAddIcon,
   X as XIcon,
 } from "lucide-vue-next";
-import { computed, markRaw, ref } from "vue";
+import { computed, markRaw, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const { user: userState, logout } = useAuth();
@@ -173,6 +189,7 @@ const formattedDate = computed(() => {
 });
 
 const isSidebarOpen = ref(false);
+const hasUnread = ref(false);
 
 const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/admin/dashboard" },
@@ -187,12 +204,29 @@ const navItems = ref([
   { icon: markRaw(BellIcon), label: "Notifikasi", path: "/admin/notification" },
 ]);
 
+const checkUnread = async () => {
+  try {
+    const response = await getNotifications({ limit: 1000 });
+    const data = response?.data?.data?.notifications ?? [];
+    hasUnread.value = data.some((n: any) => !n.read_at);
+  } catch (error) {
+    console.error("Badge check failed", error);
+  }
+};
+
 const handleNavigation = (path: string) => {
   router.push(path);
+  if (path === "/admin/notification") {
+    hasUnread.value = false;
+  }
   if (window.innerWidth < 768) {
     isSidebarOpen.value = false;
   }
 };
+
+onMounted(() => {
+  checkUnread();
+});
 </script>
 
 <style scoped>
