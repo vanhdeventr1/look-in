@@ -84,7 +84,8 @@
               </div>
               <div class="flex flex-wrap items-center gap-4">
                 <div
-                  class="relative flex items-center gap-3 p-3 rounded-2xl border border-[#E8D5D2] bg-[#FFF0EE]/50 min-w-[200px]"
+                  class="relative flex items-center gap-3 p-3 rounded-2xl border border-[#E8D5D2] bg-[#FFF0EE]/50 min-w-[200px] cursor-pointer"
+                  @click="openPicker(startDateInput)"
                 >
                   <CalendarIcon class="text-[#8C352D]" :size="20" />
                   <span class="text-[#8C352D] flex-1">
@@ -95,15 +96,19 @@
                     }}
                   </span>
                   <input
+                    ref="startDateInput"
                     v-model="newPermit.startDate"
                     type="date"
                     :min="todayDate"
-                    class="absolute inset-0 opacity-0 cursor-pointer w-full"
+                    class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                   />
                 </div>
+
                 <span class="text-[#8C352D] font-bold">Sampai</span>
+
                 <div
-                  class="relative flex items-center gap-3 p-3 rounded-2xl border border-[#E8D5D2] bg-[#FFF0EE]/50 min-w-[200px]"
+                  class="relative flex items-center gap-3 p-3 rounded-2xl border border-[#E8D5D2] bg-[#FFF0EE]/50 min-w-[200px] cursor-pointer"
+                  @click="openPicker(endDateInput)"
                 >
                   <CalendarIcon class="text-[#8C352D]" :size="20" />
                   <span class="text-[#8C352D] flex-1">
@@ -114,10 +119,11 @@
                     }}
                   </span>
                   <input
+                    ref="endDateInput"
                     v-model="newPermit.endDate"
                     type="date"
                     :min="newPermit.startDate || todayDate"
-                    class="absolute inset-0 opacity-0 cursor-pointer w-full"
+                    class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                   />
                 </div>
               </div>
@@ -388,7 +394,7 @@
         >
           <span class="text-white font-bold text-sm">Detail Perizinan</span>
           <button
-            @click="isViewModalOpen = false"
+            @click="closeViewModal"
             class="text-white hover:opacity-70 cursor-pointer transition-opacity"
           >
             <XIcon :size="20" />
@@ -505,7 +511,7 @@
 
           <div class="flex justify-end pt-6">
             <button
-              @click="isViewModalOpen = false"
+              @click="closeViewModal"
               class="bg-[#8C352D] text-white px-12 py-3.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md active:scale-95 cursor-pointer"
             >
               Tutup
@@ -618,7 +624,7 @@ import {
   X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const viewState = ref<"list" | "form">("list");
 const formMode = ref<"add" | "edit">("add");
@@ -630,11 +636,9 @@ const fullScreenImg = ref<string | null>(null);
 const successAlertTitle = ref("");
 const selectedId = ref<number | null>(null);
 const selectedPermit = ref<any>(null);
-
-// Pagination State
+const router = useRouter();
 const currentPage = ref(1);
 const itemsPerPage = 10;
-
 const isNewest = ref(true);
 const selectedMonth = ref<number | null>(null);
 const months = [
@@ -663,6 +667,24 @@ const newPermit = ref({
   startDate: "",
   endDate: "",
 });
+
+const checkDeepLink = () => {
+  const idFromUrl = route.query.permitId;
+  if (idFromUrl && permits.value.length > 0) {
+    const target = permits.value.find(
+      (p) => String(p.id) === String(idFromUrl),
+    );
+    if (target) {
+      openViewDetail(target);
+      const itemIndex = filteredPermits.value.findIndex(
+        (p) => p.id === target.id,
+      );
+      if (itemIndex !== -1) {
+        currentPage.value = Math.floor(itemIndex / itemsPerPage) + 1;
+      }
+    }
+  }
+};
 
 // Computed
 const computedTotalDays = computed(() => {
@@ -693,7 +715,6 @@ const filteredPermits = computed(() => {
   return list;
 });
 
-// Added Pagination Logic
 const totalPages = computed(() =>
   Math.ceil(filteredPermits.value.length / itemsPerPage),
 );
@@ -705,12 +726,20 @@ const paginatedPermits = computed(() => {
 });
 
 const pendingCount = computed(
-  () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
+  () => filteredPermits.value.filter((p) => p.status_code === 0).length,
 );
 const approvedCount = computed(
-  () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
+  () => filteredPermits.value.filter((p) => p.status_code === 1).length,
 );
+const startDateInput = ref<HTMLInputElement | null>(null);
+const endDateInput = ref<HTMLInputElement | null>(null);
 
+// ADD THIS HELPER FUNCTION
+const openPicker = (inputRef: HTMLInputElement | null) => {
+  if (inputRef && typeof inputRef.showPicker === "function") {
+    inputRef.showPicker();
+  }
+};
 const formatDateForDisplay = (dateStr: string) => {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.split("-");
@@ -724,7 +753,7 @@ const parseDateForInput = (dateStr: string) => {
 
 const statusLabelMap: Record<number, string> = {
   0: "Menunggu Persetujuan",
-  1: "Sudah Persetujuan",
+  1: "Diterima",
   2: "Ditolak",
 };
 const typeNameMap: Record<string, string> = {
@@ -749,14 +778,6 @@ const mapPermit = (permit: any) => ({
   createdAt: new Date(permit.created_at || permit.date_start),
   raw: permit,
 });
-
-const parsePermitId = (value: unknown) => {
-  if (Array.isArray(value)) {
-    return parsePermitId(value[0]);
-  }
-  const asNumber = Number(value);
-  return Number.isFinite(asNumber) ? asNumber : null;
-};
 
 const formatDate = (value?: string | Date) => {
   if (!value) return "-";
@@ -837,6 +858,15 @@ const openEditForm = (permit: any) => {
   viewState.value = "form";
 };
 
+const closeViewModal = () => {
+  isViewModalOpen.value = false;
+
+  router.replace({
+    path: route.path,
+    query: {},
+  });
+};
+
 const cancelForm = () => {
   viewState.value = "list";
 };
@@ -904,46 +934,28 @@ const handleDeletePermit = () => {
 const fetchPermits = async () => {
   try {
     const response = await getPermits({ limit: 1000 });
-
-    const data = response?.data?.data?.permits ?? [];
-    permits.value = data.map(mapPermit);
+    const rawData = response?.data?.data?.permits ?? [];
+    permits.value = rawData.map(mapPermit);
+    checkDeepLink();
   } catch (error) {
     console.error(error);
+    permits.value = [];
   }
 };
 
-onMounted(fetchPermits);
-
-watch([selectedMonth, isNewest], () => {
-  currentPage.value = 1;
-});
-
 watch(
   () => route.query.permitId,
-  (value) => {
-    const queryPermitId = parsePermitId(value);
-    if (!queryPermitId) return;
-    const match = permits.value.find((permit) => permit.id === queryPermitId);
-    if (match) {
-      openViewDetail(match);
-    }
+  () => {
+    checkDeepLink();
   },
 );
+
+onMounted(() => {
+  fetchPermits();
+});
 </script>
 
-<style scoped>
-input[type="date"]::-webkit-calendar-picker-indicator {
-  background: transparent;
-  bottom: 0;
-  color: transparent;
-  cursor: pointer;
-  height: auto;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: auto;
-}
+<style>
 .animate-in {
   animation: fadeIn 0.3s ease-out;
 }
@@ -957,14 +969,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transform: translateY(0);
   }
 }
-.overflow-x-auto::-webkit-scrollbar {
-  height: 6px;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
-.overflow-x-auto::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar-track {
   background: #fff0ee;
   border-radius: 10px;
 }
-.overflow-x-auto::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background: #8c352d;
   border-radius: 10px;
 }

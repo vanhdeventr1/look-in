@@ -16,7 +16,7 @@
 
       <div class="space-y-4">
         <div
-          v-for="note in notifications"
+          v-for="note in sortedNotifications"
           :key="note.id"
           :class="[
             'group flex items-center justify-between p-4 rounded-2xl border border-[#E8D5D2] transition-all cursor-pointer hover:shadow-md',
@@ -77,7 +77,7 @@ import {
   CheckCheck as CheckCheckIcon,
   ChevronRight as ChevronRightIcon,
 } from "lucide-vue-next";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 type NotificationApi = {
@@ -94,12 +94,20 @@ type NotificationRow = {
   type?: string | null;
   message: string;
   date: string;
+  rawDate: Date; // For sorting
   isUnread: boolean;
   permitId?: number | null;
 };
 
 const notifications = ref<NotificationRow[]>([]);
 const router = useRouter();
+
+// Added sorting computed property
+const sortedNotifications = computed(() => {
+  return [...notifications.value].sort(
+    (a, b) => b.rawDate.getTime() - a.rawDate.getTime(),
+  );
+});
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) return "-";
@@ -108,31 +116,49 @@ const formatDate = (value?: string | Date | null) => {
   return date.toLocaleString("id-ID");
 };
 
-const mapNotification = (note: NotificationApi): NotificationRow => ({
-  id: note.id,
-  type: note.type ?? null,
-  message: note.message || note.data || "-",
-  date: formatDate(note.created_at),
-  isUnread: !note.read_at,
-  permitId: (() => {
-    if (!note.data) return null;
-    try {
-      const parsed = JSON.parse(note.data);
-      if (parsed && typeof parsed === "object") {
-        const idValue = (parsed as any).id ?? (parsed as any).permit_id;
-        const asNumber = Number(idValue);
-        return Number.isFinite(asNumber) ? asNumber : null;
+const mapNotification = (note: NotificationApi): NotificationRow => {
+  let translatedMessage = note.message || note.data || "-";
+
+  const translations: Record<string, string> = {
+    pending: "menunggu persetujuan",
+    approved: "diterima",
+    rejected: "ditolak",
+  };
+
+  for (const [english, indo] of Object.entries(translations)) {
+    translatedMessage = translatedMessage.replace(
+      new RegExp(english, "gi"),
+      indo,
+    );
+  }
+
+  return {
+    id: note.id,
+    type: note.type ?? null,
+    message: translatedMessage,
+    date: formatDate(note.created_at),
+    rawDate: new Date(note.created_at || ""), // Store date object
+    isUnread: !note.read_at,
+    permitId: (() => {
+      if (!note.data) return null;
+      try {
+        const parsed = JSON.parse(note.data);
+        if (parsed && typeof parsed === "object") {
+          const idValue = (parsed as any).id ?? (parsed as any).permit_id;
+          const asNumber = Number(idValue);
+          return Number.isFinite(asNumber) ? asNumber : null;
+        }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
-    } catch {
-      return null;
-    }
-  })(),
-});
+    })(),
+  };
+};
 
 const fetchNotifications = async () => {
   try {
-    const response = await getNotifications();
+    const response = await getNotifications({ limit: 1000 });
     const data = response?.data?.data?.notifications ?? [];
     notifications.value = data.map(mapNotification);
   } catch (error) {
@@ -177,6 +203,7 @@ onMounted(() => {
   fetchNotifications();
 });
 </script>
+
 <style>
 .animate-in {
   animation: fadeIn 0.3s ease-out;
