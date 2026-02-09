@@ -153,7 +153,7 @@
               </div>
               <div class="space-y-2">
                 <label class="text-[#8C352D] font-bold ml-1">
-                  Uploaded File ({{ uploadedFiles.length }})
+                  Daftar File ({{ uploadedFiles.length }})
                 </label>
                 <div
                   v-if="uploadedFiles.length > 0"
