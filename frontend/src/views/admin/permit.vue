@@ -248,9 +248,7 @@
         <div class="p-10 space-y-6 max-h-[85vh] overflow-y-auto">
           <div class="grid grid-cols-2 gap-6">
             <div class="space-y-2">
-              <label
-                class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
-              >
+              <label class="text-sm font-bold text-[#8C352D] block mb-1">
                 Nama Lengkap
               </label>
               <div
@@ -261,7 +259,7 @@
             </div>
             <div class="space-y-2">
               <label
-                class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+                class="text-sm font-bold text-[#8C352D] block mb-1""
               >
                 Alasan ({{ selectedPermit?.totalDays }} Hari)
               </label>
@@ -274,7 +272,7 @@
           </div>
           <div class="space-y-2">
             <label
-              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+              class="text-sm font-bold text-[#8C352D] block mb-1""
             >
               Tanggal Perizinan
             </label>
@@ -284,7 +282,7 @@
               >
                 {{ selectedPermit?.startDate }}
               </div>
-              <span class="text-[#8C352D] font-bold text-[10px] uppercase">
+              <span class="text-sm font-bold text-[#8C352D] block mb-1"">
                 Sampai
               </span>
               <div
@@ -296,7 +294,7 @@
           </div>
           <div class="space-y-2">
             <label
-              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+              class="text-sm font-bold text-[#8C352D] block mb-1""
             >
               Deskripsi
             </label>
@@ -308,7 +306,7 @@
           </div>
           <div class="space-y-3">
             <label
-              class="text-[11px] font-bold text-[#8C352D] uppercase tracking-wider ml-1"
+              class="text-sm font-bold text-[#8C352D] block mb-1""
             >
               Bukti Foto ({{ selectedPermit?.evidenceImgs?.length || 0 }})
             </label>

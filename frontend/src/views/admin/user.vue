@@ -96,8 +96,8 @@
               </tr>
               <tr v-if="filteredUsers.length === 0">
                 <td
-                  colspan="7"
-                  class="px-6 py-10 text-center font-bold text-[#8C352D]"
+                  colspan="4"
+                  class="px-6 py-10 text-center text-[#8C352D]/40 italic text-sm"
                 >
                   Data tidak ditemukan
                 </td>
