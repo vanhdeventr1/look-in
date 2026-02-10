@@ -26,7 +26,6 @@ export class DatasetService {
     user: User,
     files: Array<Express.Multer.File>,
   ) {
-    // 1. Authorization Check
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Only hiring manager can create dataset", 403);
     }
@@ -39,7 +38,6 @@ export class DatasetService {
       const imageData = [];
       const sharpHelper = new SharpHelper();
 
-      // 2. Process and Upload Images
       for (const file of files) {
         const uploadFile = await sharpHelper.resizeAndUpload(
           file,
@@ -52,11 +50,10 @@ export class DatasetService {
         });
       }
 
-      // 3. Create Dataset with nested images
       const dataset = await this.datasetModel.create(
         {
-          user_id: createDatasetDto.user_id, // The target employee
-          created_by: user.id, // The hiring manager
+          user_id: createDatasetDto.user_id,
+          created_by: user.id,
           dataset_images: imageData,
         },
         {
@@ -67,7 +64,6 @@ export class DatasetService {
 
       await transaction.commit();
 
-      // 4. Reload with proper associations defined in Entity
       await dataset.reload({
         include: [
           { association: "user", attributes: { exclude: ["password"] } },
@@ -95,13 +91,9 @@ export class DatasetService {
     }
 
     try {
-      // Change userModel to datasetModel
-      const result = await new QueryBuilderHelper(
-        this.datasetModel, // Query the datasets directly
-        query,
-      )
-        .load("dataset_images") // Load the images
-        .load("user") // Load the employee info
+      const result = await new QueryBuilderHelper(this.datasetModel, query)
+        .load("dataset_images")
+        .load("user")
         .getResult();
 
       if (!result) {
@@ -130,11 +122,11 @@ export class DatasetService {
         include: [
           { association: "dataset_images" },
           {
-            association: "user", // The employee
+            association: "user",
             attributes: { exclude: ["password"] },
           },
           {
-            association: "created_by_user", // The manager
+            association: "created_by_user",
             attributes: { exclude: ["password"] },
           },
         ],
