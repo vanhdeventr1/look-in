@@ -1,33 +1,34 @@
-// src/features/dataset/validations/request/create-dataset.request.ts
 import * as Joi from "joi";
 import { User } from "src/features/user/entities/user.entity";
-import UserRoleEnum from "src/features/user/enums/user-role.enum"; // Adjust path
+import UserRoleEnum from "src/features/user/enums/user-role.enum";
 
 export const createDatasetSchema = Joi.object({
-  name: Joi.number()
+  user_id: Joi.number()
     .required()
     .external(async (value) => {
-      const employee = await User.findOne({
-        where: {
-          id: value,
-          role: UserRoleEnum.EMPLOYEE, // Ensure we only add datasets to Employees
-        },
+      const userFound = await User.findOne({
+        where: { id: value },
       });
 
-      if (!employee) {
+      if (!userFound) {
         throw new Joi.ValidationError(
-          "any.invalid-employee-id",
+          "any.invalid-user-id",
           [
             {
-              message: "Employee not found or invalid role",
-              path: ["name"],
-              type: "any.invalid-employee-id",
-              context: { key: "name", value },
+              message: "User not found in database",
+              path: ["user_id"],
+              type: "any.invalid-user-id",
+              context: { key: "user_id", value },
             },
           ],
           value,
         );
       }
-      return value; // Joi external needs to return the value
+
+      const allowedRoles = [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN];
+      if (!allowedRoles.includes(userFound.role)) {
+      }
+
+      return value;
     }),
 });

@@ -24,10 +24,7 @@ import { DatasetImage } from "./entities/dataset-image.entity";
 import { datasetImageIdParamSchema } from "./validations/params/dataset-image-id.param";
 import { createDatasetImageSchema } from "./validations/requests/create-dataset-image.request";
 import { updateDatasetImageSchema } from "./validations/requests/update-dataset-image.request";
-//import { PermitImageService } from './permit-image.service';
-//import { permitImageIdParamSchema } from "./validations/params/permit-image-id.param";
-//import { createPermitImageSchema } from "./validations/requests/create-permit-image.request";
-//import { updatePermitImageSchema } from "./validations/requests/update-permit-image.request";
+
 @Controller()
 export class DatasetImageController {
   constructor(private readonly datasetImageService: DatasetImageService) {}

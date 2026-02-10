@@ -26,8 +26,12 @@ export class DatasetService {
     user: User,
     files: Array<Express.Multer.File>,
   ) {
+    // 1. Authorization Check
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Only hiring manager can create dataset", 403);
+    }
+    if (!files || files.length === 0) {
+      return this.response.fail("Image is required", 400);
     }
 
     const transaction = await this.sequelize.transaction();
@@ -35,6 +39,7 @@ export class DatasetService {
       const imageData = [];
       const sharpHelper = new SharpHelper();
 
+      // 2. Process and Upload Images
       for (const file of files) {
         const uploadFile = await sharpHelper.resizeAndUpload(
           file,
@@ -47,10 +52,11 @@ export class DatasetService {
         });
       }
 
+      // 3. Create Dataset with nested images
       const dataset = await this.datasetModel.create(
         {
-          name: createDatasetDto.name,
-          created_by: user.id,
+          user_id: createDatasetDto.user_id, // The target employee
+          created_by: user.id, // The hiring manager
           dataset_images: imageData,
         },
         {
@@ -60,7 +66,14 @@ export class DatasetService {
       );
 
       await transaction.commit();
-      await dataset.reload({ include: ["name_user", "dataset_images"] });
+
+      // 4. Reload with proper associations defined in Entity
+      await dataset.reload({
+        include: [
+          { association: "user", attributes: { exclude: ["password"] } },
+          "dataset_images",
+        ],
+      });
 
       return this.response.success(
         dataset,
@@ -69,7 +82,10 @@ export class DatasetService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(
+        error.message || "An error occurred during creation",
+        400,
+      );
     }
   }
 
@@ -77,29 +93,31 @@ export class DatasetService {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Only hiring manager can see dataset", 403);
     }
+
     try {
-      const { count, data } = await new QueryBuilderHelper(
-        this.userModel,
+      // Change userModel to datasetModel
+      const result = await new QueryBuilderHelper(
+        this.datasetModel, // Query the datasets directly
         query,
       )
-        .load("datasets")
+        .load("dataset_images") // Load the images
+        .load("user") // Load the employee info
         .getResult();
 
-      const formattedData = data.map((employee: any) => {
-        const plainUser = employee.get
-          ? employee.get({ plain: true })
-          : employee;
+      if (!result) {
+        return this.response.success(
+          { count: 0, datasets: [] },
+          200,
+          "No datasets found",
+        );
+      }
 
-        return {
-          ...plainUser,
-          has_dataset: !!(plainUser.datasets && plainUser.datasets.length > 0),
-        };
-      });
+      const { count, data } = result;
 
       return this.response.success(
-        { count, employees: formattedData },
+        { count, datasets: data },
         200,
-        "Successfully retrieved employees",
+        "Successfully retrieved datasets",
       );
     } catch (error) {
       return this.response.fail(error.message, 400);
@@ -112,7 +130,11 @@ export class DatasetService {
         include: [
           { association: "dataset_images" },
           {
-            association: "created_by_user",
+            association: "user", // The employee
+            attributes: { exclude: ["password"] },
+          },
+          {
+            association: "created_by_user", // The manager
             attributes: { exclude: ["password"] },
           },
         ],
@@ -120,7 +142,7 @@ export class DatasetService {
 
       return this.response.success(dataset, 200, "Successfully get dataset");
     } catch (error) {
-      return this.response.fail(error, 400);
+      return this.response.fail(error.message || error, 400);
     }
   }
 
@@ -134,7 +156,6 @@ export class DatasetService {
     }
 
     const transaction = await this.sequelize.transaction();
-
     try {
       await dataset.update(updateDatasetDto, { transaction });
       await transaction.commit();
@@ -142,16 +163,16 @@ export class DatasetService {
       return this.response.success(dataset, 200, "Successfully update dataset");
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error, 400);
+      return this.response.fail(error.message || error, 400);
     }
   }
+
   async remove(dataset: Dataset, user: User) {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Only hiring manager can delete dataset", 403);
     }
 
     const transaction = await this.sequelize.transaction();
-
     try {
       await dataset.destroy({ transaction });
       await transaction.commit();
@@ -159,7 +180,7 @@ export class DatasetService {
       return this.response.success({}, 200, "Successfully delete dataset");
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error, 400);
+      return this.response.fail(error.message || error, 400);
     }
   }
 }

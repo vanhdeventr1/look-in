@@ -4,12 +4,10 @@ import {
   DataType,
   DefaultScope,
   ForeignKey,
-  HasMany,
   Model,
   Table,
 } from "sequelize-typescript";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
-import { Dataset } from "src/features/dataset/entities/dataset.entity";
 import { getUserRoleEnumLabel } from "../enums/user-role.enum";
 
 @Table({
@@ -70,10 +68,4 @@ export class User extends Model {
     foreignKey: "created_by",
   })
   created_by_user: TypeWrapper<User>;
-  // Inside the User class:
-  @HasMany(() => Dataset, {
-    foreignKey: "name", // This matches the 'name' column in your Dataset entity
-    as: "datasets",
-  })
-  datasets: TypeWrapper<Dataset[]>;
 }
