@@ -29,12 +29,10 @@ export class Dataset extends Model {
 
   @ForeignKey(() => User)
   @Column({ type: DataType.BIGINT, allowNull: false })
-  name: number;
+  user_id: number;
 
-  @BelongsTo(() => User, {
-    foreignKey: "name",
-  })
-  name_user: TypeWrapper<User>;
+  @BelongsTo(() => User, "user_id")
+  user: TypeWrapper<User>;
 
   @ForeignKey(() => User)
   @Column({ type: DataType.BIGINT, allowNull: false })
