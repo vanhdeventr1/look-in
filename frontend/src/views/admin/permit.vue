@@ -141,14 +141,16 @@
                     v-if="permit.status_code === 0"
                   >
                     <button
-                      @click="triggerApprove(permit)"
-                      class="text-green-600 hover:scale-110 transition-transform cursor-pointer"
+                      :disabled="isProcessing"
+                      @click.stop="triggerApprove(permit)"
+                      class="text-green-600 hover:scale-110 transition-transform cursor-pointer disabled:opacity-50"
                     >
                       <CheckCircleIcon :size="20" />
                     </button>
                     <button
-                      @click="triggerReject(permit)"
-                      class="text-red-600 hover:scale-110 transition-transform cursor-pointer"
+                      :disabled="isProcessing"
+                      @click.stop="triggerReject(permit)"
+                      class="text-red-600 hover:scale-110 transition-transform cursor-pointer disabled:opacity-50"
                     >
                       <XCircleIcon :size="20" />
                     </button>
@@ -162,7 +164,7 @@
                 </td>
                 <td class="px-6 py-4 text-center">
                   <button
-                    @click="openViewDetail(permit)"
+                    @click.stop="openViewDetail(permit)"
                     class="text-[#8C352D] hover:scale-110 transition-transform cursor-pointer"
                   >
                     <EyeIcon :size="18" />
@@ -258,9 +260,7 @@
               </div>
             </div>
             <div class="space-y-2">
-              <label
-                class="text-sm font-bold text-[#8C352D] block mb-1""
-              >
+              <label class="text-sm font-bold text-[#8C352D] block mb-1">
                 Alasan ({{ selectedPermit?.totalDays }} Hari)
               </label>
               <div
@@ -271,9 +271,7 @@
             </div>
           </div>
           <div class="space-y-2">
-            <label
-              class="text-sm font-bold text-[#8C352D] block mb-1""
-            >
+            <label class="text-sm font-bold text-[#8C352D] block mb-1">
               Tanggal Perizinan
             </label>
             <div class="flex items-center gap-4">
@@ -282,7 +280,7 @@
               >
                 {{ selectedPermit?.startDate }}
               </div>
-              <span class="text-sm font-bold text-[#8C352D] block mb-1"">
+              <span class="text-sm font-bold text-[#8C352D] block mb-1">
                 Sampai
               </span>
               <div
@@ -293,9 +291,7 @@
             </div>
           </div>
           <div class="space-y-2">
-            <label
-              class="text-sm font-bold text-[#8C352D] block mb-1""
-            >
+            <label class="text-sm font-bold text-[#8C352D] block mb-1">
               Deskripsi
             </label>
             <div
@@ -305,9 +301,7 @@
             </div>
           </div>
           <div class="space-y-3">
-            <label
-              class="text-sm font-bold text-[#8C352D] block mb-1""
-            >
+            <label class="text-sm font-bold text-[#8C352D] block mb-1">
               Bukti Foto ({{ selectedPermit?.evidenceImgs?.length || 0 }})
             </label>
             <div
@@ -345,14 +339,16 @@
             class="flex justify-end gap-3 pt-6"
           >
             <button
+              :disabled="isProcessing"
               @click="triggerReject(selectedPermit)"
-              class="px-8 py-3.5 bg-white text-[#8C352D] border border-[#8C352D] rounded-2xl font-bold hover:bg-[#FFF0EE] transition-all cursor-pointer"
+              class="px-8 py-3.5 bg-white text-[#8C352D] border border-[#8C352D] rounded-2xl font-bold hover:bg-[#FFF0EE] transition-all cursor-pointer disabled:opacity-50"
             >
               Tolak
             </button>
             <button
+              :disabled="isProcessing"
               @click="triggerApprove(selectedPermit)"
-              class="px-8 py-3.5 bg-[#8C352D] text-white rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md cursor-pointer"
+              class="px-8 py-3.5 bg-[#8C352D] text-white rounded-2xl font-bold hover:bg-[#a24a42] transition-all shadow-md cursor-pointer disabled:opacity-50"
             >
               Setujui Izin
             </button>
@@ -369,7 +365,7 @@
       </div>
     </div>
 
-    <AlertLayout v-if="isConfirmApproveOpen">
+    <AlertLayout v-if="isConfirmApproveOpen" class="z-[100]">
       <template #icon>
         <div
           class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
@@ -385,20 +381,20 @@
       <template #actions>
         <button
           @click="confirmAction('Approved')"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold cursor-pointer"
         >
           Ya, Setujui!
         </button>
         <button
           @click="isConfirmApproveOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
         >
           Batalkan
         </button>
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isConfirmRejectOpen">
+    <AlertLayout v-if="isConfirmRejectOpen" class="z-[100]">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
@@ -410,20 +406,20 @@
       <template #actions>
         <button
           @click="confirmAction('Rejected')"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold cursor-pointer"
         >
           Ya, Tolak!
         </button>
         <button
           @click="isConfirmRejectOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
         >
           Batalkan
         </button>
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isSuccessAlertOpen">
+    <AlertLayout v-if="isSuccessAlertOpen" class="z-[100]">
       <template #icon>
         <div
           class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
@@ -435,7 +431,7 @@
       <template #actions>
         <button
           @click="isSuccessAlertOpen = false"
-          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold"
+          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold cursor-pointer"
         >
           OK
         </button>
@@ -445,7 +441,7 @@
     <Transition name="fade">
       <div
         v-if="fullScreenImg"
-        class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+        class="fixed inset-0 z-[110] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
         @click="fullScreenImg = null"
       >
         <button class="absolute top-6 right-6 text-white/70 hover:text-white">
@@ -504,6 +500,7 @@ const isViewModalOpen = ref(false);
 const isConfirmApproveOpen = ref(false);
 const isConfirmRejectOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
+const isProcessing = ref(false); // Optimization: Prevent multiple clicks
 const fullScreenImg = ref<string | null>(null);
 const searchQuery = ref("");
 const selectedPermit = ref<PermitRow | null>(null);
@@ -612,17 +609,21 @@ const closeViewModal = () => {
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
 };
+
 const openViewDetail = (permit: any) => {
   selectedPermit.value = permit;
   isViewModalOpen.value = true;
 };
+
 const openFullScreen = (url: string) => {
   fullScreenImg.value = url;
 };
+
 const triggerApprove = (permit: any) => {
   selectedPermit.value = permit;
   isConfirmApproveOpen.value = true;
 };
+
 const triggerReject = (permit: any) => {
   selectedPermit.value = permit;
   isConfirmRejectOpen.value = true;
@@ -640,11 +641,24 @@ const fetchPermits = async () => {
 };
 
 const confirmAction = async (type: "Approved" | "Rejected") => {
-  if (!selectedPermit.value) return;
+  if (!selectedPermit.value || isProcessing.value) return;
+
+  isProcessing.value = true;
   const nextStatus = type === "Approved" ? 1 : 2;
+
   try {
     await updatePermit(selectedPermit.value.id, { status: nextStatus });
-    await fetchPermits();
+    const index = permits.value.findIndex(
+      (p) => p.id === selectedPermit.value?.id,
+    );
+    if (index !== -1) {
+      const target = permits.value[index];
+      if (target) {
+        target.status_code = nextStatus;
+        target.status = statusLabelMap[nextStatus] ?? "Unknown";
+      }
+    }
+
     successAlertTitle.value =
       type === "Approved"
         ? "Izin Berhasil Disetujui!"
@@ -653,6 +667,7 @@ const confirmAction = async (type: "Approved" | "Rejected") => {
   } catch (error) {
     console.error(error);
   } finally {
+    isProcessing.value = false;
     isConfirmApproveOpen.value = false;
     isConfirmRejectOpen.value = false;
     closeViewModal();
@@ -696,10 +711,10 @@ const paginatedPermits = computed(() => {
 });
 
 const pendingCount = computed(
-  () => filteredPermits.value.filter((p) => p.raw.status === 0).length,
+  () => filteredPermits.value.filter((p) => p.status_code === 0).length,
 );
 const approvedCount = computed(
-  () => filteredPermits.value.filter((p) => p.raw.status === 1).length,
+  () => filteredPermits.value.filter((p) => p.status_code === 1).length,
 );
 
 watch([searchQuery, selectedMonth, selectedYear, sortOrder], () => {

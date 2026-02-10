@@ -4,12 +4,16 @@ export const getDatasets = (params?: Record<string, any>) => {
   return api.get("/datasets", { params });
 };
 
+export const getDataset = (id: number) => {
+  return api.get(`/datasets/${id}`);
+};
+
 export const createDataset = (payload: {
-  name: number;
+  user_id: number;
   files: File[];
 }) => {
   const formData = new FormData();
-  formData.append("name", String(payload.name));
+  formData.append("user_id", String(payload.user_id));
 
   if (payload.files?.length) {
     payload.files.forEach((file) => {
