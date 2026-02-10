@@ -1,3 +1,3 @@
 export class CreateDatasetDto {
-  name: number;
+  user_id: number;
 }
