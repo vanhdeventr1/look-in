@@ -367,7 +367,7 @@
           class="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl animate-in object-contain"
         />
         <button
-          class="absolute -top-12 right-0 text-white font-bold bg-[#8C352D] px-6 py-2 rounded-full"
+          class="absolute -top-12 right-0 text-white font-bold bg-[#8C352D] px-6 py-2 rounded-full cursor-pointer"
         >
           Tutup Viewer
         </button>
@@ -386,13 +386,13 @@
       <template #actions>
         <button
           @click="handleDelete"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold cursor-pointer"
         >
           Ya, Hapus!
         </button>
         <button
           @click="isDeleteAlertOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
         >
           Batalkan
         </button>
@@ -411,7 +411,7 @@
       <template #actions>
         <button
           @click="isValidationAlertOpen = false"
-          class="w-full bg-[#8C352D] text-white py-3 rounded-2xl font-bold"
+          class="w-full bg-[#8C352D] text-white py-3 rounded-2xl font-bold cursor-pointer"
         >
           Oke, Mengerti
         </button>
@@ -444,6 +444,13 @@
 </template>
 
 <script setup lang="ts">
+import {
+  createDataset,
+  deleteDataset,
+  getDataset,
+  getDatasets,
+} from "@/api/dataset.api";
+import { getUsers } from "@/api/users.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebar.vue";
 import {
@@ -459,7 +466,41 @@ import {
   Trash2 as TrashIcon,
   Upload as UploadIcon,
 } from "lucide-vue-next";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+
+type User = {
+  id: number;
+  name: string;
+  role: number;
+  role_name?: string;
+};
+
+type DatasetImage = {
+  id: number;
+  url: string;
+};
+
+type DatasetApiItem = {
+  id: number;
+  user_id: number;
+  user?: User;
+  dataset_images?: DatasetImage[];
+  datasetImages?: DatasetImage[];
+  userId?: number;
+};
+
+type DatasetRow = {
+  id: number;
+  userId: number;
+  name: string;
+  role: string;
+  images: Array<{
+    id?: number;
+    name?: string;
+    preview: string;
+    file?: File;
+  }>;
+};
 
 const viewState = ref<"list" | "form" | "view">("list");
 const formMode = ref<"add" | "edit">("add");
@@ -476,23 +517,66 @@ const searchQuery = ref("");
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
-const users = ref([
-  { id: 1, name: "Hayley William", role: "Karyawan" },
-  { id: 2, name: "Johnny Marr", role: "Karyawan" },
-  { id: 3, name: "Morrissey", role: "Karyawan" },
-  { id: 4, name: "Julian Casablancas", role: "Magang" },
-  { id: 5, name: "Dave Grohl", role: "Karyawan" },
-  { id: 6, name: "Kurt Cobain", role: "Karyawan" },
-  { id: 7, name: "Thom Yorke", role: "Karyawan" },
-  { id: 8, name: "Chris Martin", role: "Karyawan" },
-  { id: 9, name: "Eddie Vedder", role: "Karyawan" },
-  { id: 10, name: "Eddie Vedder", role: "Karyawan" },
-]);
+const users = ref<User[]>([]);
 
-const dataset = ref<any[]>([]);
+const dataset = ref<DatasetRow[]>([]);
 const selectedUser = ref<number | string>("");
-const uploadedFiles = ref<any[]>([]);
-const selectedData = ref<any>(null);
+const uploadedFiles = ref<DatasetRow["images"]>([]);
+const selectedData = ref<DatasetRow | null>(null);
+
+const roleLabelMap: Record<number, string> = {
+  0: "Pengguna",
+  1: "Manajer Rekrutmen",
+  2: "Karyawan",
+  3: "Magang",
+};
+
+const getRoleLabel = (user?: User | null) =>
+  user?.role_name ?? (user ? roleLabelMap[user.role] : undefined) ?? "-";
+
+const normalizeDatasetRow = (d: DatasetApiItem): DatasetRow => ({
+  id: (d as any).id,
+  userId: (d as any).user_id ?? (d as any).userId,
+  name: (d as any).user?.name ?? "-",
+  role: getRoleLabel((d as any).user),
+  images: ((d as any).dataset_images ?? (d as any).datasetImages ?? []).map(
+    (img: DatasetImage) => ({
+      id: img.id,
+      name: `image-${img.id}`,
+      preview: img.url,
+    }),
+  ),
+});
+
+const fetchUsers = async () => {
+  try {
+    const response = await getUsers({ limit: 1000 });
+    users.value = response?.data?.data?.users ?? [];
+  } catch (error) {
+    console.error(error);
+    users.value = [];
+  }
+};
+
+const fetchDatasets = async () => {
+  try {
+    const response = await getDatasets({ limit: 1000 });
+    const datasets = (response?.data?.data?.datasets ?? []) as DatasetApiItem[];
+    dataset.value = datasets.map(normalizeDatasetRow);
+  } catch (error) {
+    console.error(error);
+    dataset.value = [];
+  }
+};
+
+const fetchDatasetDetail = async (id: number) => {
+  const response = await getDataset(id);
+  return response?.data?.data as DatasetApiItem;
+};
+
+onMounted(async () => {
+  await Promise.all([fetchUsers(), fetchDatasets()]);
+});
 
 const filteredDataset = computed(() => {
   if (!searchQuery.value) return dataset.value;
@@ -518,17 +602,28 @@ const openAddForm = () => {
   uploadedFiles.value = [];
 };
 
-const openViewMode = (item: any) => {
-  selectedData.value = item;
-  viewState.value = "view";
+const openViewMode = async (item: DatasetRow) => {
+  try {
+    // The list endpoint should include dataset_images, but fetch detail to ensure
+    // the view modal always has the latest dataset_images attached.
+    const detail = await fetchDatasetDetail(item.id);
+    selectedData.value = normalizeDatasetRow(detail);
+  } catch (error) {
+    console.error(error);
+    selectedData.value = item;
+  } finally {
+    viewState.value = "view";
+  }
 };
 
 const openEditForm = (item: any) => {
+  // Backend currently supports create/delete datasets. "Edit" is kept as UI flow,
+  // but we don't attempt to update existing dataset images here.
   formMode.value = "edit";
   viewState.value = "form";
   selectedId.value = item.id;
   selectedUser.value = item.userId;
-  uploadedFiles.value = [...item.images];
+  uploadedFiles.value = [];
 };
 
 const openLightbox = (url: string) => (lightboxUrl.value = url);
@@ -550,29 +645,29 @@ const handleFileUpload = (event: Event) => {
 
 const removeFile = (index: number) => uploadedFiles.value.splice(index, 1);
 
-const submitData = () => {
-  if (!selectedUser.value || uploadedFiles.value.length === 0) {
+const submitData = async () => {
+  const files = uploadedFiles.value
+    .map((f) => f.file)
+    .filter(Boolean) as File[];
+  if (!selectedUser.value || files.length === 0) {
     isValidationAlertOpen.value = true;
     return;
   }
 
-  const userObj = users.value.find((u) => u.id === Number(selectedUser.value));
+  try {
+    if (formMode.value === "add") {
+      await createDataset({ user_id: Number(selectedUser.value), files });
+      successAlertTitle.value = "Gambar Dataset\nBerhasil Ditambahkan!";
+    } else {
+      isValidationAlertOpen.value = true;
+      return;
+    }
 
-  if (formMode.value === "add") {
-    dataset.value.push({
-      id: Date.now(),
-      userId: Number(selectedUser.value),
-      name: userObj?.name,
-      role: userObj?.role,
-      images: [...uploadedFiles.value],
-    });
-    successAlertTitle.value = "Gambar Dataset\nBerhasil Ditambahkan!";
-  } else {
-    const index = dataset.value.findIndex((d) => d.id === selectedId.value);
-    if (index !== -1) dataset.value[index].images = [...uploadedFiles.value];
-    successAlertTitle.value = "Gambar Dataset\nBerhasil Diperbarui!";
+    await fetchDatasets();
+    isSuccessAlertOpen.value = true;
+  } catch (error) {
+    console.error(error);
   }
-  isSuccessAlertOpen.value = true;
 };
 
 const closeSuccessAlert = () => {
@@ -586,8 +681,13 @@ const confirmDelete = (id: number) => {
 };
 
 const handleDelete = () => {
-  dataset.value = dataset.value.filter((item) => item.id !== selectedId.value);
-  isDeleteAlertOpen.value = false;
+  if (!selectedId.value) return;
+  deleteDataset(selectedId.value)
+    .then(() => fetchDatasets())
+    .catch((error) => console.error(error))
+    .finally(() => {
+      isDeleteAlertOpen.value = false;
+    });
 };
 </script>
 
