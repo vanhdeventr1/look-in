@@ -43,7 +43,7 @@ export class Dataset extends Model {
   })
   created_by_user: TypeWrapper<User>;
 
-  @HasMany(() => DatasetImage)
+  @HasMany(() => DatasetImage, { foreignKey: "dataset_id" })
   dataset_images: TypeWrapper<DatasetImage[]>;
 
   static imageDimension: { datasetImage: ResizeOption } = {
