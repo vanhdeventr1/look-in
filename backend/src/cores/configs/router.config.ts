@@ -1,6 +1,7 @@
 import { RouterModule } from "@nestjs/core";
 import { AuthModule } from "src/features/auth/auth.module";
 import { BusinessUnitModule } from "src/features/business-unit/business-unit.module";
+import { DatasetImageModule } from "src/features/dataset-image/dataset-image.module";
 import { DatasetModule } from "src/features/dataset/dataset.module";
 import { NotificationModule } from "src/features/notification/public/notification.module";
 import { PermitImageModule } from "src/features/permit-image/permit-image.module";
@@ -31,6 +32,12 @@ export default RouterModule.register([
       {
         path: "datasets",
         module: DatasetModule,
+        children: [
+          {
+            path: ":datasetId/images",
+            module: DatasetImageModule,
+          },
+        ],
       },
       {
         path: "business-units",
