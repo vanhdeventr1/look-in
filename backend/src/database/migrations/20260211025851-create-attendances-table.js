@@ -10,34 +10,50 @@ module.exports = {
         primaryKey: true,
       },
       user_id: {
-       type: Sequelize.BIGINT,
+        type: Sequelize.BIGINT,
         allowNull: false,
         references: {
           model: "users",
           key: "id",
         },
       },
-      timestamp: {
+      clock_in: {
         type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
+        allowNull: true,
       },
-      timestop: {
+      shift_time: {
         type: Sequelize.DATE,
         allowNull: false,
+      },
+      is_late: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      late_duration: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      permit_id: {
+        type: Sequelize.BIGINT,
+        allowNull: true,
+        references: {
+          model: "permits",
+          key: "id",
+        },
       },
       gps_lat: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       gps_lng: {
         type: Sequelize.STRING,
-        allowNull: false,
-      },
-      status: {
-        type: Sequelize.TINYINT,
         allowNull: true,
-        defaultValue: 0,
+      },
+      note: {
+        type: Sequelize.TEXT,
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,
