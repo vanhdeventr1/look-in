@@ -53,8 +53,18 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, role: 2 },
   },
   {
+    path: "/public/attendance",
+    component: () => import("@/views/public/attendance.vue"),
+    meta: { requiresAuth: true, role: 2 },
+  },
+  {
     path: "/public/permit",
     component: () => import("@/views/public/permit.vue"),
+    meta: { requiresAuth: true, role: 2 },
+  },
+  {
+    path: "/public/attendance-history",
+    component: () => import("@/views/public/attendance-history.vue"),
     meta: { requiresAuth: true, role: 2 },
   },
   {
