@@ -192,12 +192,12 @@ const hasUnread = ref(false);
 
 const navItems = ref([
   { icon: markRaw(HomeIcon), label: "Beranda", path: "/public/dashboard" },
-  { icon: markRaw(ScanIcon), label: "Absen", path: "" },
+  { icon: markRaw(ScanIcon), label: "Absen", path: "/public/attendance" },
   { icon: markRaw(PermitIcon), label: "Perizinan", path: "/public/permit" },
   {
     icon: markRaw(AttendanceIcon),
     label: "Riwayat Absen",
-    path: "",
+    path: "/public/attendance-history",
   },
   {
     icon: markRaw(BellIcon),
