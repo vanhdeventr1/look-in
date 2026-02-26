@@ -1,3 +1,4 @@
+import Attendance from "@/views/attendance.vue";
 import Login from "@/views/login.vue";
 import Register from "@/views/register.vue";
 import {
@@ -10,6 +11,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: "/", redirect: "/login" },
   { path: "/login", name: "login", component: Login },
   { path: "/register", name: "register", component: Register },
+  { path: "/attendance", name: "attendance", component: Attendance },
 
   {
     path: "/admin/dashboard",

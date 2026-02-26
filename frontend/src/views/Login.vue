@@ -28,6 +28,7 @@
         </div>
 
         <button
+          @click="goToAttendance"
           type="button"
           class="absolute bottom-6 md:bottom-10 w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#a24a42] flex items-center justify-center shadow-lg hover:bg-[#b3564d] transition-transform active:scale-95 cursor-pointer"
         >
@@ -139,8 +140,10 @@ import {
   Mail as MailIcon,
 } from "lucide-vue-next";
 import { reactive, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 const { login, error, clearError, loading } = useAuth();
+const router = useRouter();
 
 const showPassword = ref(false);
 
@@ -155,5 +158,9 @@ watch(form, () => {
 
 const handleLogin = () => {
   login(form.username, form.password);
+};
+
+const goToAttendance = () => {
+  router.push("/attendance");
 };
 </script>
