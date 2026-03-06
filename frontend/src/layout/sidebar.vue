@@ -156,12 +156,13 @@
 </template>
 
 <script setup lang="ts">
-import { getNotifications } from "@/api/notification.api"; // Import notification API
+import { getNotifications } from "@/api/notification.api";
 import { useAuth } from "@/composables/useAuth";
 import {
   FileCheckCorner as ApprovalIcon,
   CalendarDays as AttendanceIcon,
   Bell as BellIcon,
+  CalendarCog as CalendarCogIcon,
   ScanFace as FaceIcon,
   Home as HomeIcon,
   LogOut as LogOutIcon,
@@ -200,6 +201,11 @@ const navItems = ref([
     icon: markRaw(AttendanceIcon),
     label: "Riwayat Absen",
     path: "/admin/attendance",
+  },
+  {
+    icon: markRaw(CalendarCogIcon),
+    label: "Pengaturan Absen",
+    path: "/admin/attendance-setting",
   },
   { icon: markRaw(BellIcon), label: "Notifikasi", path: "/admin/notification" },
 ]);
