@@ -17,6 +17,14 @@ module.exports = {
           key: "id",
         },
       },
+      permit_id: {
+        type: Sequelize.BIGINT,
+        allowNull: true,
+        references: {
+          model: "permits",
+          key: "id",
+        },
+      },
       clock_in: {
         type: Sequelize.DATE,
         allowNull: true,
@@ -34,14 +42,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 0,
-      },
-      permit_id: {
-        type: Sequelize.BIGINT,
-        allowNull: true,
-        references: {
-          model: "permits",
-          key: "id",
-        },
       },
       gps_lat: {
         type: Sequelize.STRING,
