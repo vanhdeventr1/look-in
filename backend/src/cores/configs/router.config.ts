@@ -1,5 +1,6 @@
 import { RouterModule } from "@nestjs/core";
 import { AttendanceImageModule } from "src/features/attendance-image/attendance-image.module";
+import { AttendanceSettingModule } from "src/features/attendance-setting/attendance-setting.module";
 import { AttendanceModule } from "src/features/attendance/attendance.module";
 import { AuthModule } from "src/features/auth/auth.module";
 import { DatasetImageModule } from "src/features/dataset-image/dataset-image.module";
@@ -49,6 +50,10 @@ export default RouterModule.register([
             module: AttendanceImageModule,
           },
         ],
+      },
+      {
+        path: "attendance-settings",
+        module: AttendanceSettingModule,
       },
       {
         path: "permits",
