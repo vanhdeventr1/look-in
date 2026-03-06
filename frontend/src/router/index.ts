@@ -39,6 +39,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, role: 1 },
   },
   {
+    path: "/admin/attendance-setting",
+    component: () => import("@/views/admin/attendance-setting.vue"),
+    meta: { requiresAuth: true, role: 1 },
+  },
+  {
     path: "/admin/notification",
     component: () => import("@/views/admin/notification.vue"),
     meta: { requiresAuth: true, role: 1 },
