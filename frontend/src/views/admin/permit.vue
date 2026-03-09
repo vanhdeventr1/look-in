@@ -174,7 +174,7 @@
               <tr v-if="filteredPermits.length === 0">
                 <td
                   colspan="7"
-                  class="px-6 py-10 text-center text-[#8C352D]/50 italic"
+                  class="px-6 py-10 text-center text-[#8C352D]/50 italic text-sm"
                 >
                   Tidak ada data yang sesuai filter.
                 </td>
