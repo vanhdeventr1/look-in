@@ -1,7 +1,6 @@
 import * as Joi from "joi";
 
 export const createAttendanceSchema = Joi.object({
-  clock_in: Joi.date().optional().allow(null),
   clock_out: Joi.date().optional().allow(null),
   gps_lat: Joi.string().required(),
   gps_lng: Joi.string().required(),

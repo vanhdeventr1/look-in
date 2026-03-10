@@ -12,6 +12,9 @@ import { Attendance } from "./entities/attendance.entity";
 
 @Injectable()
 export class AttendanceService {
+  private readonly attendanceTimeZone = "Asia/Jakarta";
+  private readonly attendanceTimeZoneOffset = "+07:00";
+
   constructor(
     private readonly response: ResponseHelper,
     private readonly sequelize: Sequelize,
@@ -21,11 +24,58 @@ export class AttendanceService {
     private readonly attendanceSettingModel: typeof AttendanceSetting,
   ) {}
 
+  private pad2(value: number): string {
+    return value.toString().padStart(2, "0");
+  }
+
+  private getDateTimePartsInTimeZone(date: Date, timeZone: string) {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(date);
+    const get = (type: string) =>
+      parts.find((value) => value.type === type)?.value || "00";
+
+    return {
+      year: get("year"),
+      month: get("month"),
+      day: get("day"),
+      hour: get("hour"),
+      minute: get("minute"),
+      second: get("second"),
+    };
+  }
+
+  private getNowInAttendanceTimeZone(): Date {
+    const now = new Date();
+    const nowParts = this.getDateTimePartsInTimeZone(
+      now,
+      this.attendanceTimeZone,
+    );
+
+    return new Date(
+      `${nowParts.year}-${nowParts.month}-${nowParts.day}T${nowParts.hour}:${nowParts.minute}:${nowParts.second}.000${this.attendanceTimeZoneOffset}`,
+    );
+  }
+
   private parseTimeOnDate(date: Date, time: string): Date {
     const [hour, minute, second] = time.split(":").map((value) => +value || 0);
-    const result = new Date(date);
-    result.setHours(hour, minute, second, 0);
-    return result;
+    const dateParts = this.getDateTimePartsInTimeZone(
+      date,
+      this.attendanceTimeZone,
+    );
+
+    return new Date(
+      `${dateParts.year}-${dateParts.month}-${dateParts.day}T${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}.000${this.attendanceTimeZoneOffset}`,
+    );
   }
 
   private calculateLateDuration(clockIn: Date, checkInTime: string): number {
@@ -108,9 +158,7 @@ export class AttendanceService {
       );
     }
 
-    const clockIn = createAttendanceDto.clock_in
-      ? new Date(createAttendanceDto.clock_in)
-      : new Date();
+    const clockIn = this.getNowInAttendanceTimeZone();
     const lateDuration = this.calculateLateDuration(
       clockIn,
       attendanceSetting.check_in_time,
