@@ -16,11 +16,11 @@ import { JoiValidationPipe } from "src/cores/validators/pipes/joi-validation.pip
 import { User } from "../user/entities/user.entity";
 import { AttendanceService } from "./attendance.service";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
-import { UpdateLateNoteDto } from "./dto/update-late-note.dto";
+import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
 import { Attendance } from "./entities/attendance.entity";
 import { attendanceIdParamSchema } from "./validations/params/attendance-id.param";
 import { createAttendanceSchema } from "./validations/requests/create-attendance-id.request";
-import { updateLateNoteSchema } from "./validations/requests/update-late-note.request";
+import { updateAttendanceSchema } from "./validations/requests/update-attendance-id.request";
 
 @Controller()
 export class AttendanceController {
@@ -57,13 +57,13 @@ export class AttendanceController {
     @CurrentUser() user: User,
     @Param("id", new JoiValidationParamPipe(attendanceIdParamSchema))
     attendance: Attendance,
-    @Body(new JoiValidationPipe(updateLateNoteSchema))
-    updateLateNoteDto: UpdateLateNoteDto,
+    @Body(new JoiValidationPipe(updateAttendanceSchema))
+    updateAttendanceDto: UpdateAttendanceDto,
   ) {
     return this.attendanceService.updateLateNote(
       attendance,
       user,
-      updateLateNoteDto,
+      updateAttendanceDto,
     );
   }
 

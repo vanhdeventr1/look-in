@@ -7,7 +7,7 @@ import { AttendanceSetting } from "../attendance-setting/entities/attendance-set
 import { User } from "../user/entities/user.entity";
 import UserRoleEnum from "../user/enums/user-role.enum";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
-import { UpdateLateNoteDto } from "./dto/update-late-note.dto";
+import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
 import { Attendance } from "./entities/attendance.entity";
 
 @Injectable()
@@ -259,7 +259,7 @@ export class AttendanceService {
   async updateLateNote(
     attendance: Attendance,
     user: User,
-    updateLateNoteDto: UpdateLateNoteDto,
+    updateAttendanceDto: UpdateAttendanceDto,
   ) {
     if (attendance.user_id !== user.id) {
       return this.response.fail(
@@ -277,7 +277,7 @@ export class AttendanceService {
 
     const requiredWords =
       attendance.late_duration * this.lateNoteRequiredWordsPerMinute;
-    const currentWords = this.countWords(updateLateNoteDto.note || "");
+    const currentWords = this.countWords(updateAttendanceDto.note || "");
     const additionalWordsNeeded = Math.max(requiredWords - currentWords, 0);
 
     if (additionalWordsNeeded > 0) {
@@ -291,7 +291,7 @@ export class AttendanceService {
     try {
       await attendance.update(
         {
-          note: updateLateNoteDto.note,
+          note: updateAttendanceDto.note,
         },
         { transaction },
       );
