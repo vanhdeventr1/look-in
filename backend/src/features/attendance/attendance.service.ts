@@ -7,7 +7,7 @@ import { AttendanceSetting } from "../attendance-setting/entities/attendance-set
 import { User } from "../user/entities/user.entity";
 import UserRoleEnum from "../user/enums/user-role.enum";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
-import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
+import { UpdateLateNoteDto } from "./dto/update-late-note.dto";
 import { Attendance } from "./entities/attendance.entity";
 
 @Injectable()
@@ -111,10 +111,7 @@ export class AttendanceService {
   }
 
   private countWords(text: string): number {
-    return text
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean).length;
+    return text.trim().split(/\s+/).filter(Boolean).length;
   }
 
   async create(createAttendanceDto: CreateAttendanceDto, user: User) {
@@ -145,9 +142,12 @@ export class AttendanceService {
     const settingLongitude = +attendanceSetting.gps_lng;
 
     if (
-      [currentLatitude, currentLongitude, settingLatitude, settingLongitude].some(
-        Number.isNaN,
-      )
+      [
+        currentLatitude,
+        currentLongitude,
+        settingLatitude,
+        settingLongitude,
+      ].some(Number.isNaN)
     ) {
       return this.response.fail("Invalid GPS coordinate format", 400);
     }
@@ -175,9 +175,7 @@ export class AttendanceService {
     const minimumRequiredWords =
       lateDuration * this.lateNoteRequiredWordsPerMinute;
     const additionalWordsNeeded =
-      lateDuration > 0
-        ? Math.max(minimumRequiredWords - noteWordCount, 0)
-        : 0;
+      lateDuration > 0 ? Math.max(minimumRequiredWords - noteWordCount, 0) : 0;
 
     const transaction = await this.sequelize.transaction();
     try {
@@ -239,22 +237,80 @@ export class AttendanceService {
   async findOne(attendance: Attendance) {
     try {
       await attendance.reload({
-        include: ["user", "created_by_user", "attendance_images", "attendance_setting", "permit"],
+        include: [
+          "user",
+          "created_by_user",
+          "attendance_images",
+          "attendance_setting",
+          "permit",
+        ],
       });
 
-      return this.response.success(attendance, 200, "Successfully get attendance");
+      return this.response.success(
+        attendance,
+        200,
+        "Successfully get attendance",
+      );
     } catch (error) {
       return this.response.fail(error.message || error, 400);
     }
   }
 
-  async update(attendance: Attendance, updateAttendanceDto: UpdateAttendanceDto) {
+  async updateLateNote(
+    attendance: Attendance,
+    user: User,
+    updateLateNoteDto: UpdateLateNoteDto,
+  ) {
+    if (attendance.user_id !== user.id) {
+      return this.response.fail(
+        "You can only update late note for your own attendance",
+        403,
+      );
+    }
+
+    if (!attendance.is_late) {
+      return this.response.fail(
+        "Late note can only be updated for late attendance",
+        400,
+      );
+    }
+
+    const requiredWords =
+      attendance.late_duration * this.lateNoteRequiredWordsPerMinute;
+    const currentWords = this.countWords(updateLateNoteDto.note || "");
+    const additionalWordsNeeded = Math.max(requiredWords - currentWords, 0);
+
+    if (additionalWordsNeeded > 0) {
+      return this.response.fail(
+        `You are late ${attendance.late_duration} minute(s), add ${additionalWordsNeeded} words more`,
+        400,
+      );
+    }
+
     const transaction = await this.sequelize.transaction();
     try {
-      await attendance.update(updateAttendanceDto, { transaction });
+      await attendance.update(
+        {
+          note: updateLateNoteDto.note,
+        },
+        { transaction },
+      );
       await transaction.commit();
 
-      return this.response.success(attendance, 200, "Successfully update attendance");
+      return this.response.success(
+        {
+          attendance,
+          late_note_requirement: {
+            is_required: true,
+            required_words: requiredWords,
+            current_words: currentWords,
+            additional_words_needed: 0,
+            is_fulfilled: true,
+          },
+        },
+        200,
+        "Late note fulfilled",
+      );
     } catch (error) {
       await transaction.rollback();
       return this.response.fail(error.message || error, 400);

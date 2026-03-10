@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -17,11 +16,11 @@ import { JoiValidationPipe } from "src/cores/validators/pipes/joi-validation.pip
 import { User } from "../user/entities/user.entity";
 import { AttendanceService } from "./attendance.service";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
-import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
+import { UpdateLateNoteDto } from "./dto/update-late-note.dto";
 import { Attendance } from "./entities/attendance.entity";
 import { attendanceIdParamSchema } from "./validations/params/attendance-id.param";
 import { createAttendanceSchema } from "./validations/requests/create-attendance-id.request";
-import { updateAttendanceSchema } from "./validations/requests/update-attendance-id.request";
+import { updateLateNoteSchema } from "./validations/requests/update-late-note.request";
 
 @Controller()
 export class AttendanceController {
@@ -53,15 +52,19 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Put(":id")
-  @Patch(":id")
-  update(
+  @Patch(":id/late-note")
+  updateLateNote(
+    @CurrentUser() user: User,
     @Param("id", new JoiValidationParamPipe(attendanceIdParamSchema))
     attendance: Attendance,
-    @Body(new JoiValidationPipe(updateAttendanceSchema))
-    updateAttendanceDto: UpdateAttendanceDto,
+    @Body(new JoiValidationPipe(updateLateNoteSchema))
+    updateLateNoteDto: UpdateLateNoteDto,
   ) {
-    return this.attendanceService.update(attendance, updateAttendanceDto);
+    return this.attendanceService.updateLateNote(
+      attendance,
+      user,
+      updateLateNoteDto,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
