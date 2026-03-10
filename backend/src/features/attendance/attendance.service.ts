@@ -14,6 +14,7 @@ import { Attendance } from "./entities/attendance.entity";
 export class AttendanceService {
   private readonly attendanceTimeZone = "Asia/Jakarta";
   private readonly attendanceTimeZoneOffset = "+07:00";
+  private readonly lateNoteRequiredWordsPerMinute = 60;
 
   constructor(
     private readonly response: ResponseHelper,
@@ -109,6 +110,13 @@ export class AttendanceService {
     return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  private countWords(text: string): number {
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+  }
+
   async create(createAttendanceDto: CreateAttendanceDto, user: User) {
     if (![UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN].includes(user.role)) {
       return this.response.fail(
@@ -163,6 +171,13 @@ export class AttendanceService {
       clockIn,
       attendanceSetting.check_in_time,
     );
+    const noteWordCount = this.countWords(createAttendanceDto.note || "");
+    const minimumRequiredWords =
+      lateDuration * this.lateNoteRequiredWordsPerMinute;
+    const additionalWordsNeeded =
+      lateDuration > 0
+        ? Math.max(minimumRequiredWords - noteWordCount, 0)
+        : 0;
 
     const transaction = await this.sequelize.transaction();
     try {
@@ -180,7 +195,22 @@ export class AttendanceService {
       );
 
       await transaction.commit();
-      return this.response.success(attendance, 201, "Successfully create attendance");
+      return this.response.success(
+        {
+          attendance,
+          late_note_requirement: {
+            is_required: lateDuration > 0,
+            required_words: minimumRequiredWords,
+            current_words: noteWordCount,
+            additional_words_needed: additionalWordsNeeded,
+            is_fulfilled: additionalWordsNeeded === 0,
+          },
+        },
+        201,
+        additionalWordsNeeded > 0
+          ? `Attendance recorded. You are late ${lateDuration} minute(s), add ${additionalWordsNeeded} words more`
+          : "Successfully create attendance",
+      );
     } catch (error) {
       await transaction.rollback();
       return this.response.fail(error.message || error, 400);
