@@ -10,10 +10,10 @@ import routerConfig from "./cores/configs/router.config";
 import { sequelizeConfigAsync } from "./cores/configs/sequelize.config";
 import { NotificationListener } from "./cores/event-emitter/notification.listener";
 import { ResponseModule } from "./cores/modules/response/response.module";
+import { AttendanceImageModule } from "./features/attendance-image/attendance-image.module";
+import { AttendanceSettingModule } from "./features/attendance-setting/attendance-setting.module";
+import { AttendanceModule } from "./features/attendance/attendance.module";
 import { AuthModule } from "./features/auth/auth.module";
-import { BranchModule } from "./features/branch/branch.module";
-import { BusinessUnitModule } from "./features/business-unit/business-unit.module";
-import { CompanyModule } from "./features/companies/company.module";
 import { DatasetImageModule } from "./features/dataset-image/dataset-image.module";
 import { DatasetModule } from "./features/dataset/dataset.module";
 import { NotificationModule } from "./features/notification/public/notification.module";
@@ -40,13 +40,13 @@ import { UserModule } from "./features/user/user.module";
     // WhatsappWebModule,
     UserDeviceModule,
     ScheduleModule.forRoot(),
-    CompanyModule,
-    BranchModule,
-    BusinessUnitModule,
     PermitModule,
     PermitImageModule,
     DatasetModule,
     DatasetImageModule,
+    AttendanceModule,
+    AttendanceImageModule,
+    AttendanceSettingModule,
   ],
   controllers: [AppController],
   providers: [AppService, NotificationListener],
