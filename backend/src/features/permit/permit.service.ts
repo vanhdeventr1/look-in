@@ -39,24 +39,20 @@ export class PermitService {
   ) {
     const transaction = await this.sequelize.transaction();
     try {
-      const permitImageInstance = [];
-      const data = [];
       const sharpHelper = new SharpHelper();
+      const data = [];
 
+      // ← changed: upload original only, no resizing
       for (const file of files) {
-        const uploadFile = sharpHelper
-          .resizeAndUpload(file, Permit.imageDimension.permitImage)
-          .then((value) => {
-            const image = new URL(value.url);
-            data.push({
-              url: image.href,
-              file_path: image.pathname.substring(1),
-            });
-          });
-        permitImageInstance.push(uploadFile);
+        const uploadFile = await sharpHelper.resizeAndUpload(file, {
+          path: Permit.imageOption.path,
+        });
+        const image = new URL(uploadFile.url);
+        data.push({
+          url: image.href,
+          file_path: image.pathname.substring(1),
+        });
       }
-
-      await Promise.all(permitImageInstance);
 
       const totalDays = this.calculateTotalDays(
         createPermitDto.date_start,
@@ -97,16 +93,12 @@ export class PermitService {
   async findAll(user: User, query: any) {
     const condition = {};
     if (user.role === UserRoleEnum.HIRING_MANAGER) {
-      Object.assign(condition, {
-        created_by: { [Op.ne]: user.id },
-      });
+      Object.assign(condition, { created_by: { [Op.ne]: user.id } });
     } else if (
       user.role === UserRoleEnum.EMPLOYEE ||
       user.role === UserRoleEnum.INTERN
     ) {
-      Object.assign(condition, {
-        "$permits.user_id$": user.id,
-      });
+      Object.assign(condition, { "$permits.user_id$": user.id });
     }
 
     try {
@@ -119,9 +111,7 @@ export class PermitService {
         .getResult();
 
       const permitImages = await PermitImage.findAll({
-        where: {
-          permit_id: data.map((permit) => permit.id),
-        },
+        where: { permit_id: data.map((permit) => permit.id) },
       });
 
       for (const permit of data) {

@@ -8,7 +8,6 @@ import {
   PrimaryKey,
   Table,
 } from "sequelize-typescript";
-import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { PermitImage } from "src/features/permit-image/entities/permit-image.entity";
 import { User } from "src/features/user/entities/user.entity";
@@ -88,21 +87,7 @@ export class Permit extends Model {
   @HasMany(() => PermitImage)
   permit_images: TypeWrapper<PermitImage[]>;
 
-  static imageDimension: { permitImage: ResizeOption } = {
-    permitImage: {
-      dimensions: [
-        {
-          width: 100,
-          fit: "inside",
-          prefix: "100",
-        },
-        {
-          width: 500,
-          fit: "inside",
-          prefix: "500",
-        },
-      ],
-      path: "permit/images",
-    },
+  static imageOption = {
+    path: "permit/images",
   };
 }
