@@ -26,22 +26,23 @@ export class DatasetImageService {
     if (!files.length) {
       return this.response.fail("Image is required", 400);
     }
+
     const transaction = await this.sequelize.transaction();
     try {
       const sharpHelper = new SharpHelper();
+
       for (const [
         index,
         datasetImage,
       ] of createDatasetImageDto.dataset_images.entries()) {
-        const file = files[index];
         if (!files[index]) {
           return this.response.fail(`Image at index ${index} is required`, 400);
         }
 
-        const uploadResult = await sharpHelper.resizeAndUpload(
-          file,
-          this.datasetImageModel.imageDimension.datasetImage,
-        );
+        // ← changed: upload original only, no resizing
+        const uploadResult = await sharpHelper.resizeAndUpload(files[index], {
+          path: Dataset.imageOption.path,
+        });
 
         const imageUrl = new URL(uploadResult.url);
         datasetImage.file_path = imageUrl.pathname.substring(1);
@@ -74,13 +75,8 @@ export class DatasetImageService {
       .where({ dataset_id: dataset.id })
       .getResult();
 
-    const result = {
-      count: count,
-      dataset_images: data,
-    };
-
     return this.response.success(
-      result,
+      { count, dataset_images: data },
       200,
       "Successfully get dataset images",
     );
@@ -92,11 +88,9 @@ export class DatasetImageService {
   ) {
     const transaction = await this.sequelize.transaction();
     try {
-      await datasetImage.update(updateDatasetImageDto, {
-        transaction,
-      });
-
+      await datasetImage.update(updateDatasetImageDto, { transaction });
       await transaction.commit();
+
       return this.response.success(
         datasetImage,
         200,
@@ -111,12 +105,10 @@ export class DatasetImageService {
   async remove(datasetImage: DatasetImage) {
     const transaction = await this.sequelize.transaction();
     try {
+      // ← changed: no dimension needed anymore
       if (datasetImage.file_path) {
         const sharpHelper = new SharpHelper();
-        await sharpHelper.delete(
-          datasetImage.file_path,
-          this.datasetImageModel.imageDimension.datasetImage,
-        );
+        await sharpHelper.delete(datasetImage.file_path);
       }
 
       await datasetImage.destroy({ transaction });
@@ -128,7 +120,6 @@ export class DatasetImageService {
         "Successfully delete dataset image",
       );
     } catch (error) {
-      console.log(error);
       await transaction.rollback();
       return this.response.fail("Failed delete dataset image", 400);
     }

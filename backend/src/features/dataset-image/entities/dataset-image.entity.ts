@@ -6,7 +6,6 @@ import {
   Model,
   Table,
 } from "sequelize-typescript";
-import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { Dataset } from "src/features/dataset/entities/dataset.entity";
 
@@ -47,21 +46,7 @@ export class DatasetImage extends Model {
   })
   file_path: string;
 
-  static imageDimension: { datasetImage: ResizeOption } = {
-    datasetImage: {
-      dimensions: [
-        {
-          width: 100,
-          fit: "inside",
-          prefix: "100",
-        },
-        {
-          width: 500,
-          fit: "inside",
-          prefix: "500",
-        },
-      ],
-      path: "dataset/images",
-    },
+  static imageOption = {
+    path: "dataset/images",
   };
 }
