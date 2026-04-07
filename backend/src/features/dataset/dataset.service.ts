@@ -39,10 +39,10 @@ export class DatasetService {
       const sharpHelper = new SharpHelper();
 
       for (const file of files) {
-        const uploadFile = await sharpHelper.resizeAndUpload(
-          file,
-          Dataset.imageDimension.datasetImage,
-        );
+        // ← changed: no more resizing, just upload original
+        const uploadFile = await sharpHelper.resizeAndUpload(file, {
+          path: Dataset.imageOption.path,
+        });
         const image = new URL(uploadFile.url);
         imageData.push({
           url: image.href,
@@ -78,10 +78,7 @@ export class DatasetService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(
-        error.message || "An error occurred during creation",
-        400,
-      );
+      return this.response.fail(error, 400);
     }
   }
 
@@ -112,7 +109,7 @@ export class DatasetService {
         "Successfully retrieved datasets",
       );
     } catch (error) {
-      return this.response.fail(error.message, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -134,7 +131,7 @@ export class DatasetService {
 
       return this.response.success(dataset, 200, "Successfully get dataset");
     } catch (error) {
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -155,7 +152,7 @@ export class DatasetService {
       return this.response.success(dataset, 200, "Successfully update dataset");
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -172,7 +169,7 @@ export class DatasetService {
       return this.response.success({}, 200, "Successfully delete dataset");
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 }
