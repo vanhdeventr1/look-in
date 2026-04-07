@@ -26,22 +26,23 @@ export class PermitImageService {
     if (!files.length) {
       return this.response.fail("Image is required", 400);
     }
+
     const transaction = await this.sequelize.transaction();
     try {
       const sharpHelper = new SharpHelper();
+
       for (const [
         index,
         permitImage,
       ] of createPermitImageDto.permit_images.entries()) {
-        const file = files[index];
         if (!files[index]) {
           return this.response.fail(`Image at index ${index} is required`, 400);
         }
 
-        const uploadResult = await sharpHelper.resizeAndUpload(
-          file,
-          this.permitImageModel.imageDimension.permitImage,
-        );
+        // ← changed: no more resizing, just upload original
+        const uploadResult = await sharpHelper.resizeAndUpload(files[index], {
+          path: PermitImage.imageOption.path,
+        });
 
         const imageUrl = new URL(uploadResult.url);
         permitImage.file_path = imageUrl.pathname.substring(1);
@@ -74,12 +75,11 @@ export class PermitImageService {
       .where({ permit_id: permit.id })
       .getResult();
 
-    const result = {
-      count: count,
-      permit_images: data,
-    };
-
-    return this.response.success(result, 200, "Successfully get permit images");
+    return this.response.success(
+      { count, permit_images: data },
+      200,
+      "Successfully get permit images",
+    );
   }
 
   async update(
@@ -88,11 +88,9 @@ export class PermitImageService {
   ) {
     const transaction = await this.sequelize.transaction();
     try {
-      await permitImage.update(updatePermitImageDto, {
-        transaction,
-      });
-
+      await permitImage.update(updatePermitImageDto, { transaction });
       await transaction.commit();
+
       return this.response.success(
         permitImage,
         200,
@@ -107,12 +105,10 @@ export class PermitImageService {
   async remove(permitImage: PermitImage) {
     const transaction = await this.sequelize.transaction();
     try {
+      // ← changed: simpler delete, no dimension needed
       if (permitImage.file_path) {
         const sharpHelper = new SharpHelper();
-        await sharpHelper.delete(
-          permitImage.file_path,
-          this.permitImageModel.imageDimension.permitImage,
-        );
+        await sharpHelper.delete(permitImage.file_path);
       }
 
       await permitImage.destroy({ transaction });
@@ -120,7 +116,6 @@ export class PermitImageService {
 
       return this.response.success({}, 200, "Successfully delete permit image");
     } catch (error) {
-      console.log(error);
       await transaction.rollback();
       return this.response.fail("Failed delete permit image", 400);
     }

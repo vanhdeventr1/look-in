@@ -6,7 +6,6 @@ import {
   Model,
   Table,
 } from "sequelize-typescript";
-import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { Permit } from "src/features/permit/entities/permit.entity";
 
@@ -47,21 +46,7 @@ export class PermitImage extends Model {
   })
   file_path: string;
 
-  static imageDimension: { permitImage: ResizeOption } = {
-    permitImage: {
-      dimensions: [
-        {
-          width: 100,
-          fit: "inside",
-          prefix: "100",
-        },
-        {
-          width: 500,
-          fit: "inside",
-          prefix: "500",
-        },
-      ],
-      path: "permit/images",
-    },
+  static imageOption = {
+    path: "permit/images",
   };
 }
