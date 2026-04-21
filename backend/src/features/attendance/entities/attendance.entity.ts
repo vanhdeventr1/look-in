@@ -8,7 +8,6 @@ import {
   PrimaryKey,
   Table,
 } from "sequelize-typescript";
-import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { AttendanceImage } from "src/features/attendance-image/entities/attendance-image.entity";
 import { AttendanceSetting } from "src/features/attendance-setting/entities/attendance-setting.entity";
@@ -75,29 +74,13 @@ export class Attendance extends Model {
   @Column({ type: DataType.BIGINT, allowNull: false })
   created_by: number;
 
-  @BelongsTo(() => User, {
-    foreignKey: "created_by",
-  })
+  @BelongsTo(() => User, { foreignKey: "created_by" })
   created_by_user: TypeWrapper<User>;
 
   @HasMany(() => AttendanceImage)
   attendance_images: TypeWrapper<AttendanceImage[]>;
 
-  static imageDimension: { attendanceImage: ResizeOption } = {
-    attendanceImage: {
-      dimensions: [
-        {
-          width: 100,
-          fit: "inside",
-          prefix: "100",
-        },
-        {
-          width: 500,
-          fit: "inside",
-          prefix: "500",
-        },
-      ],
-      path: "attendance/images",
-    },
+  static imageOption = {
+    path: "attendance/images",
   };
 }

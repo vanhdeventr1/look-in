@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
+import { Op } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
@@ -10,11 +11,13 @@ import { CreateAttendanceDto } from "./dto/create-attendance.dto";
 import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
 import { Attendance } from "./entities/attendance.entity";
 
+const ALLOWED_ROLES = [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN];
+const WORDS_PER_LATE_MINUTE = 60;
+
 @Injectable()
 export class AttendanceService {
   private readonly attendanceTimeZone = "Asia/Jakarta";
   private readonly attendanceTimeZoneOffset = "+07:00";
-  private readonly lateNoteRequiredWordsPerMinute = 60;
 
   constructor(
     private readonly response: ResponseHelper,
@@ -25,13 +28,11 @@ export class AttendanceService {
     private readonly attendanceSettingModel: typeof AttendanceSetting,
   ) {}
 
-  private pad2(value: number): string {
-    return value.toString().padStart(2, "0");
-  }
+  // ─── Time Helpers ────────────────────────────────────────────────────
 
-  private getDateTimePartsInTimeZone(date: Date, timeZone: string) {
-    const formatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone,
+  private getDateTimeParts(date: Date) {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: this.attendanceTimeZone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -39,181 +40,311 @@ export class AttendanceService {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    });
-
-    const parts = formatter.formatToParts(date);
-    const get = (type: string) =>
-      parts.find((value) => value.type === type)?.value || "00";
-
-    return {
-      year: get("year"),
-      month: get("month"),
-      day: get("day"),
-      hour: get("hour"),
-      minute: get("minute"),
-      second: get("second"),
-    };
+    })
+      .formatToParts(date)
+      .reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {} as any);
   }
 
-  private getNowInAttendanceTimeZone(): Date {
-    const now = new Date();
-    const nowParts = this.getDateTimePartsInTimeZone(
-      now,
-      this.attendanceTimeZone,
-    );
-
+  private getNow(): Date {
+    const p = this.getDateTimeParts(new Date());
     return new Date(
-      `${nowParts.year}-${nowParts.month}-${nowParts.day}T${nowParts.hour}:${nowParts.minute}:${nowParts.second}.000${this.attendanceTimeZoneOffset}`,
+      `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}.000${this.attendanceTimeZoneOffset}`,
+    );
+  }
+
+  private getTodayStart(): Date {
+    const p = this.getDateTimeParts(new Date());
+    return new Date(
+      `${p.year}-${p.month}-${p.day}T00:00:00.000${this.attendanceTimeZoneOffset}`,
     );
   }
 
   private parseTimeOnDate(date: Date, time: string): Date {
-    const [hour, minute, second] = time.split(":").map((value) => +value || 0);
-    const dateParts = this.getDateTimePartsInTimeZone(
-      date,
-      this.attendanceTimeZone,
-    );
-
+    const [h, m, s] = time.split(":").map(Number);
+    const p = this.getDateTimeParts(date);
     return new Date(
-      `${dateParts.year}-${dateParts.month}-${dateParts.day}T${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}.000${this.attendanceTimeZoneOffset}`,
+      `${p.year}-${p.month}-${p.day}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s || 0).padStart(2, "0")}.000${this.attendanceTimeZoneOffset}`,
     );
   }
 
-  private calculateLateDuration(clockIn: Date, checkInTime: string): number {
-    const scheduleTime = this.parseTimeOnDate(clockIn, checkInTime);
-    const diffMs = clockIn.getTime() - scheduleTime.getTime();
-
-    if (diffMs <= 0) {
-      return 0;
-    }
-
-    return Math.floor(diffMs / (1000 * 60));
-  }
-
-  private calculateDistanceMeters(
-    fromLat: number,
-    fromLng: number,
-    toLat: number,
-    toLng: number,
-  ): number {
-    const earthRadius = 6371000;
-    const degToRad = (value: number) => (value * Math.PI) / 180;
-
-    const latitudeDiff = degToRad(toLat - fromLat);
-    const longitudeDiff = degToRad(toLng - fromLng);
-    const a =
-      Math.sin(latitudeDiff / 2) ** 2 +
-      Math.cos(degToRad(fromLat)) *
-        Math.cos(degToRad(toLat)) *
-        Math.sin(longitudeDiff / 2) ** 2;
-
-    return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  private getLateDuration(clockIn: Date, checkInTime: string): number {
+    const diff =
+      clockIn.getTime() - this.parseTimeOnDate(clockIn, checkInTime).getTime();
+    return diff > 0 ? Math.floor(diff / 60000) : 0;
   }
 
   private countWords(text: string): number {
     return text.trim().split(/\s+/).filter(Boolean).length;
   }
 
-  async create(createAttendanceDto: CreateAttendanceDto, user: User) {
-    if (![UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN].includes(user.role)) {
-      return this.response.fail(
-        "Only employee or intern can take attendance",
-        403,
-      );
+  // ─── GPS Helpers ─────────────────────────────────────────────────────
+
+  private getDistanceMeters(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number {
+    const R = 6371000;
+    const rad = (v: number) => (v * Math.PI) / 180;
+    const dLat = rad(lat2 - lat1);
+    const dLng = rad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  private validateGps(
+    gps_lat: string,
+    gps_lng: string,
+    setting: AttendanceSetting,
+  ): string | null {
+    const currentLat = +gps_lat;
+    const currentLng = +gps_lng;
+    const settingLat = +setting.gps_lat;
+    const settingLng = +setting.gps_lng;
+
+    if ([currentLat, currentLng, settingLat, settingLng].some(Number.isNaN)) {
+      return "Invalid GPS coordinate format";
     }
 
-    const attendanceSetting = await this.attendanceSettingModel.findOne({
+    const distance = this.getDistanceMeters(
+      settingLat,
+      settingLng,
+      currentLat,
+      currentLng,
+    );
+    if (distance > setting.radius_meter) {
+      return `You are ${Math.ceil(distance)}m away from attendance location`;
+    }
+
+    return null;
+  }
+
+  private lateNoteResult(lateDuration: number, note: string) {
+    const requiredWords = lateDuration * WORDS_PER_LATE_MINUTE;
+    const currentWords = this.countWords(note || "");
+    const missingWords =
+      lateDuration > 0 ? Math.max(requiredWords - currentWords, 0) : 0;
+    return { requiredWords, currentWords, missingWords };
+  }
+
+  // ─── Check In ───────────────────────────────────────────────────────
+
+  async checkIn(user: User, dto: CreateAttendanceDto) {
+    if (!ALLOWED_ROLES.includes(user.role)) {
+      return this.response.fail("Only employee or intern can check in", 403);
+    }
+
+    const setting = await this.attendanceSettingModel.findOne({
       order: [["id", "DESC"]],
     });
-    if (!attendanceSetting) {
+    if (!setting)
       return this.response.fail("Attendance setting not found", 404);
+
+    if (!dto.gps_lat || !dto.gps_lng) {
+      return this.response.fail("GPS latitude and longitude are required", 400);
     }
 
-    if (!createAttendanceDto.gps_lat || !createAttendanceDto.gps_lng) {
-      return this.response.fail(
-        "GPS latitude and longitude are required to take attendance",
-        400,
-      );
-    }
+    const gpsError = this.validateGps(dto.gps_lat, dto.gps_lng, setting);
+    if (gpsError) return this.response.fail(gpsError, 400);
 
-    const currentLatitude = +createAttendanceDto.gps_lat;
-    const currentLongitude = +createAttendanceDto.gps_lng;
-    const settingLatitude = +attendanceSetting.gps_lat;
-    const settingLongitude = +attendanceSetting.gps_lng;
+    const existing = await this.attendanceModel.findOne({
+      where: {
+        user_id: user.id,
+        clock_in: { [Op.gte]: this.getTodayStart() },
+      },
+    });
+    if (existing) return this.response.fail("Already checked in today", 400);
 
-    if (
-      [
-        currentLatitude,
-        currentLongitude,
-        settingLatitude,
-        settingLongitude,
-      ].some(Number.isNaN)
-    ) {
-      return this.response.fail("Invalid GPS coordinate format", 400);
-    }
-
-    const distanceMeters = this.calculateDistanceMeters(
-      settingLatitude,
-      settingLongitude,
-      currentLatitude,
-      currentLongitude,
+    const clockIn = this.getNow();
+    const lateDuration = this.getLateDuration(clockIn, setting.check_in_time);
+    const { requiredWords, currentWords, missingWords } = this.lateNoteResult(
+      lateDuration,
+      dto.note || "",
     );
-    if (distanceMeters > attendanceSetting.radius_meter) {
-      const roundedDistance = Math.ceil(distanceMeters);
-      return this.response.fail(
-        `You are ${roundedDistance} meter away from attendance location, can't take attendance`,
-        400,
-      );
-    }
-
-    const clockIn = this.getNowInAttendanceTimeZone();
-    const lateDuration = this.calculateLateDuration(
-      clockIn,
-      attendanceSetting.check_in_time,
-    );
-    const noteWordCount = this.countWords(createAttendanceDto.note || "");
-    const minimumRequiredWords =
-      lateDuration * this.lateNoteRequiredWordsPerMinute;
-    const additionalWordsNeeded =
-      lateDuration > 0 ? Math.max(minimumRequiredWords - noteWordCount, 0) : 0;
 
     const transaction = await this.sequelize.transaction();
     try {
       const attendance = await this.attendanceModel.create(
         {
-          ...createAttendanceDto,
+          user_id: user.id,
+          created_by: user.id,
           clock_in: clockIn,
           is_late: lateDuration > 0,
           late_duration: lateDuration,
-          attendance_setting_id: attendanceSetting.id,
-          user_id: user.id,
-          created_by: user.id,
+          gps_lat: dto.gps_lat,
+          gps_lng: dto.gps_lng,
+          note: dto.note ?? null,
+          attendance_setting_id: setting.id,
         },
         { transaction },
       );
-
       await transaction.commit();
+
       return this.response.success(
         {
           attendance,
           late_note_requirement: {
             is_required: lateDuration > 0,
-            required_words: minimumRequiredWords,
-            current_words: noteWordCount,
-            additional_words_needed: additionalWordsNeeded,
-            is_fulfilled: additionalWordsNeeded === 0,
+            required_words: requiredWords,
+            current_words: currentWords,
+            additional_words_needed: missingWords,
+            is_fulfilled: missingWords === 0,
           },
         },
         201,
-        additionalWordsNeeded > 0
-          ? `Attendance recorded. You are late ${lateDuration} minute(s), add ${additionalWordsNeeded} words more`
-          : "Successfully create attendance",
+        missingWords > 0
+          ? `Checked in. You are late ${lateDuration} min(s), add ${missingWords} more words`
+          : "Successfully checked in",
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
+
+  // ─── Check Out ──────────────────────────────────────────────────────
+
+  async checkOut(user: User, dto: CreateAttendanceDto) {
+    if (!ALLOWED_ROLES.includes(user.role)) {
+      return this.response.fail("Only employee or intern can check out", 403);
+    }
+
+    if (!dto.gps_lat || !dto.gps_lng) {
+      return this.response.fail("GPS latitude and longitude are required", 400);
+    }
+
+    const attendance = await this.attendanceModel.findOne({
+      where: {
+        user_id: user.id,
+        clock_in: { [Op.gte]: this.getTodayStart() },
+        clock_out: null,
+      },
+    });
+    if (!attendance)
+      return this.response.fail("No active check-in found for today", 404);
+
+    const setting = await this.attendanceSettingModel.findOne({
+      order: [["id", "DESC"]],
+    });
+    if (setting) {
+      const gpsError = this.validateGps(dto.gps_lat, dto.gps_lng, setting);
+      if (gpsError) return this.response.fail(gpsError, 400);
+    }
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      await attendance.update(
+        {
+          clock_out: this.getNow(),
+          gps_lat: dto.gps_lat,
+          gps_lng: dto.gps_lng,
+          note: dto.note ?? attendance.note,
+        },
+        { transaction },
+      );
+      await transaction.commit();
+
+      return this.response.success(attendance, 200, "Successfully checked out");
+    } catch (error) {
+      await transaction.rollback();
+      return this.response.fail(error, 400);
+    }
+  }
+
+  // ─── Today ───────────────────────────────────────────────────────────
+
+  async today(user: User) {
+    const attendance = await this.attendanceModel.findOne({
+      where: {
+        user_id: user.id,
+        clock_in: { [Op.gte]: this.getTodayStart() },
+      },
+      include: ["attendance_setting"],
+    });
+
+    return this.response.success(
+      {
+        has_checked_in: !!attendance,
+        has_checked_out: !!attendance?.clock_out,
+        attendance: attendance ?? null,
+      },
+      200,
+      "Successfully get today attendance",
+    );
+  }
+
+  // async create(createAttendanceDto: CreateAttendanceDto, user: User) {
+  //   if (!ALLOWED_ROLES.includes(user.role)) {
+  //     return this.response.fail(
+  //       "Only employee or intern can take attendance",
+  //       403,
+  //     );
+  //   }
+
+  //   const setting = await this.attendanceSettingModel.findOne({
+  //     order: [["id", "DESC"]],
+  //   });
+  //   if (!setting)
+  //     return this.response.fail("Attendance setting not found", 404);
+
+  //   if (!createAttendanceDto.gps_lat || !createAttendanceDto.gps_lng) {
+  //     return this.response.fail("GPS latitude and longitude are required", 400);
+  //   }
+
+  //   const gpsError = this.validateGps(
+  //     createAttendanceDto.gps_lat,
+  //     createAttendanceDto.gps_lng,
+  //     setting,
+  //   );
+  //   if (gpsError) return this.response.fail(gpsError, 400);
+
+  //   const clockIn = this.getNow();
+  //   const lateDuration = this.getLateDuration(clockIn, setting.check_in_time);
+  //   const { requiredWords, currentWords, missingWords } = this.lateNoteResult(
+  //     lateDuration,
+  //     createAttendanceDto.note || "",
+  //   );
+
+  //   const transaction = await this.sequelize.transaction();
+  //   try {
+  //     const attendance = await this.attendanceModel.create(
+  //       {
+  //         ...createAttendanceDto,
+  //         clock_in: clockIn,
+  //         is_late: lateDuration > 0,
+  //         late_duration: lateDuration,
+  //         attendance_setting_id: setting.id,
+  //         user_id: user.id,
+  //         created_by: user.id,
+  //       },
+  //       { transaction },
+  //     );
+  //     await transaction.commit();
+
+  //     return this.response.success(
+  //       {
+  //         attendance,
+  //         late_note_requirement: {
+  //           is_required: lateDuration > 0,
+  //           required_words: requiredWords,
+  //           current_words: currentWords,
+  //           additional_words_needed: missingWords,
+  //           is_fulfilled: missingWords === 0,
+  //         },
+  //       },
+  //       201,
+  //       missingWords > 0
+  //         ? `Attendance recorded. You are late ${lateDuration} minute(s), add ${missingWords} words more`
+  //         : "Successfully create attendance",
+  //     );
+  //   } catch (error) {
+  //     await transaction.rollback();
+  //     return this.response.fail(error, 400);
+  //   }
+  // }
 
   async findAll(query: any) {
     try {
@@ -223,14 +354,13 @@ export class AttendanceService {
       )
         .load("user", "created_by_user", "attendance_setting", "permit")
         .getResult();
-
       return this.response.success(
         { count, attendances: data },
         200,
         "Successfully get attendances",
       );
     } catch (error) {
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -245,14 +375,13 @@ export class AttendanceService {
           "permit",
         ],
       });
-
       return this.response.success(
         attendance,
         200,
         "Successfully get attendance",
       );
     } catch (error) {
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -267,7 +396,6 @@ export class AttendanceService {
         403,
       );
     }
-
     if (!attendance.is_late) {
       return this.response.fail(
         "Late note can only be updated for late attendance",
@@ -275,14 +403,14 @@ export class AttendanceService {
       );
     }
 
-    const requiredWords =
-      attendance.late_duration * this.lateNoteRequiredWordsPerMinute;
-    const currentWords = this.countWords(updateAttendanceDto.note || "");
-    const additionalWordsNeeded = Math.max(requiredWords - currentWords, 0);
+    const { requiredWords, currentWords, missingWords } = this.lateNoteResult(
+      attendance.late_duration,
+      updateAttendanceDto.note || "",
+    );
 
-    if (additionalWordsNeeded > 0) {
+    if (missingWords > 0) {
       return this.response.fail(
-        `You are late ${attendance.late_duration} minute(s), add ${additionalWordsNeeded} words more`,
+        `You are late ${attendance.late_duration} minute(s), add ${missingWords} words more`,
         400,
       );
     }
@@ -290,9 +418,7 @@ export class AttendanceService {
     const transaction = await this.sequelize.transaction();
     try {
       await attendance.update(
-        {
-          note: updateAttendanceDto.note,
-        },
+        { note: updateAttendanceDto.note },
         { transaction },
       );
       await transaction.commit();
@@ -313,7 +439,7 @@ export class AttendanceService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -322,11 +448,10 @@ export class AttendanceService {
     try {
       await attendance.destroy({ transaction });
       await transaction.commit();
-
       return this.response.success({}, 200, "Successfully delete attendance");
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 }

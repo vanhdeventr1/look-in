@@ -26,6 +26,38 @@ import { updateAttendanceSchema } from "./validations/requests/update-attendance
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
+  // ─── Check In ───────────────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard)
+  @Post("check-in")
+  checkIn(
+    @CurrentUser() user: User,
+    @Query("gps_lat") gps_lat: string,
+    @Query("gps_lng") gps_lng: string,
+    @Query("note") note?: string,
+  ) {
+    return this.attendanceService.checkIn(user, { gps_lat, gps_lng, note });
+  }
+
+  // ─── Check Out ──────────────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard)
+  @Post("check-out")
+  checkOut(
+    @CurrentUser() user: User,
+    @Query("gps_lat") gps_lat: string,
+    @Query("gps_lng") gps_lng: string,
+    @Query("note") note?: string,
+  ) {
+    return this.attendanceService.checkOut(user, { gps_lat, gps_lng, note });
+  }
+
+  // ─── Today Status ───────────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard)
+  @Get("today")
+  today(@CurrentUser() user: User) {
+    return this.attendanceService.today(user);
+  }
+
+  // ─── CRUD ────────────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Post()
   create(
