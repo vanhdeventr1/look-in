@@ -17,7 +17,10 @@ export class AttendanceSettingService {
     private readonly attendanceSettingModel: typeof AttendanceSetting,
   ) {}
 
-  async create(createAttendanceSettingDto: CreateAttendanceSettingDto, user: User) {
+  async create(
+    createAttendanceSettingDto: CreateAttendanceSettingDto,
+    user: User,
+  ) {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail(
         "Only hiring manager can create attendance setting",
@@ -42,7 +45,7 @@ export class AttendanceSettingService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -57,7 +60,7 @@ export class AttendanceSettingService {
         "Successfully get attendance settings",
       );
     } catch (error) {
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -69,7 +72,7 @@ export class AttendanceSettingService {
         "Successfully get attendance setting",
       );
     } catch (error) {
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -99,7 +102,7 @@ export class AttendanceSettingService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 
@@ -123,7 +126,7 @@ export class AttendanceSettingService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message || error, 400);
+      return this.response.fail(error, 400);
     }
   }
 }
