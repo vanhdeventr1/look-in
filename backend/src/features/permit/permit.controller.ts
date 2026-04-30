@@ -59,6 +59,7 @@ export class PermitController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(AnyFilesInterceptor())
   @Put(":id")
   update(
     @CurrentUser() user: User,
@@ -66,8 +67,9 @@ export class PermitController {
     permit: Permit,
     @Body(new JoiValidationPipe(updatePermitSchema))
     updatePermitDto: UpdatePermitDto,
+    @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
-    return this.permitService.update(permit, updatePermitDto, user);
+    return this.permitService.update(permit, updatePermitDto, user, files);
   }
 
   @UseGuards(JwtAuthGuard)

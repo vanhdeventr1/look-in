@@ -147,7 +147,12 @@ export class PermitService {
     }
   }
 
-  async update(permit: Permit, updatePermitDto: UpdatePermitDto, user: User) {
+  async update(
+    permit: Permit,
+    updatePermitDto: UpdatePermitDto,
+    user: User,
+    files: Array<Express.Multer.File> = [],
+  ) {
     const transaction = await this.sequelize.transaction();
     try {
       const statusChanged = updatePermitDto.status !== undefined;
@@ -175,9 +180,45 @@ export class PermitService {
         });
       }
 
+      // Handle permit images update
+      if (files && files.length > 0) {
+        // Remove old images from AWS S3 and DB
+        const oldImages = await PermitImage.findAll({
+          where: { permit_id: permit.id },
+        });
+        const { S3Helper } = await import("src/cores/helpers/s3.helper");
+        const s3Helper = new S3Helper();
+        for (const img of oldImages) {
+          if (img.file_path) {
+            try {
+              await s3Helper.deleteFile(img.file_path);
+            } catch (e) {
+              // log error but continue
+              console.error("Failed to delete S3 file", img.file_path, e);
+            }
+          }
+          await img.destroy({ transaction });
+        }
+
+        // Upload new images
+        const sharpHelper = new SharpHelper();
+        const data = [];
+        for (const file of files) {
+          const uploadFile = await sharpHelper.resizeAndUpload(file, {
+            path: Permit.imageOption.path,
+          });
+          const image = new URL(uploadFile.url);
+          data.push({
+            url: image.href,
+            file_path: image.pathname.substring(1),
+            permit_id: permit.id,
+          });
+        }
+        await PermitImage.bulkCreate(data, { transaction });
+      }
+
       await permit.update(updatePermitDto, { transaction });
       await transaction.commit();
-
       return this.response.success(permit, 200, "Successfully update permit");
     } catch (error) {
       await transaction.rollback();
