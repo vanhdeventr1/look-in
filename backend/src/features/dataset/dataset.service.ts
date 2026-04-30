@@ -7,7 +7,6 @@ import { SharpHelper } from "src/cores/helpers/sharp.helper";
 import { User } from "src/features/user/entities/user.entity";
 import UserRoleEnum from "../user/enums/user-role.enum";
 import { CreateDatasetDto } from "./dto/create-dataset.dto";
-import { UpdateDatasetDto } from "./dto/update-dataset.dto";
 import { Dataset } from "./entities/dataset.entity";
 
 @Injectable()
@@ -135,26 +134,26 @@ export class DatasetService {
     }
   }
 
-  async update(
-    dataset: Dataset,
-    updateDatasetDto: UpdateDatasetDto,
-    user: User,
-  ) {
-    if (user.role !== UserRoleEnum.HIRING_MANAGER) {
-      return this.response.fail("Only hiring manager can update dataset", 403);
-    }
+  // async update(
+  //   dataset: Dataset,
+  //   updateDatasetDto: UpdateDatasetDto,
+  //   user: User,
+  // ) {
+  //   if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+  //     return this.response.fail("Only hiring manager can update dataset", 403);
+  //   }
 
-    const transaction = await this.sequelize.transaction();
-    try {
-      await dataset.update(updateDatasetDto, { transaction });
-      await transaction.commit();
+  //   const transaction = await this.sequelize.transaction();
+  //   try {
+  //     await dataset.update(updateDatasetDto, { transaction });
+  //     await transaction.commit();
 
-      return this.response.success(dataset, 200, "Successfully update dataset");
-    } catch (error) {
-      await transaction.rollback();
-      return this.response.fail(error, 400);
-    }
-  }
+  //     return this.response.success(dataset, 200, "Successfully update dataset");
+  //   } catch (error) {
+  //     await transaction.rollback();
+  //     return this.response.fail(error, 400);
+  //   }
+  // }
 
   async remove(dataset: Dataset, user: User) {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {

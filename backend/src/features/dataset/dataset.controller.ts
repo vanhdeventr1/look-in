@@ -5,7 +5,6 @@ import {
   Get,
   Param,
   Post,
-  Put,
   Query,
   UploadedFiles,
   UseGuards,
@@ -18,7 +17,6 @@ import { JoiValidationParamPipe } from "src/cores/validators/pipes/joi-validatio
 import { JoiValidationPipe } from "src/cores/validators/pipes/joi-validation.pipe";
 import { DatasetService } from "src/features/dataset/dataset.service";
 import { CreateDatasetDto } from "src/features/dataset/dto/create-dataset.dto";
-import { UpdateDatasetDto } from "src/features/dataset/dto/update-dataset.dto";
 import { Dataset } from "src/features/dataset/entities/dataset.entity";
 import { datasetIdParamSchema } from "src/features/dataset/validations/params/dataset-id.param";
 import { createDatasetSchema } from "src/features/dataset/validations/request/create-dataset.request";
@@ -56,17 +54,17 @@ export class DatasetController {
     return this.datasetService.findOne(dataset);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Put(":id")
-  update(
-    @CurrentUser() user: User,
-    @Param("id", new JoiValidationParamPipe(datasetIdParamSchema))
-    dataset: Dataset,
-    @Body(new JoiValidationPipe(createDatasetSchema))
-    updateDatasetDto: UpdateDatasetDto,
-  ) {
-    return this.datasetService.update(dataset, updateDatasetDto, user);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Put(":id")
+  // update(
+  //   @CurrentUser() user: User,
+  //   @Param("id", new JoiValidationParamPipe(datasetIdParamSchema))
+  //   dataset: Dataset,
+  //   @Body(new JoiValidationPipe(createDatasetSchema))
+  //   updateDatasetDto: UpdateDatasetDto,
+  // ) {
+  //   return this.datasetService.update(dataset, updateDatasetDto, user);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Delete(":id")
