@@ -1,10 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { S3Helper } from "src/cores/helpers/s3.helper";
-import { HttpStatus } from "@nestjs/common";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -98,7 +97,7 @@ export class UserService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message, 400);
+      return this.response.fail(error, 400);
     }
   }
 
