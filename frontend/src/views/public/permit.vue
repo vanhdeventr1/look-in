@@ -894,11 +894,15 @@ const submitForm = async () => {
       });
       successAlertTitle.value = "Data Perizinan\nBerhasil Ditambahkan!";
     } else if (selectedId.value !== null) {
+      const files = uploadedFiles.value
+        .map((item) => item.file)
+        .filter((file): file is File => Boolean(file));
       await updatePermit(selectedId.value, {
         description: newPermit.value.description,
         type: typeValue,
         date_start: dateStart,
         date_end: dateEnd,
+        files,
       });
       successAlertTitle.value = "Data Perizinan\nBerhasil Diperbarui!";
     }

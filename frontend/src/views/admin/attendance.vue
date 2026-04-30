@@ -9,14 +9,12 @@
             <p class="text-3xl font-bold text-[#8C352D]">24</p>
             <p class="text-[#8C352D] font-medium">Absen Hari Ini</p>
           </div>
-
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
             <p class="text-3xl font-bold text-[#8C352D]">12</p>
             <p class="text-[#8C352D] font-medium">Terlambat</p>
           </div>
-
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
@@ -31,16 +29,61 @@
       >
         <div class="flex flex-wrap items-center gap-3">
           <div
-            class="flex items-center gap-2 px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm"
+            class="relative flex items-center gap-2 px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white hover:bg-[#8C352D]/5 transition-colors font-bold text-sm cursor-pointer"
           >
             <CalendarIcon :size="18" />
-            <span>7/8/25</span>
+            <span class="">
+              {{ selectedDate ? formatDate(selectedDate) : "Semua Tanggal" }}
+            </span>
+            <input
+              v-model="selectedDate"
+              type="date"
+              class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            />
           </div>
+
+          <div class="relative">
+            <CalendarIcon
+              :size="18"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-[#8C352D] pointer-events-none z-10"
+            />
+            <select
+              v-model="selectedMonth"
+              class="pl-10 pr-8 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
+            >
+              <option :value="null">Semua Bulan</option>
+              <option
+                v-for="(month, index) in months"
+                :key="index"
+                :value="index"
+              >
+                {{ month }}
+              </option>
+            </select>
+          </div>
+
+          <div class="relative">
+            <select
+              v-model="selectedYear"
+              class="px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white cursor-pointer hover:bg-[#8C352D]/5 transition-colors font-bold text-sm focus:outline-none appearance-none"
+            >
+              <option :value="null">Semua Tahun</option>
+              <option v-for="year in years" :key="year" :value="year">
+                {{ year }}
+              </option>
+            </select>
+          </div>
+
           <div
-            class="flex items-center gap-2 px-4 py-2 text-[#8C352D] cursor-pointer hover:opacity-70 transition-opacity font-bold text-sm"
+            @click="toggleSort"
+            class="flex items-center gap-2 px-4 py-2 border border-transparent rounded-xl text-[#8C352D] cursor-pointer hover:bg-[#8C352D]/5 transition-all font-bold text-sm"
           >
-            <FilterIcon :size="18" />
-            <span>Terbaru</span>
+            <FilterIcon
+              :size="18"
+              :class="{ 'rotate-180': sortOrder === 'oldest' }"
+              class="transition-transform"
+            />
+            <span>{{ sortOrder === "newest" ? "Terbaru" : "Terlama" }}</span>
           </div>
         </div>
 
@@ -57,6 +100,7 @@
               <SearchIcon :size="18" />
             </span>
             <input
+              v-model="searchQuery"
               type="text"
               placeholder="Cari data pengguna"
               class="w-full pl-12 pr-4 py-2.5 rounded-full border border-[#E8D5D2] bg-white text-[#8C352D] focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20 transition-all placeholder:text-[#8C352D]/30"
@@ -74,17 +118,23 @@
               <tr class="bg-[#8C352D] text-white">
                 <th class="px-6 py-4 font-bold text-sm text-center">No</th>
                 <th class="px-6 py-4 font-bold text-sm">Nama Lengkap</th>
-                <th class="px-6 py-4 font-bold text-sm">Jam Absen</th>
+                <th class="px-6 py-4 font-bold text-sm text-center">
+                  Jam Masuk
+                </th>
+                <th class="px-6 py-4 font-bold text-sm text-center">
+                  Jam Keluar
+                </th>
                 <th class="px-6 py-4 font-bold text-sm">Keterangan</th>
                 <th class="px-6 py-4 font-bold text-sm">Status</th>
                 <th class="px-6 py-4 font-bold text-sm">Latitude</th>
                 <th class="px-6 py-4 font-bold text-sm">Longitude</th>
+                <th class="px-6 py-4 font-bold text-sm">Catatan</th>
                 <th class="px-6 py-4 font-bold text-sm text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-[#E8D5D2]">
               <tr
-                v-for="(record, index) in attendanceRecords"
+                v-for="(record, index) in filteredRecords"
                 :key="record.id"
                 class="hover:bg-[#FFF0EE]/30 transition-colors"
               >
@@ -96,8 +146,15 @@
                 <td class="px-6 py-4 text-sm font-semibold text-[#8C352D]">
                   {{ record.name }}
                 </td>
-                <td class="px-6 py-4 text-sm text-[#8C352D]/80">
-                  {{ record.time }}
+                <td
+                  class="px-6 py-4 text-sm text-[#8C352D]/80 text-center font-medium"
+                >
+                  {{ record.checkIn }}
+                </td>
+                <td
+                  class="px-6 py-4 text-sm text-[#8C352D]/80 text-center font-medium"
+                >
+                  {{ record.checkOut }}
                 </td>
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80">
                   {{ record.info }}
@@ -111,14 +168,23 @@
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80 font-mono">
                   {{ record.lng }}
                 </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-center">
-                    <button
-                      class="text-[#8C352D] hover:scale-110 transition-transform"
-                    >
-                      <EyeIcon :size="18" />
-                    </button>
-                  </div>
+                <td class="px-6 py-4 text-sm text-[#8C352D]/80 italic">
+                  {{ record.note || "-" }}
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button
+                    class="text-[#8C352D] hover:scale-110 transition-transform"
+                  >
+                    <EyeIcon :size="18" />
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="filteredRecords.length === 0">
+                <td
+                  colspan="10"
+                  class="px-6 py-10 text-center text-[#8C352D]/50 italic"
+                >
+                  Tidak ada data yang ditemukan.
                 </td>
               </tr>
             </tbody>
@@ -138,99 +204,259 @@ import {
   Settings2 as FilterIcon,
   Search as SearchIcon,
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
-// Table Mock Data
+// State
+const today = new Date().toISOString().split("T")[0];
+const searchQuery = ref("");
+const selectedDate = ref<string | null>(today);
+const selectedMonth = ref<number | null>(null);
+const selectedYear = ref<number | null>(null);
+const sortOrder = ref<"newest" | "oldest">("newest");
+
+const months = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+const years = Array.from(
+  { length: 11 },
+  (_, i) => new Date().getFullYear() - i,
+);
+
+// Master Data (Ditambahkan properti createdAt untuk sorting yang akurat)
 const attendanceRecords = ref([
   {
     id: 1,
     name: "Johnny Marr",
-    time: "08:00 WIB",
+    date: "2026-04-24",
+    checkIn: "08:00 WIB",
+    checkOut: "17:00 WIB",
     info: "Tepat Waktu",
     status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
+    lat: "-40.626",
+    lng: "-162.932",
+    note: "Hadir",
+    createdAt: "2026-04-24T08:00:00",
   },
   {
     id: 2,
     name: "Morrissey",
-    time: "08:10 WIB",
-    info: "Terlambat 10 Menit",
+    date: "2026-04-24",
+    checkIn: "08:10 WIB",
+    checkOut: "17:05 WIB",
+    info: "Terlambat",
     status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
+    lat: "-40.626",
+    lng: "-162.932",
+    note: "Macet",
+    createdAt: "2026-04-24T08:10:00",
   },
   {
     id: 3,
     name: "Julian Casablancas",
-    time: "08:20 WIB",
-    info: "Terlambat 20 Menit",
+    date: "2026-04-23",
+    checkIn: "08:20 WIB",
+    checkOut: "--:-- WIB",
+    info: "Terlambat",
     status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
+    lat: "-40.626",
+    lng: "-162.932",
+    note: "Ban bocor",
+    createdAt: "2026-04-23T08:20:00",
   },
   {
     id: 4,
-    name: "Thom Yorke",
-    time: "08:01 WIB",
-    info: "Terlambat 1 Menit",
-    status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
-  },
-  {
-    id: 5,
-    name: "Mark Mckenna",
-    time: "08:00 WIB",
-    info: "Tepat Waktu",
-    status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
-  },
-  {
-    id: 6,
-    name: "Ethel Cain",
-    time: "08:00 WIB",
-    info: "Tepat Waktu",
-    status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
-  },
-  {
-    id: 7,
-    name: "Taylor Swift",
-    time: "08:00 WIB",
-    info: "Tepat Waktu",
-    status: "-",
-    lat: "-40.62678",
-    lng: "-162.93208",
-  },
-  {
-    id: 8,
-    name: "Chappell Roan",
-    time: "--:-- WIB",
-    info: "Sakit",
-    status: "Menunggu Persetujuan",
-    lat: "-",
-    lng: "-",
-  },
-  {
-    id: 9,
     name: "Hayley Williams",
-    time: "--:-- WIB",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
     info: "Sakit",
-    status: "Sudah Persetujuan",
+    status: "Ok",
     lat: "-",
     lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
+  },
+  {
+    id: 4,
+    name: "Hayley Williams",
+    date: "2026-04-24",
+    checkIn: "--:-- WIB",
+    checkOut: "--:-- WIB",
+    info: "Sakit",
+    status: "Ok",
+    lat: "-",
+    lng: "-",
+    note: "Surat Dokter",
+    createdAt: "2026-04-24T07:45:00",
   },
 ]);
+
+// Actions
+const toggleSort = () => {
+  sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
+};
+
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+// Logika Filter & Sorting
+const filteredRecords = computed(() => {
+  let result = attendanceRecords.value.filter((record) => {
+    const recordDate = new Date(record.date);
+    const matchesSearch = record.name
+      .toLowerCase()
+      .includes(searchQuery.value.toLowerCase());
+    const matchesDate = selectedDate.value
+      ? record.date === selectedDate.value
+      : true;
+    const matchesMonth =
+      selectedMonth.value !== null
+        ? recordDate.getMonth() === selectedMonth.value
+        : true;
+    const matchesYear =
+      selectedYear.value !== null
+        ? recordDate.getFullYear() === selectedYear.value
+        : true;
+
+    return matchesSearch && matchesDate && matchesMonth && matchesYear;
+  });
+
+  // Urutkan berdasarkan Tanggal Pembuatan Data (createdAt)
+  return result.sort((a, b) => {
+    const timeA = new Date(a.createdAt).getTime();
+    const timeB = new Date(b.createdAt).getTime();
+
+    // "newest" = Data yang paling terakhir dibuat muncul di atas
+    // "oldest" = Data yang paling awal dibuat muncul di atas
+    return sortOrder.value === "newest" ? timeB - timeA : timeA - timeB;
+  });
+});
 </script>
 
 <style scoped>
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
 table {
   border-spacing: 0;
 }
-/* Ensure table text doesn't wrap awkwardly */
 th,
 td {
   white-space: nowrap;
