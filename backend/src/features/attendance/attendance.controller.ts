@@ -15,18 +15,15 @@ import { JoiValidationParamPipe } from "src/cores/validators/pipes/joi-validatio
 import { JoiValidationPipe } from "src/cores/validators/pipes/joi-validation.pipe";
 import { User } from "../user/entities/user.entity";
 import { AttendanceService } from "./attendance.service";
-import { CreateAttendanceDto } from "./dto/create-attendance.dto";
 import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
 import { Attendance } from "./entities/attendance.entity";
 import { attendanceIdParamSchema } from "./validations/params/attendance-id.param";
-import { createAttendanceSchema } from "./validations/requests/create-attendance-id.request";
 import { updateAttendanceSchema } from "./validations/requests/update-attendance-id.request";
 
 @Controller()
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  // ─── Check In ───────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Post("check-in")
   checkIn(
@@ -38,7 +35,6 @@ export class AttendanceController {
     return this.attendanceService.checkIn(user, { gps_lat, gps_lng, note });
   }
 
-  // ─── Check Out ──────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Post("check-out")
   checkOut(
@@ -50,23 +46,21 @@ export class AttendanceController {
     return this.attendanceService.checkOut(user, { gps_lat, gps_lng, note });
   }
 
-  // ─── Today Status ───────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Get("today")
   today(@CurrentUser() user: User) {
     return this.attendanceService.today(user);
   }
 
-  // ─── CRUD ────────────────────────────────────────────────────────────
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  create(
-    @CurrentUser() user: User,
-    @Body(new JoiValidationPipe(createAttendanceSchema))
-    createAttendanceDto: CreateAttendanceDto,
-  ) {
-    return this.attendanceService.create(createAttendanceDto, user);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Post()
+  // create(
+  //   @CurrentUser() user: User,
+  //   @Body(new JoiValidationPipe(createAttendanceSchema))
+  //   createAttendanceDto: CreateAttendanceDto,
+  // ) {
+  //   return this.attendanceService.create(createAttendanceDto, user);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Get()

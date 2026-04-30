@@ -28,8 +28,6 @@ export class AttendanceService {
     private readonly attendanceSettingModel: typeof AttendanceSetting,
   ) {}
 
-  // ─── Time Helpers ────────────────────────────────────────────────────
-
   private getDateTimeParts(date: Date) {
     return new Intl.DateTimeFormat("en-CA", {
       timeZone: this.attendanceTimeZone,
@@ -76,8 +74,6 @@ export class AttendanceService {
   private countWords(text: string): number {
     return text.trim().split(/\s+/).filter(Boolean).length;
   }
-
-  // ─── GPS Helpers ─────────────────────────────────────────────────────
 
   private getDistanceMeters(
     lat1: number,
@@ -129,8 +125,6 @@ export class AttendanceService {
       lateDuration > 0 ? Math.max(requiredWords - currentWords, 0) : 0;
     return { requiredWords, currentWords, missingWords };
   }
-
-  // ─── Check In ───────────────────────────────────────────────────────
 
   async checkIn(user: User, dto: CreateAttendanceDto) {
     if (!ALLOWED_ROLES.includes(user.role)) {
@@ -205,8 +199,6 @@ export class AttendanceService {
     }
   }
 
-  // ─── Check Out ──────────────────────────────────────────────────────
-
   async checkOut(user: User, dto: CreateAttendanceDto) {
     if (!ALLOWED_ROLES.includes(user.role)) {
       return this.response.fail("Only employee or intern can check out", 403);
@@ -253,8 +245,6 @@ export class AttendanceService {
       return this.response.fail(error, 400);
     }
   }
-
-  // ─── Today ───────────────────────────────────────────────────────────
 
   async today(user: User) {
     const attendance = await this.attendanceModel.findOne({
