@@ -5,7 +5,6 @@ import {
   Get,
   Param,
   Post,
-  Put,
   Query,
   UploadedFiles,
   UseGuards,
@@ -19,11 +18,9 @@ import { Dataset } from "../dataset/entities/dataset.entity";
 import { datasetIdParamSchema } from "../dataset/validations/params/dataset-id.param";
 import { DatasetImageService } from "./dataset-image.service";
 import { CreateDatasetImageDto } from "./dto/create-dataset-image.dto";
-import { UpdateDatasetImageDto } from "./dto/update-dataset-image.dto";
 import { DatasetImage } from "./entities/dataset-image.entity";
 import { datasetImageIdParamSchema } from "./validations/params/dataset-image-id.param";
 import { createDatasetImageSchema } from "./validations/requests/create-dataset-image.request";
-import { updateDatasetImageSchema } from "./validations/requests/update-dataset-image.request";
 
 @Controller()
 export class DatasetImageController {
@@ -57,16 +54,16 @@ export class DatasetImageController {
     return this.datasetImageService.findAll(dataset, query);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Put(":id")
-  async update(
-    @Param(new JoiValidationParamPipe(datasetImageIdParamSchema))
-    datasetImage: DatasetImage,
-    @Body(new JoiValidationPipe(updateDatasetImageSchema))
-    updateDatasetImageDto: UpdateDatasetImageDto,
-  ) {
-    return this.datasetImageService.update(datasetImage, updateDatasetImageDto);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Put(":id")
+  // async update(
+  //   @Param(new JoiValidationParamPipe(datasetImageIdParamSchema))
+  //   datasetImage: DatasetImage,
+  //   @Body(new JoiValidationPipe(updateDatasetImageSchema))
+  //   updateDatasetImageDto: UpdateDatasetImageDto,
+  // ) {
+  //   return this.datasetImageService.update(datasetImage, updateDatasetImageDto);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Delete(":id")

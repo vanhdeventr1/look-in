@@ -6,7 +6,6 @@ import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { SharpHelper } from "src/cores/helpers/sharp.helper";
 import { Dataset } from "../dataset/entities/dataset.entity";
 import { CreateDatasetImageDto } from "./dto/create-dataset-image.dto";
-import { UpdateDatasetImageDto } from "./dto/update-dataset-image.dto";
 import { DatasetImage } from "./entities/dataset-image.entity";
 
 @Injectable()
@@ -82,25 +81,25 @@ export class DatasetImageService {
     );
   }
 
-  async update(
-    datasetImage: DatasetImage,
-    updateDatasetImageDto: UpdateDatasetImageDto,
-  ) {
-    const transaction = await this.sequelize.transaction();
-    try {
-      await datasetImage.update(updateDatasetImageDto, { transaction });
-      await transaction.commit();
+  // async update(
+  //   datasetImage: DatasetImage,
+  //   updateDatasetImageDto: UpdateDatasetImageDto,
+  // ) {
+  //   const transaction = await this.sequelize.transaction();
+  //   try {
+  //     await datasetImage.update(updateDatasetImageDto, { transaction });
+  //     await transaction.commit();
 
-      return this.response.success(
-        datasetImage,
-        200,
-        "Successfully update dataset image",
-      );
-    } catch (error) {
-      await transaction.rollback();
-      return this.response.fail(error, 400);
-    }
-  }
+  //     return this.response.success(
+  //       datasetImage,
+  //       200,
+  //       "Successfully update dataset image",
+  //     );
+  //   } catch (error) {
+  //     await transaction.rollback();
+  //     return this.response.fail(error, 400);
+  //   }
+  // }
 
   async remove(datasetImage: DatasetImage) {
     const transaction = await this.sequelize.transaction();
