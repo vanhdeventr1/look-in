@@ -28,23 +28,25 @@ export class DatasetService {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Only hiring manager can create dataset", 403);
     }
+
     if (!files || files.length === 0) {
       return this.response.fail("Image is required", 400);
     }
 
     const transaction = await this.sequelize.transaction();
+
     try {
       const imageData = [];
       const sharpHelper = new SharpHelper();
 
       for (const file of files) {
-        // ← changed: no more resizing, just upload original
         const uploadFile = await sharpHelper.resizeAndUpload(file, {
           path: Dataset.imageOption.path,
         });
+
         const image = new URL(uploadFile.url);
+
         imageData.push({
-          url: image.href,
           file_path: image.pathname.substring(1),
         });
       }
@@ -63,17 +65,16 @@ export class DatasetService {
 
       await transaction.commit();
 
-      await dataset.reload({
-        include: [
-          { association: "user", attributes: { exclude: ["password"] } },
-          "dataset_images",
-        ],
-      });
-
       return this.response.success(
-        dataset,
+        {
+          id: dataset.id,
+          user_id: dataset.user_id,
+          created_by: dataset.created_by,
+          created_at: dataset.createdAt,
+          image_count: imageData.length,
+        },
         201,
-        "Successfully created dataset for employee",
+        "Successfully created dataset",
       );
     } catch (error) {
       await transaction.rollback();
@@ -88,8 +89,8 @@ export class DatasetService {
 
     try {
       const result = await new QueryBuilderHelper(this.datasetModel, query)
-        .load("dataset_images")
-        .load("user")
+        .load("user", "dataset_images")
+        .setSubQuery(false)
         .getResult();
 
       if (!result) {
@@ -102,8 +103,20 @@ export class DatasetService {
 
       const { count, data } = result;
 
+      const cleaned = data.map((d: any) => ({
+        id: d.id,
+        user: d.user
+          ? {
+              id: d.user.id,
+              name: d.user.name,
+            }
+          : null,
+        image_count: d.dataset_images ? d.dataset_images.length : 0,
+        created_at: d.created_at,
+      }));
+
       return this.response.success(
-        { count, datasets: data },
+        { count, datasets: cleaned },
         200,
         "Successfully retrieved datasets",
       );
@@ -119,41 +132,39 @@ export class DatasetService {
           { association: "dataset_images" },
           {
             association: "user",
-            attributes: { exclude: ["password"] },
+            attributes: ["id", "name"],
           },
           {
             association: "created_by_user",
-            attributes: { exclude: ["password"] },
+            attributes: ["id", "name"],
           },
         ],
       });
 
-      return this.response.success(dataset, 200, "Successfully get dataset");
+      const result = {
+        id: dataset.id,
+        user: dataset.user
+          ? {
+              id: dataset.user.id,
+              name: dataset.user.name,
+            }
+          : null,
+        created_by_user: dataset.created_by_user
+          ? {
+              id: dataset.created_by_user.id,
+              name: dataset.created_by_user.name,
+            }
+          : null,
+        image_count: dataset.dataset_images ? dataset.dataset_images.length : 0,
+        created_at: dataset.createdAt,
+        updated_at: dataset.updatedAt,
+      };
+
+      return this.response.success(result, 200, "Successfully get dataset");
     } catch (error) {
       return this.response.fail(error, 400);
     }
   }
-
-  // async update(
-  //   dataset: Dataset,
-  //   updateDatasetDto: UpdateDatasetDto,
-  //   user: User,
-  // ) {
-  //   if (user.role !== UserRoleEnum.HIRING_MANAGER) {
-  //     return this.response.fail("Only hiring manager can update dataset", 403);
-  //   }
-
-  //   const transaction = await this.sequelize.transaction();
-  //   try {
-  //     await dataset.update(updateDatasetDto, { transaction });
-  //     await transaction.commit();
-
-  //     return this.response.success(dataset, 200, "Successfully update dataset");
-  //   } catch (error) {
-  //     await transaction.rollback();
-  //     return this.response.fail(error, 400);
-  //   }
-  // }
 
   async remove(dataset: Dataset, user: User) {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
@@ -161,6 +172,7 @@ export class DatasetService {
     }
 
     const transaction = await this.sequelize.transaction();
+
     try {
       await dataset.destroy({ transaction });
       await transaction.commit();

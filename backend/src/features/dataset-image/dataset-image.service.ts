@@ -27,6 +27,7 @@ export class DatasetImageService {
     }
 
     const transaction = await this.sequelize.transaction();
+
     try {
       const sharpHelper = new SharpHelper();
 
@@ -38,14 +39,13 @@ export class DatasetImageService {
           return this.response.fail(`Image at index ${index} is required`, 400);
         }
 
-        // ← changed: upload original only, no resizing
         const uploadResult = await sharpHelper.resizeAndUpload(files[index], {
           path: Dataset.imageOption.path,
         });
 
         const imageUrl = new URL(uploadResult.url);
+
         datasetImage.file_path = imageUrl.pathname.substring(1);
-        datasetImage.url = imageUrl.href;
         datasetImage.dataset_id = dataset.id;
       }
 
@@ -55,8 +55,16 @@ export class DatasetImageService {
       );
 
       await transaction.commit();
+
+      const result = datasetImages.map((img) => ({
+        id: img.id,
+        dataset_id: img.dataset_id,
+        file_path: img.file_path,
+        created_at: img.createdAt,
+      }));
+
       return this.response.success(
-        datasetImages,
+        result,
         201,
         "Successfully create dataset image",
       );
@@ -74,8 +82,15 @@ export class DatasetImageService {
       .where({ dataset_id: dataset.id })
       .getResult();
 
+    const cleanedData = data.map((img) => ({
+      id: img.id,
+      dataset_id: img.dataset_id,
+      file_path: img.file_path,
+      created_at: img.created_at,
+    }));
+
     return this.response.success(
-      { count, dataset_images: data },
+      { count, dataset_images: cleanedData },
       200,
       "Successfully get dataset images",
     );
@@ -86,12 +101,18 @@ export class DatasetImageService {
   //   updateDatasetImageDto: UpdateDatasetImageDto,
   // ) {
   //   const transaction = await this.sequelize.transaction();
+
   //   try {
   //     await datasetImage.update(updateDatasetImageDto, { transaction });
   //     await transaction.commit();
 
   //     return this.response.success(
-  //       datasetImage,
+  //       {
+  //         id: datasetImage.id,
+  //         dataset_id: datasetImage.dataset_id,
+  //         file_path: datasetImage.file_path,
+  //         updated_at: datasetImage.updatedAt,
+  //       },
   //       200,
   //       "Successfully update dataset image",
   //     );
@@ -103,8 +124,8 @@ export class DatasetImageService {
 
   async remove(datasetImage: DatasetImage) {
     const transaction = await this.sequelize.transaction();
+
     try {
-      // ← changed: no dimension needed anymore
       if (datasetImage.file_path) {
         const sharpHelper = new SharpHelper();
         await sharpHelper.delete(datasetImage.file_path);
