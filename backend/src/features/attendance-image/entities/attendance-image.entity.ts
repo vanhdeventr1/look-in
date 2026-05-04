@@ -6,7 +6,6 @@ import {
   Model,
   Table,
 } from "sequelize-typescript";
-import { ResizeOption } from "src/cores/helpers/sharp.helper";
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { Attendance } from "src/features/attendance/entities/attendance.entity";
 
@@ -47,21 +46,7 @@ export class AttendanceImage extends Model {
   })
   file_path: string;
 
-  static imageDimension: { attendanceImage: ResizeOption } = {
-    attendanceImage: {
-      dimensions: [
-        {
-          width: 100,
-          fit: "inside",
-          prefix: "100",
-        },
-        {
-          width: 500,
-          fit: "inside",
-          prefix: "500",
-        },
-      ],
-      path: "attendance/images",
-    },
+  static imageOption = {
+    path: "attendance/images",
   };
 }
