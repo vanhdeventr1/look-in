@@ -52,15 +52,11 @@ export class AttendanceController {
     return this.attendanceService.today(user);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Post()
-  // create(
-  //   @CurrentUser() user: User,
-  //   @Body(new JoiValidationPipe(createAttendanceSchema))
-  //   createAttendanceDto: CreateAttendanceDto,
-  // ) {
-  //   return this.attendanceService.create(createAttendanceDto, user);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @Get("history")
+  getAttendanceHistory(@CurrentUser() user: User, @Query() query: any) {
+    return this.attendanceService.getAttendanceHistory(user, query);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get()

@@ -5,6 +5,7 @@ import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { AttendanceSetting } from "../attendance-setting/entities/attendance-setting.entity";
+import { Permit } from "../permit/entities/permit.entity";
 import { User } from "../user/entities/user.entity";
 import UserRoleEnum from "../user/enums/user-role.enum";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
@@ -26,6 +27,8 @@ export class AttendanceService {
     private readonly attendanceModel: typeof Attendance,
     @InjectModel(AttendanceSetting)
     private readonly attendanceSettingModel: typeof AttendanceSetting,
+    @InjectModel(Permit)
+    private readonly permitModel: typeof Permit,
   ) {}
 
   private getDateTimeParts(date: Date) {
@@ -124,6 +127,12 @@ export class AttendanceService {
     const missingWords =
       lateDuration > 0 ? Math.max(requiredWords - currentWords, 0) : 0;
     return { requiredWords, currentWords, missingWords };
+  }
+
+  private isWeekend(dateStr: string): boolean {
+    const date = new Date(dateStr);
+    const day = date.getDay();
+    return day === 0 || day === 6;
   }
 
   async checkIn(user: User, dto: CreateAttendanceDto) {
@@ -266,76 +275,6 @@ export class AttendanceService {
     );
   }
 
-  // async create(createAttendanceDto: CreateAttendanceDto, user: User) {
-  //   if (!ALLOWED_ROLES.includes(user.role)) {
-  //     return this.response.fail(
-  //       "Only employee or intern can take attendance",
-  //       403,
-  //     );
-  //   }
-
-  //   const setting = await this.attendanceSettingModel.findOne({
-  //     order: [["id", "DESC"]],
-  //   });
-  //   if (!setting)
-  //     return this.response.fail("Attendance setting not found", 404);
-
-  //   if (!createAttendanceDto.gps_lat || !createAttendanceDto.gps_lng) {
-  //     return this.response.fail("GPS latitude and longitude are required", 400);
-  //   }
-
-  //   const gpsError = this.validateGps(
-  //     createAttendanceDto.gps_lat,
-  //     createAttendanceDto.gps_lng,
-  //     setting,
-  //   );
-  //   if (gpsError) return this.response.fail(gpsError, 400);
-
-  //   const clockIn = this.getNow();
-  //   const lateDuration = this.getLateDuration(clockIn, setting.check_in_time);
-  //   const { requiredWords, currentWords, missingWords } = this.lateNoteResult(
-  //     lateDuration,
-  //     createAttendanceDto.note || "",
-  //   );
-
-  //   const transaction = await this.sequelize.transaction();
-  //   try {
-  //     const attendance = await this.attendanceModel.create(
-  //       {
-  //         ...createAttendanceDto,
-  //         clock_in: clockIn,
-  //         is_late: lateDuration > 0,
-  //         late_duration: lateDuration,
-  //         attendance_setting_id: setting.id,
-  //         user_id: user.id,
-  //         created_by: user.id,
-  //       },
-  //       { transaction },
-  //     );
-  //     await transaction.commit();
-
-  //     return this.response.success(
-  //       {
-  //         attendance,
-  //         late_note_requirement: {
-  //           is_required: lateDuration > 0,
-  //           required_words: requiredWords,
-  //           current_words: currentWords,
-  //           additional_words_needed: missingWords,
-  //           is_fulfilled: missingWords === 0,
-  //         },
-  //       },
-  //       201,
-  //       missingWords > 0
-  //         ? `Attendance recorded. You are late ${lateDuration} minute(s), add ${missingWords} words more`
-  //         : "Successfully create attendance",
-  //     );
-  //   } catch (error) {
-  //     await transaction.rollback();
-  //     return this.response.fail(error, 400);
-  //   }
-  // }
-
   async findAll(query: any) {
     try {
       const { count, data } = await new QueryBuilderHelper(
@@ -429,6 +368,162 @@ export class AttendanceService {
       );
     } catch (error) {
       await transaction.rollback();
+      return this.response.fail(error, 400);
+    }
+  }
+
+  async getAttendanceHistory(user: User, query: any) {
+    try {
+      const start = new Date(query.start_date);
+      const end = new Date(query.end_date);
+
+      const attendanceWhere: any = {
+        clock_in: { [Op.between]: [start, end] },
+      };
+
+      if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+        attendanceWhere.user_id = user.id;
+      }
+
+      const attendances = await this.attendanceModel.findAll({
+        where: attendanceWhere,
+        include: ["user"],
+      });
+
+      const permitWhere: any = {
+        status: 1,
+        [Op.or]: [
+          { date_start: { [Op.between]: [start, end] } },
+          { date_end: { [Op.between]: [start, end] } },
+          {
+            date_start: { [Op.lte]: start },
+            date_end: { [Op.gte]: end },
+          },
+        ],
+      };
+
+      if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+        permitWhere.user_id = user.id;
+      }
+
+      const permits = await this.permitModel.findAll({
+        where: permitWhere,
+        include: ["user"],
+      });
+
+      let users: User[] = [];
+
+      if (user.role === UserRoleEnum.HIRING_MANAGER) {
+        users = await User.findAll({
+          where: {
+            role: [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN],
+          },
+        });
+      } else {
+        users = [user];
+      }
+
+      const map = new Map<string, any>();
+
+      for (const permit of permits as any[]) {
+        const current = new Date(permit.date_start);
+        const endDate = new Date(permit.date_end);
+
+        while (current <= endDate) {
+          const dateStr = current.toLocaleDateString("en-CA", {
+            timeZone: this.attendanceTimeZone,
+          });
+
+          const key = `${permit.user_id}-${dateStr}`;
+
+          map.set(key, {
+            user: permit.user,
+            user_id: permit.user_id,
+            date: dateStr,
+            status: "permit",
+            source: "permit",
+            permit_id: permit.id,
+          });
+
+          current.setDate(current.getDate() + 1);
+        }
+      }
+
+      for (const att of attendances as Attendance[]) {
+        const dateStr = att.clock_in.toLocaleDateString("en-CA", {
+          timeZone: this.attendanceTimeZone,
+        });
+
+        const key = `${att.user_id}-${dateStr}`;
+
+        if (!map.has(key)) {
+          map.set(key, {
+            user: att.user,
+            user_id: att.user_id,
+            date: dateStr,
+            status: att.is_late ? "late" : "present",
+            source: "attendance",
+            attendance_id: att.id,
+            clock_in: att.clock_in,
+            clock_out: att.clock_out,
+          });
+        }
+      }
+
+      const dates: string[] = [];
+      const current = new Date(start);
+
+      while (current <= end) {
+        dates.push(
+          current.toLocaleDateString("en-CA", {
+            timeZone: this.attendanceTimeZone,
+          }),
+        );
+        current.setDate(current.getDate() + 1);
+      }
+
+      const final = [];
+
+      for (const u of users) {
+        for (const d of dates) {
+          const key = `${u.id}-${d}`;
+
+          if (map.has(key)) {
+            final.push(map.get(key));
+          } else if (this.isWeekend(d)) {
+            final.push({
+              user: u,
+              user_id: u.id,
+              date: d,
+              status: "weekend",
+              source: "system",
+            });
+          } else {
+            final.push({
+              user: u,
+              user_id: u.id,
+              date: d,
+              status: "absent",
+              source: "system",
+            });
+          }
+        }
+      }
+
+      final.sort((a, b) => {
+        if (a.date === b.date) return a.user_id - b.user_id;
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
+
+      return this.response.success(
+        {
+          count: final.length,
+          history: final,
+        },
+        200,
+        "Attendance history retrieved successfully",
+      );
+    } catch (error) {
       return this.response.fail(error, 400);
     }
   }
