@@ -56,6 +56,12 @@ export class Attendance extends Model {
   @Column({ type: DataType.TEXT, allowNull: true })
   note: string;
 
+  @Column({ type: DataType.FLOAT, allowNull: true })
+  face_confidence: number;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false })
+  is_face_verified: boolean;
+
   @ForeignKey(() => AttendanceSetting)
   @Column({ type: DataType.BIGINT, allowNull: true })
   attendance_setting_id: number;
