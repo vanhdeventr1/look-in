@@ -11,7 +11,7 @@ import {
 import type { TypeWrapper } from "src/cores/helpers/type-wrapper";
 import { AttendanceImage } from "src/features/attendance-image/entities/attendance-image.entity";
 import { AttendanceSetting } from "src/features/attendance-setting/entities/attendance-setting.entity";
-import { Permit } from "src/features/permit/entities/permit.entity";
+// import { Permit } from "src/features/permit/entities/permit.entity";
 import { User } from "src/features/user/entities/user.entity";
 
 @Table({
@@ -69,12 +69,12 @@ export class Attendance extends Model {
   @BelongsTo(() => AttendanceSetting, { foreignKey: "attendance_setting_id" })
   attendance_setting: TypeWrapper<AttendanceSetting>;
 
-  @ForeignKey(() => Permit)
-  @Column({ type: DataType.BIGINT, allowNull: true })
-  permit_id: number;
+  // @ForeignKey(() => Permit)
+  // @Column({ type: DataType.BIGINT, allowNull: true })
+  // permit_id: number;
 
-  @BelongsTo(() => Permit, { foreignKey: "permit_id" })
-  permit: TypeWrapper<Permit>;
+  // @BelongsTo(() => Permit, { foreignKey: "permit_id" })
+  // permit: TypeWrapper<Permit>;
 
   @ForeignKey(() => User)
   @Column({ type: DataType.BIGINT, allowNull: false })
