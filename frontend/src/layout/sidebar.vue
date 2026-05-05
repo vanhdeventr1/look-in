@@ -200,7 +200,7 @@ const navItems = ref([
   {
     icon: markRaw(AttendanceIcon),
     label: "Riwayat Absen",
-    path: "/admin/attendance",
+    path: "/admin/attendance-history",
   },
   {
     icon: markRaw(CalendarCogIcon),
