@@ -281,7 +281,7 @@ export class AttendanceService {
         this.attendanceModel,
         query,
       )
-        .load("user", "created_by_user", "attendance_setting", "permit")
+        .load("user", "created_by_user", "attendance_setting")
         .getResult();
       return this.response.success(
         { count, attendances: data },
@@ -301,7 +301,6 @@ export class AttendanceService {
           "created_by_user",
           "attendance_images",
           "attendance_setting",
-          "permit",
         ],
       });
       return this.response.success(
@@ -374,8 +373,12 @@ export class AttendanceService {
 
   async getAttendanceHistory(user: User, query: any) {
     try {
-      const start = new Date(query.start_date);
-      const end = new Date(query.end_date);
+      const start = new Date(
+        `${query.start_date}T00:00:00.000${this.attendanceTimeZoneOffset}`,
+      );
+      const end = new Date(
+        `${query.end_date}T23:59:59.999${this.attendanceTimeZoneOffset}`,
+      );
 
       const attendanceWhere: any = {
         clock_in: { [Op.between]: [start, end] },
@@ -443,6 +446,9 @@ export class AttendanceService {
             status: "permit",
             source: "permit",
             permit_id: permit.id,
+            permit_type: permit.type,
+            permit_type_name: permit.type_name,
+            note: permit.description,
           });
 
           current.setDate(current.getDate() + 1);
@@ -466,6 +472,10 @@ export class AttendanceService {
             attendance_id: att.id,
             clock_in: att.clock_in,
             clock_out: att.clock_out,
+            gps_lat: att.gps_lat,
+            gps_lng: att.gps_lng,
+            late_duration: att.late_duration,
+            note: att.note,
           });
         }
       }
