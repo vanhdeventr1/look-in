@@ -115,7 +115,7 @@ export class AttendanceService {
       currentLng,
     );
     if (distance > setting.radius_meter) {
-      return `You are ${Math.ceil(distance)}m away from attendance location`;
+      return `Anda berada ${Math.ceil(distance)}m dari lokasi absensi`;
     }
 
     return null;

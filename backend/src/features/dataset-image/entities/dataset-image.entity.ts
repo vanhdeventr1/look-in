@@ -38,19 +38,7 @@ export class DatasetImage extends Model {
     type: DataType.STRING,
     allowNull: true,
   })
-  url: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-  })
   file_path: string;
-
-  @Column({
-    type: DataType.JSON,
-    allowNull: true,
-  })
-  embedding: number[];
 
   static imageOption = {
     path: "dataset/images",

@@ -37,6 +37,7 @@ export class DatasetService {
 
     try {
       const imageData = [];
+      const s3Urls = []; // ✅ collect S3 URLs
       const sharpHelper = new SharpHelper();
 
       for (const file of files) {
@@ -49,6 +50,19 @@ export class DatasetService {
         imageData.push({
           file_path: image.pathname.substring(1),
         });
+
+        s3Urls.push(uploadFile.url); // ✅ save public S3 URL
+      }
+
+      // ✅ get target user name for AI model folder
+      const targetUser = await this.userModel.findByPk(
+        createDatasetDto.user_id,
+        { attributes: ["id", "name"] },
+      );
+
+      if (!targetUser) {
+        await transaction.rollback();
+        return this.response.fail("User not found", 404);
       }
 
       const dataset = await this.datasetModel.create(
@@ -64,6 +78,21 @@ export class DatasetService {
       );
 
       await transaction.commit();
+
+      // ✅ trigger AI service to retrain
+      try {
+        await fetch("http://localhost:8000/train", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            person_name: targetUser.name,
+            s3_urls: s3Urls,
+          }),
+        });
+        console.log(`[AI] Retrained model for ${targetUser.name}`);
+      } catch (aiError: any) {
+        console.warn("[AI] Train trigger failed:", aiError.message);
+      }
 
       return this.response.success(
         {
