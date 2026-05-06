@@ -180,7 +180,15 @@
                   {{ record.info }}
                 </td>
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80">
-                  {{ record.note }}
+                  <button
+                    v-if="hasSubmittedLateNote(record)"
+                    @click="openViewLateNoteModal(record)"
+                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFF0EE] border border-[#8C352D] text-[#8C352D] text-xs font-bold hover:bg-[#8C352D]/5 transition-colors cursor-pointer"
+                  >
+                    <FileTextIcon :size="13" />
+                    <span>Sudah mengirim catatan</span>
+                  </button>
+                  <span v-else>{{ getNoteTableText(record) }}</span>
                 </td>
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80 font-mono">
                   {{ record.lat }}
@@ -263,6 +271,52 @@
           </div>
         </div>
       </div>
+
+      <div
+        v-if="viewLateNoteModal.visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px]"
+      >
+        <div
+          class="bg-white w-full max-w-lg rounded-2xl border border-[#E8D5D2] shadow-2xl animate-in overflow-hidden"
+        >
+          <div
+            class="bg-[#8C352D] px-6 py-4 flex items-center justify-between"
+          >
+            <div>
+              <h3 class="text-white font-bold text-base">
+                Catatan Terlambat
+              </h3>
+              <p class="text-white/70 text-xs font-medium">
+                {{ viewLateNoteModal.record?.name ?? "-" }} -
+                {{ viewLateNoteModal.record?.displayDate ?? "-" }}
+              </p>
+            </div>
+            <button
+              @click="closeViewLateNoteModal"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-white/90 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <XIcon :size="18" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4">
+            <div
+              class="max-h-[55vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 px-4 py-3 text-sm leading-6 text-[#8C352D]"
+            >
+              {{ viewLateNoteModal.record?.note ?? "-" }}
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+              <button
+                @click="closeViewLateNoteModal"
+                class="px-4 py-2 rounded-xl bg-[#8C352D] text-white text-sm font-bold hover:bg-[#742f28] transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </SidebarLayout>
 </template>
@@ -275,8 +329,10 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Download as DownloadIcon,
+  FileText as FileTextIcon,
   Settings2 as FilterIcon,
   Search as SearchIcon,
+  X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 
@@ -305,6 +361,10 @@ const selectedYear = ref<number | null>(new Date().getFullYear());
 const sortOrder = ref<"newest" | "oldest">("newest");
 const isLoading = ref(false);
 const errorMessage = ref("");
+const viewLateNoteModal = ref({
+  visible: false,
+  record: null as AttendanceRecord | null,
+});
 
 // Pagination
 const currentPage = ref(1);
@@ -334,6 +394,32 @@ const attendanceRecords = ref<AttendanceRecord[]>([]);
 // Actions
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
+};
+
+const isLateRecord = (record: AttendanceRecord) => {
+  return record.raw?.source === "attendance" && record.raw?.status === "late";
+};
+
+const hasSubmittedLateNote = (record: AttendanceRecord) => {
+  return isLateRecord(record) && record.note.trim() !== "-";
+};
+
+const getNoteTableText = (record: AttendanceRecord) => {
+  return isLateRecord(record) ? "-" : record.note;
+};
+
+const openViewLateNoteModal = (record: AttendanceRecord) => {
+  viewLateNoteModal.value = {
+    visible: true,
+    record,
+  };
+};
+
+const closeViewLateNoteModal = () => {
+  viewLateNoteModal.value = {
+    visible: false,
+    record: null,
+  };
 };
 
 const formatDate = (dateStr: string) => {

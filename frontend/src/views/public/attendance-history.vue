@@ -154,13 +154,49 @@
                 <td
                   class="px-6 py-4 text-sm text-[#8C352D]/80 text-center font-medium"
                 >
-                  {{ record.checkOut }}
+                  <button
+                    v-if="canCheckOut(record)"
+                    @click="submitCheckOut(record)"
+                    :disabled="actionLoadingId === record.id"
+                    class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#8C352D] text-white text-xs font-bold hover:bg-[#742f28] disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  >
+                    <Loader2Icon
+                      v-if="actionLoadingId === record.id"
+                      :size="14"
+                      class="animate-spin"
+                    />
+                    <LogOutIcon v-else :size="14" />
+                    <span>Check Out</span>
+                  </button>
+                  <span v-else>{{ record.checkOut }}</span>
                 </td>
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80">
                   {{ record.info }}
                 </td>
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80">
-                  {{ record.note }}
+                  <div
+                    v-if="isLateRecord(record)"
+                    class="flex items-center gap-2"
+                  >
+                    <button
+                      v-if="hasSubmittedLateNote(record)"
+                      @click="openViewLateNoteModal(record)"
+                      class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFF0EE] border border-[#8C352D] text-[#8C352D] text-xs font-bold hover:bg-[#8C352D]/5 transition-colors cursor-pointer"
+                    >
+                      <FileTextIcon :size="13" />
+                      <span>Sudah mengirim catatan</span>
+                    </button>
+                    <span v-else>-</span>
+                    <button
+                      v-if="canEditLateNote(record)"
+                      @click="openLateNoteModal(record)"
+                      class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#8C352D] text-[#8C352D] text-xs font-bold hover:bg-[#8C352D]/5 transition-colors cursor-pointer"
+                    >
+                      <PencilIcon :size="13" />
+                      <span>{{ record.note === "-" ? "Tambah" : "Ubah" }}</span>
+                    </button>
+                  </div>
+                  <span v-else>{{ record.note }}</span>
                 </td>
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80 font-mono">
                   {{ record.lat }}
@@ -242,19 +278,151 @@
           </div>
         </div>
       </div>
+
+      <div
+        v-if="lateNoteModal.visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px]"
+      >
+        <div
+          class="bg-white w-full max-w-lg rounded-2xl shadow-2xl animate-in overflow-hidden"
+        >
+          <div class="bg-[#8C352D] px-6 py-4 flex items-center justify-between">
+            <div>
+              <h3 class="text-white font-bold text-base">Catatan Terlambat</h3>
+              <p class="text-white/70 text-xs font-medium">
+                Minimal {{ lateNoteRequiredWords }} kata
+              </p>
+            </div>
+            <button
+              @click="closeLateNoteModal"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-white/90 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <XIcon :size="18" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4">
+            <textarea
+              v-model="lateNoteModal.note"
+              rows="7"
+              class="w-full resize-none rounded-xl border border-[#E8D5D2] px-4 py-3 text-sm text-[#8C352D] focus:outline-none focus:border-[#8C352D] bg-white"
+              placeholder="Tulis alasan keterlambatan..."
+            ></textarea>
+
+            <div class="flex items-center justify-between gap-4">
+              <p
+                :class="[
+                  'text-sm font-bold',
+                  lateNoteWordsNeeded > 0
+                    ? 'text-[#8C352D]/70'
+                    : 'text-green-700',
+                ]"
+              >
+                {{ lateNoteWordCount }} / {{ lateNoteRequiredWords }} kata
+              </p>
+              <p
+                v-if="lateNoteWordsNeeded > 0"
+                class="text-xs text-[#8C352D]/60"
+              >
+                Tambahkan {{ lateNoteWordsNeeded }} kata lagi.
+              </p>
+            </div>
+
+            <div
+              v-if="modalErrorMessage"
+              class="px-4 py-3 rounded-xl bg-[#FFF0EE] border border-[#E8D5D2] text-sm text-[#8C352D] font-medium"
+            >
+              {{ modalErrorMessage }}
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+              <button
+                @click="closeLateNoteModal"
+                class="px-4 py-2 rounded-xl border border-[#E8D5D2] text-[#8C352D] text-sm font-bold hover:bg-[#FFF0EE] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                @click="submitLateNote"
+                :disabled="isSubmittingLateNote || lateNoteWordsNeeded > 0"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#8C352D] text-white text-sm font-bold hover:bg-[#742f28] disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <Loader2Icon
+                  v-if="isSubmittingLateNote"
+                  :size="16"
+                  class="animate-spin"
+                />
+                <SaveIcon v-else :size="16" />
+                <span>Simpan</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="viewLateNoteModal.visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px]"
+      >
+        <div
+          class="bg-white w-full max-w-lg rounded-2xl shadow-2xl animate-in overflow-hidden"
+        >
+          <div class="bg-[#8C352D] px-6 py-4 flex items-center justify-between">
+            <div>
+              <h3 class="text-white font-bold text-base">Catatan Terlambat</h3>
+              <p class="text-white/70 text-xs font-medium">
+                {{ viewLateNoteModal.record?.displayDate ?? "-" }}
+              </p>
+            </div>
+            <button
+              @click="closeViewLateNoteModal"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-white/90 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <XIcon :size="18" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4">
+            <div
+              class="max-h-[55vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/30 px-4 py-3 text-sm leading-6 text-[#8C352D]"
+            >
+              {{ viewLateNoteModal.record?.note ?? "-" }}
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+              <button
+                @click="closeViewLateNoteModal"
+                class="px-4 py-2 rounded-xl bg-[#8C352D] text-white text-sm font-bold hover:bg-[#742f28] transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </SidebarLayout>
 </template>
 
 <script setup lang="ts">
-import { getAttendanceHistory } from "@/api/attendance.api";
+import {
+  checkOutAttendance,
+  getAttendanceHistory,
+  updateAttendanceLateNote,
+} from "@/api/attendance.api";
 import { getPermits } from "@/api/permit.api";
 import SidebarLayout from "@/layout/sidebarpublic.vue";
 import {
   Calendar as CalendarIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  FileText as FileTextIcon,
   Settings2 as FilterIcon,
+  Loader2 as Loader2Icon,
+  LogOut as LogOutIcon,
+  Pencil as PencilIcon,
+  Save as SaveIcon,
+  X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 
@@ -283,11 +451,23 @@ const selectedYear = ref<number | null>(new Date().getFullYear());
 const sortOrder = ref<"newest" | "oldest">("newest");
 const isLoading = ref(false);
 const errorMessage = ref("");
+const modalErrorMessage = ref("");
 const currentPage = ref(1);
 const itemsPerPage = 10;
 const attendanceRecords = ref<AttendanceRecord[]>([]);
 const weeklyAttendanceRecords = ref<AttendanceRecord[]>([]);
 const pendingPermitCount = ref(0);
+const actionLoadingId = ref<string | null>(null);
+const isSubmittingLateNote = ref(false);
+const lateNoteModal = ref({
+  visible: false,
+  record: null as AttendanceRecord | null,
+  note: "",
+});
+const viewLateNoteModal = ref({
+  visible: false,
+  record: null as AttendanceRecord | null,
+});
 
 const months = [
   "Januari",
@@ -310,6 +490,165 @@ const years = Array.from(
 
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
+};
+
+const getErrorText = (error: any, fallback: string) => {
+  return error?.response?.data?.message ?? error?.message ?? fallback;
+};
+
+const getUserId = (value: any) => {
+  const raw = value?.id ?? value?.user_id;
+  return raw === undefined || raw === null ? null : Number(raw);
+};
+
+const isHiringManager = computed(() => Number(currentUser?.role) === 1);
+
+const isOwnRecord = (record: AttendanceRecord) => {
+  const currentUserId = getUserId(currentUser);
+  const recordUserId = getUserId(record.raw);
+  return (
+    currentUserId !== null &&
+    recordUserId !== null &&
+    currentUserId === recordUserId
+  );
+};
+
+const canCheckOut = (record: AttendanceRecord) => {
+  return (
+    !isHiringManager.value &&
+    isOwnRecord(record) &&
+    record.raw?.source === "attendance" &&
+    record.date === today &&
+    !!record.raw?.clock_in &&
+    !record.raw?.clock_out
+  );
+};
+
+const canEditLateNote = (record: AttendanceRecord) => {
+  return (
+    !isHiringManager.value &&
+    isOwnRecord(record) &&
+    record.raw?.source === "attendance" &&
+    !!record.raw?.attendance_id &&
+    record.raw?.status === "late"
+  );
+};
+
+const isLateRecord = (record: AttendanceRecord) => {
+  return record.raw?.source === "attendance" && record.raw?.status === "late";
+};
+
+const hasSubmittedLateNote = (record: AttendanceRecord) => {
+  return isLateRecord(record) && record.note.trim() !== "-";
+};
+
+const getCurrentPosition = () => {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Browser tidak mendukung lokasi."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    });
+  });
+};
+
+const submitCheckOut = async (record: AttendanceRecord) => {
+  actionLoadingId.value = record.id;
+  errorMessage.value = "";
+
+  try {
+    const position = await getCurrentPosition();
+    await checkOutAttendance({
+      gps_lat: position.coords.latitude.toString(),
+      gps_lng: position.coords.longitude.toString(),
+    });
+    await fetchAttendanceHistory();
+    await fetchWeeklyAttendanceSummary();
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = getErrorText(error, "Gagal melakukan check out.");
+  } finally {
+    actionLoadingId.value = null;
+  }
+};
+
+const countWords = (text: string) => {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+};
+
+const lateNoteRequiredWords = computed(() => {
+  const lateDuration = Number(
+    lateNoteModal.value.record?.raw?.late_duration ?? 0,
+  );
+  return Math.max(lateDuration, 0) * 60;
+});
+
+const lateNoteWordCount = computed(() => countWords(lateNoteModal.value.note));
+
+const lateNoteWordsNeeded = computed(() => {
+  return Math.max(lateNoteRequiredWords.value - lateNoteWordCount.value, 0);
+});
+
+const openLateNoteModal = (record: AttendanceRecord) => {
+  modalErrorMessage.value = "";
+  lateNoteModal.value = {
+    visible: true,
+    record,
+    note: record.note === "-" ? "" : record.note,
+  };
+};
+
+const openViewLateNoteModal = (record: AttendanceRecord) => {
+  viewLateNoteModal.value = {
+    visible: true,
+    record,
+  };
+};
+
+const closeViewLateNoteModal = () => {
+  viewLateNoteModal.value = {
+    visible: false,
+    record: null,
+  };
+};
+
+const closeLateNoteModal = () => {
+  if (isSubmittingLateNote.value) return;
+  lateNoteModal.value = {
+    visible: false,
+    record: null,
+    note: "",
+  };
+  modalErrorMessage.value = "";
+};
+
+const submitLateNote = async () => {
+  const record = lateNoteModal.value.record;
+  if (!record?.raw?.attendance_id || lateNoteWordsNeeded.value > 0) return;
+
+  isSubmittingLateNote.value = true;
+  modalErrorMessage.value = "";
+
+  try {
+    await updateAttendanceLateNote(
+      record.raw.attendance_id,
+      lateNoteModal.value.note,
+    );
+    isSubmittingLateNote.value = false;
+    closeLateNoteModal();
+    await fetchAttendanceHistory();
+    await fetchWeeklyAttendanceSummary();
+  } catch (error) {
+    console.error(error);
+    modalErrorMessage.value = getErrorText(error, "Gagal menyimpan catatan.");
+  } finally {
+    isSubmittingLateNote.value = false;
+  }
 };
 
 const formatDate = (dateStr: string) => {

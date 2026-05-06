@@ -1,27 +1,32 @@
 <template>
   <div
-    class="min-h-screen bg-[#f6ebe8] flex flex-col items-center justify-center p-4 sm:p-8 selection:bg-[#8b3a32]/20 overflow-x-hidden"
+    class="min-h-screen bg-[#F6EBE8] flex flex-col items-center justify-center p-4 sm:p-8 selection:bg-[#8C352D]/20 overflow-x-hidden"
   >
     <div
-      class="mb-6 lg:absolute lg:top-8 lg:left-8 lg:mb-0 text-[#8b3a32] font-bold tracking-[0.3em] text-xl lg:text-2xl text-center w-full lg:w-auto transition-all"
+      class="w-full max-w-5xl mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
     >
-      LOOK-IN
+      <div class="text-[#8C352D] font-black tracking-[0.28em] text-xl">
+        LOOK-IN
+      </div>
+      <div
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E8D5D2] text-[#8C352D] text-xs font-bold shadow-sm"
+      >
+        <ClockIcon :size="15" />
+        <span>{{ currentDate }}</span>
+      </div>
     </div>
 
-    <div class="relative w-full flex justify-center">
+    <div class="relative w-full max-w-5xl flex justify-center">
       <Transition name="slide-fade" mode="out-in">
         <div
           v-if="!showDetail"
           key="camera"
-          class="w-full max-w-[22rem] sm:max-w-md bg-white rounded-2xl overflow-hidden border border-[#B5473C]"
+          class="w-full bg-white rounded-2xl overflow-hidden border border-[#E8D5D2] shadow-sm"
         >
           <div
-            class="bg-[#8b3a32] px-6 py-5 sm:px-8 sm:py-6 flex items-center justify-between relative overflow-hidden"
+            class="bg-[#8C352D] px-6 py-5 sm:px-8 sm:py-6 flex items-center justify-between"
           >
-            <div
-              class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full"
-            ></div>
-            <div class="relative z-10">
+            <div>
               <h3
                 class="text-white font-bold text-base sm:text-lg tracking-tight"
               >
@@ -35,40 +40,18 @@
             </div>
             <button
               @click="$router.back()"
-              class="relative z-10 w-10 h-10 flex items-center justify-center"
+              class="w-10 h-10 flex items-center justify-center rounded-lg text-white/90 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
             >
-              <XIcon :size="20" class="text-white" />
+              <XIcon :size="20" />
             </button>
           </div>
 
-          <div class="p-5 sm:p-8 bg-white">
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,420px)_1fr] gap-6 p-5 sm:p-8 bg-white">
             <div
-              class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6"
+              class="border border-[#E8D5D2] bg-[#FFF0EE]/50 rounded-2xl p-3 relative aspect-[3/4] w-full overflow-hidden"
             >
               <div
-                class="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full border border-green-100"
-              >
-                <div
-                  class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"
-                ></div>
-                <span
-                  class="text-[9px] sm:text-[10px] font-bold text-green-700 uppercase"
-                >
-                  System Ready
-                </span>
-              </div>
-              <span
-                class="text-[10px] sm:text-[11px] font-bold text-[#8b3a32]/70 bg-white px-3 py-1 rounded-lg border border-gray-50 shadow-sm"
-              >
-                {{ currentDate }}
-              </span>
-            </div>
-
-            <div
-              class="border-2 border-dashed border-[#E8D5D2] bg-[#FFF0EE]/50 rounded-[1.5rem] p-2 sm:p-3 relative aspect-[3/4] w-full overflow-hidden"
-            >
-              <div
-                class="relative w-full h-full rounded-[1rem] overflow-hidden bg-gray-900 shadow-inner"
+                class="relative w-full h-full rounded-xl overflow-hidden bg-[#2F211F] shadow-inner"
               >
                 <video
                   ref="videoElement"
@@ -81,58 +64,92 @@
                   class="absolute inset-0 z-20 pointer-events-none"
                 >
                   <div
-                    class="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-[#8b3a32] to-transparent animate-scan"
+                    class="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-white to-transparent animate-scan"
                   ></div>
                   <div class="absolute inset-4">
                     <div
-                      class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#8b3a32] rounded-tl-lg"
+                      class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"
                     ></div>
                     <div
-                      class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#8b3a32] rounded-tr-lg"
+                      class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"
                     ></div>
                     <div
-                      class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#8b3a32] rounded-bl-lg"
+                      class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"
                     ></div>
                     <div
-                      class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#8b3a32] rounded-br-lg"
+                      class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"
                     ></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="mt-5 flex flex-col items-center gap-1">
+            <div class="flex flex-col justify-between gap-6">
               <div
-                class="flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-full border border-gray-200"
+                class="space-y-5"
               >
-                <GlobeIcon :size="12" class="text-[#8b3a32]" />
-                <span
-                  class="text-[10px] font-bold text-gray-500 uppercase tracking-tight"
+                <div
+                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-100"
                 >
-                  Location IP:
-                </span>
-                <span class="text-[10px] font-mono font-bold text-[#8b3a32]">
-                  {{ userIp || "Fetching..." }}
-                </span>
-              </div>
-            </div>
+                  <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                  <span class="text-[10px] font-bold text-green-700 uppercase">
+                    Sistem Siap
+                  </span>
+                </div>
 
-            <div class="mt-6 flex flex-col items-center">
+                <div>
+                  <h4 class="text-[#8C352D] text-2xl font-black leading-tight">
+                    Verifikasi wajah dan lokasi
+                  </h4>
+                  <p class="mt-2 text-sm leading-6 text-[#8C352D]/70">
+                    Pastikan wajah terlihat jelas dan izin lokasi browser aktif
+                    sebelum mengirim absensi.
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div
+                    class="rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/40 px-4 py-3"
+                  >
+                    <div class="flex items-center gap-2 text-[#8C352D]">
+                      <ShieldCheckIcon :size="16" />
+                      <span class="text-xs font-bold uppercase">
+                        Kamera
+                      </span>
+                    </div>
+                    <p class="mt-1 text-sm font-semibold text-[#8C352D]/80">
+                      {{ isStreaming ? "Aktif" : "Memuat..." }}
+                    </p>
+                  </div>
+
+                  <div
+                    class="rounded-xl border border-[#E8D5D2] bg-[#FFF0EE]/40 px-4 py-3"
+                  >
+                    <div class="flex items-center gap-2 text-[#8C352D]">
+                      <GlobeIcon :size="16" />
+                      <span class="text-xs font-bold uppercase">
+                        Location IP
+                      </span>
+                    </div>
+                    <p class="mt-1 text-sm font-mono font-semibold text-[#8C352D]/80">
+                      {{ userIp || "Fetching..." }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <button
                 @click="takeAbsence"
                 :disabled="isLocating"
-                class="w-full px-12 py-4 bg-[#8C352D] text-white rounded-lg text-sm font-semibold transition-all hover:bg-[#742f28] active:scale-95 disabled:opacity-70 flex items-center justify-center gap-3 cursor-pointer"
+                class="w-full px-6 py-4 bg-[#8C352D] text-white rounded-xl text-sm font-bold transition-all hover:bg-[#742f28] active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 cursor-pointer shadow-sm"
               >
-                <component
-                  :is="isLocating ? 'Loader2Icon' : 'CameraIcon'"
+                <Loader2Icon
+                  v-if="isLocating"
                   :size="18"
-                  :class="{ 'animate-spin': isLocating }"
+                  class="animate-spin"
                 />
-                <span>
-                  {{
-                    isLocating ? "Securing Location..." : "Confirm Attendance"
-                  }}
-                </span>
+                <CameraIcon v-else :size="18" />
+                <span>{{ isLocating ? "Mengamankan Lokasi..." : "Kirim Absensi" }}</span>
               </button>
             </div>
           </div>
@@ -141,9 +158,9 @@
         <div
           v-else
           key="detail"
-          class="w-full max-w-[860px] bg-white rounded-xl overflow-hidden border border-[#B5473C]"
+          class="w-full bg-white rounded-2xl overflow-hidden border border-[#E8D5D2] shadow-sm"
         >
-          <div class="bg-[#8b3a32] px-7 py-4 flex justify-between items-center">
+          <div class="bg-[#8C352D] px-7 py-4 flex justify-between items-center">
             <h3 class="text-white font-bold tracking-tight text-[17px]">
               Detail Absensi
             </h3>
@@ -157,28 +174,28 @@
 
           <div class="p-8 sm:p-11 relative bg-white">
             <div
-              class="absolute top-6 right-10 text-[11px] font-bold text-[#8b3a32] tracking-wide"
+              class="mb-5 sm:absolute sm:top-6 sm:right-10 text-[11px] font-bold text-[#8C352D] tracking-wide"
             >
               {{ attendanceData.dateLabel }}
             </div>
             <div class="flex flex-col md:flex-row gap-11 mt-4">
               <div
-                class="w-full md:w-[340px] relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm"
+                class="w-full md:w-[340px] relative aspect-[3/4] rounded-2xl overflow-hidden border border-[#E8D5D2] bg-[#FFF0EE]/40 shadow-sm"
               >
                 <img
                   :src="attendanceData.photo"
                   class="w-full h-full object-cover"
                 />
                 <div
-                  class="absolute top-5 left-5 w-11 h-11 border-t-[7px] border-l-[7px] border-[#8b3a32]"
+                  class="absolute top-5 left-5 w-11 h-11 border-t-[7px] border-l-[7px] border-[#8C352D]"
                 ></div>
                 <div
-                  class="absolute bottom-5 right-5 w-11 h-11 border-b-[7px] border-r-[7px] border-[#8b3a32]"
+                  class="absolute bottom-5 right-5 w-11 h-11 border-b-[7px] border-r-[7px] border-[#8C352D]"
                 ></div>
               </div>
               <div class="flex-1">
                 <div
-                  class="w-full h-[220px] rounded-2xl overflow-hidden relative mb-10 border border-[#B5473C] bg-gray-100 shadow-sm"
+                  class="w-full h-[220px] rounded-2xl overflow-hidden relative mb-8 border border-[#E8D5D2] bg-[#FFF0EE]/40 shadow-sm"
                 >
                   <iframe
                     v-if="attendanceData.lat && attendanceData.lng"
@@ -195,40 +212,40 @@
                   >
                     <MapPinIcon
                       :size="32"
-                      class="text-[#8b3a32] animate-bounce"
+                      class="text-[#8C352D] animate-bounce"
                     />
                   </div>
                 </div>
 
-                <div class="grid grid-cols-[160px_1fr] gap-y-3.5 text-[15px]">
-                  <span class="font-bold text-[#8b3a32]">Nama Lengkap</span>
-                  <span class="text-gray-900">: {{ attendanceData.name }}</span>
+                <div class="grid grid-cols-[150px_1fr] gap-y-3.5 text-[15px]">
+                  <span class="font-bold text-[#8C352D]">Nama Lengkap</span>
+                  <span class="text-[#2F211F]">: {{ attendanceData.name }}</span>
 
-                  <span class="font-bold text-[#8b3a32]">Jam Masuk</span>
-                  <span class="text-gray-900">: {{ attendanceData.time }}</span>
+                  <span class="font-bold text-[#8C352D]">Jam Masuk</span>
+                  <span class="text-[#2F211F]">: {{ attendanceData.time }}</span>
 
-                  <span class="font-bold text-[#8b3a32]">Terlambat</span>
-                  <span class="text-gray-900">
+                  <span class="font-bold text-[#8C352D]">Terlambat</span>
+                  <span class="text-[#2F211F]">
                     : {{ attendanceData.isLate ? "Ya" : "Tidak" }}
                   </span>
 
-                  <span class="font-bold text-[#8b3a32]">Durasi Terlambat</span>
-                  <span class="text-gray-900">
+                  <span class="font-bold text-[#8C352D]">Durasi Terlambat</span>
+                  <span class="text-[#2F211F]">
                     : {{ attendanceData.lateDuration }} Menit
                   </span>
 
-                  <span class="font-bold text-[#8b3a32]">Latitude</span>
-                  <span class="text-gray-900 font-mono">
+                  <span class="font-bold text-[#8C352D]">Latitude</span>
+                  <span class="text-[#2F211F] font-mono">
                     : {{ attendanceData.lat }}
                   </span>
 
-                  <span class="font-bold text-[#8b3a32]">Longtitude</span>
-                  <span class="text-gray-900 font-mono">
+                  <span class="font-bold text-[#8C352D]">Longitude</span>
+                  <span class="text-[#2F211F] font-mono">
                     : {{ attendanceData.lng }}
                   </span>
 
-                  <span class="font-bold text-[#8b3a32]">Location IP</span>
-                  <span class="text-gray-900 font-mono">: {{ userIp }}</span>
+                  <span class="font-bold text-[#8C352D]">Location IP</span>
+                  <span class="text-[#2F211F] font-mono">: {{ userIp }}</span>
                 </div>
               </div>
             </div>
@@ -249,7 +266,7 @@
             v-if="alert.type === 'processing'"
             class="w-20 h-20 flex items-center justify-center"
           >
-            <Loader2Icon :size="60" class="text-[#8b3a32] animate-spin" />
+            <Loader2Icon :size="60" class="text-[#8C352D] animate-spin" />
           </div>
           <div
             v-if="alert.type === 'success'"
@@ -304,19 +321,19 @@
 
 <script setup lang="ts">
 import {
+  Camera as CameraIcon,
   Check as CheckIcon,
+  Clock as ClockIcon,
   Globe as GlobeIcon,
   Loader2 as Loader2Icon,
   MapPin as MapPinIcon,
+  ShieldCheck as ShieldCheckIcon,
   TriangleAlert as TriangleAlertIcon,
   X as XIcon,
 } from "lucide-vue-next";
-import moment from "moment";
-import "moment/dist/locale/id";
 import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
-moment.locale("id");
 const router = useRouter();
 
 const videoElement = ref<HTMLVideoElement | null>(null);
@@ -344,8 +361,36 @@ const attendanceData = reactive({
   dateLabel: "",
 });
 
+const formatDateTime = (date: Date) => {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+};
+
+const formatDateLabel = (date: Date) => {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+};
+
+const formatTimeLabel = (date: Date) => {
+  return new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
 const updateTime = () => {
-  currentDate.value = moment().format("dddd, D MMMM YYYY HH:mm:ss");
+  currentDate.value = formatDateTime(new Date());
 };
 
 const fetchIp = async () => {
@@ -408,7 +453,7 @@ const takeAbsence = () => {
         attendanceData.lng = position.coords.longitude.toString();
         triggerVerification();
       },
-      (error) => {
+      () => {
         attendanceData.lat = "-6.200000";
         attendanceData.lng = "106.816666";
         triggerVerification();
@@ -438,8 +483,9 @@ const triggerVerification = () => {
 };
 
 const finalizeAbsence = () => {
-  attendanceData.time = moment().format("h:mm A");
-  attendanceData.dateLabel = moment().format("dddd, D MMMM YYYY");
+  const now = new Date();
+  attendanceData.time = formatTimeLabel(now);
+  attendanceData.dateLabel = formatDateLabel(now);
   alert.visible = false;
   showDetail.value = true;
 };

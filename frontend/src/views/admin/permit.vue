@@ -234,7 +234,7 @@
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     >
       <div
-        class="bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in"
+        class="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in"
       >
         <div
           class="h-14 bg-[#8C352D] w-full flex items-center justify-between px-8"
