@@ -10,3 +10,19 @@ export const getAttendanceHistory = (params: {
 }) => {
   return api.get("/attendances/history", { params });
 };
+
+export const checkOutAttendance = (params: {
+  gps_lat: string;
+  gps_lng: string;
+  note?: string;
+}) => {
+  return api.post("/attendances/check-out", null, { params });
+};
+
+export const updateAttendanceLateNote = (id: number | string, note: string) => {
+  return api.patch(
+    `/attendances/${id}/late-note`,
+    { note },
+    { timeout: 30000 },
+  );
+};
