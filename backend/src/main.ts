@@ -10,15 +10,15 @@ async function bootstrap() {
   app.set("query parser", "extended");
   const httpAdapter = app.get(HttpAdapterHost);
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-  app.useGlobalFilters(new Handler(httpAdapter));
-  app.useGlobalInterceptors(new Response());
   app.enableCors({
     origin: (origin, callback) => {
       callback(null, true);
     },
   });
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+  app.useGlobalFilters(new Handler(httpAdapter));
+  app.useGlobalInterceptors(new Response());
 
   await app.listen(3000, "0.0.0.0"); // ← only this line changed
 }
