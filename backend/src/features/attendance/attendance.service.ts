@@ -4,6 +4,8 @@ import { Op } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
+import { SharpHelper } from "src/cores/helpers/sharp.helper";
+import { AttendanceImage } from "../attendance-image/entities/attendance-image.entity";
 import { AttendanceSetting } from "../attendance-setting/entities/attendance-setting.entity";
 import { Permit } from "../permit/entities/permit.entity";
 import { User } from "../user/entities/user.entity";
@@ -14,6 +16,7 @@ import { Attendance } from "./entities/attendance.entity";
 
 const ALLOWED_ROLES = [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN];
 const WORDS_PER_LATE_MINUTE = 60;
+const FACE_CONFIDENCE_THRESHOLD = 50;
 
 @Injectable()
 export class AttendanceService {
@@ -25,10 +28,14 @@ export class AttendanceService {
     private readonly sequelize: Sequelize,
     @InjectModel(Attendance)
     private readonly attendanceModel: typeof Attendance,
+    @InjectModel(AttendanceImage)
+    private readonly attendanceImageModel: typeof AttendanceImage,
     @InjectModel(AttendanceSetting)
     private readonly attendanceSettingModel: typeof AttendanceSetting,
     @InjectModel(Permit)
     private readonly permitModel: typeof Permit,
+    @InjectModel(User)
+    private readonly userModel: typeof User,
   ) {}
 
   private getDateTimeParts(date: Date) {
@@ -135,7 +142,93 @@ export class AttendanceService {
     return day === 0 || day === 6;
   }
 
-  async checkIn(user: User, dto: CreateAttendanceDto) {
+  private async verifyFaceWithAi(image: Express.Multer.File) {
+    const aiUrl = process.env.AI_SERVICE_URL || "http://localhost:8000";
+    const mime = image.mimetype || "image/jpeg";
+    const imageBase64 = `data:${mime};base64,${image.buffer.toString("base64")}`;
+
+    const response = await fetch(`${aiUrl}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_base64: imageBase64 }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result?.error || "Face verification service failed");
+    }
+
+    return result as {
+      matched: boolean;
+      name: string | null;
+      confidence: number | null;
+      error: string | null;
+    };
+  }
+
+  async quickCheckIn(dto: CreateAttendanceDto, image?: Express.Multer.File) {
+    if (!image) {
+      return this.response.fail("Attendance image is required", 400);
+    }
+
+    let verifyResult: Awaited<ReturnType<typeof this.verifyFaceWithAi>>;
+    try {
+      verifyResult = await this.verifyFaceWithAi(image);
+    } catch (error: any) {
+      return this.response.fail(error.message || "Face verification failed", 400);
+    }
+
+    if (verifyResult.error === "no_face") {
+      return this.response.fail(
+        "Wajah tidak terdeteksi, pastikan wajah terlihat jelas di kamera",
+        400,
+      );
+    }
+
+    if (!verifyResult.matched || !verifyResult.name) {
+      return this.response.fail(
+        "Wajah tidak dikenali, absen gagal ditambahkan",
+        400,
+      );
+    }
+
+    const attendanceUser = await this.userModel.findOne({
+      where: {
+        name: verifyResult.name,
+        role: { [Op.in]: ALLOWED_ROLES },
+        is_active: true,
+      },
+    });
+
+    if (!attendanceUser) {
+      return this.response.fail(
+        `User ${verifyResult.name} tidak ditemukan atau tidak aktif`,
+        404,
+      );
+    }
+
+    const response: any = await this.checkIn(
+      attendanceUser,
+      {
+        ...dto,
+        face_confidence: Number(verifyResult.confidence),
+      },
+      image,
+    );
+
+    response.data.recognized_user = {
+      id: attendanceUser.id,
+      name: attendanceUser.name,
+    };
+
+    return response;
+  }
+
+  async checkIn(
+    user: User,
+    dto: CreateAttendanceDto,
+    image?: Express.Multer.File,
+  ) {
     if (!ALLOWED_ROLES.includes(user.role)) {
       return this.response.fail("Only employee or intern can check in", 403);
     }
@@ -150,6 +243,18 @@ export class AttendanceService {
       return this.response.fail("GPS latitude and longitude are required", 400);
     }
 
+    if (dto.face_confidence == null || Number.isNaN(dto.face_confidence)) {
+      return this.response.fail("Face confidence is required", 400);
+    }
+
+    if (dto.face_confidence <= FACE_CONFIDENCE_THRESHOLD) {
+      return this.response.fail("Face verification failed", 400);
+    }
+
+    if (!image) {
+      return this.response.fail("Attendance image is required", 400);
+    }
+
     const gpsError = this.validateGps(dto.gps_lat, dto.gps_lng, setting);
     if (gpsError) return this.response.fail(gpsError, 400);
 
@@ -159,7 +264,7 @@ export class AttendanceService {
         clock_in: { [Op.gte]: this.getTodayStart() },
       },
     });
-    if (existing) return this.response.fail("Already checked in today", 400);
+    if (existing) return this.response.fail("Anda sudah check in hari ini", 400);
 
     const clockIn = this.getNow();
     const lateDuration = this.getLateDuration(clockIn, setting.check_in_time);
@@ -170,6 +275,11 @@ export class AttendanceService {
 
     const transaction = await this.sequelize.transaction();
     try {
+      const sharpHelper = new SharpHelper();
+      const uploadResult = await sharpHelper.resizeAndUpload(image, {
+        path: Attendance.imageOption.path,
+      });
+
       const attendance = await this.attendanceModel.create(
         {
           user_id: user.id,
@@ -181,6 +291,17 @@ export class AttendanceService {
           gps_lng: dto.gps_lng,
           note: dto.note ?? null,
           attendance_setting_id: setting.id,
+          face_confidence: dto.face_confidence ?? null,
+          is_face_verified: dto.face_confidence > FACE_CONFIDENCE_THRESHOLD,
+        },
+        { transaction },
+      );
+
+      await this.attendanceImageModel.create(
+        {
+          attendance_id: attendance.id,
+          file_path: uploadResult.file_path,
+          url: uploadResult.url,
         },
         { transaction },
       );

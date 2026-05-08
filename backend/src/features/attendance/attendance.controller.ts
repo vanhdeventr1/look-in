@@ -7,8 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { CurrentUser } from "src/cores/decorators/current-user.decorator";
 import { JwtAuthGuard } from "src/cores/guards/jwt-auth.guard";
 import { JoiValidationParamPipe } from "src/cores/validators/pipes/joi-validation-param.pipe";
@@ -26,13 +29,40 @@ export class AttendanceController {
 
   @UseGuards(JwtAuthGuard)
   @Post("check-in")
+  @UseInterceptors(FileInterceptor("image"))
   checkIn(
     @CurrentUser() user: User,
     @Query("gps_lat") gps_lat: string,
     @Query("gps_lng") gps_lng: string,
+    @Query("face_confidence") face_confidence?: string,
     @Query("note") note?: string,
+    @UploadedFile() image?: Express.Multer.File,
   ) {
-    return this.attendanceService.checkIn(user, { gps_lat, gps_lng, note });
+    return this.attendanceService.checkIn(
+      user,
+      {
+        gps_lat,
+        gps_lng,
+        note,
+        face_confidence:
+          face_confidence === undefined ? undefined : Number(face_confidence),
+      },
+      image,
+    );
+  }
+
+  @Post("quick-check-in")
+  @UseInterceptors(FileInterceptor("image"))
+  quickCheckIn(
+    @Query("gps_lat") gps_lat: string,
+    @Query("gps_lng") gps_lng: string,
+    @Query("note") note?: string,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.attendanceService.quickCheckIn(
+      { gps_lat, gps_lng, note },
+      image,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
