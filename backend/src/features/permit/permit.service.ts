@@ -42,7 +42,6 @@ export class PermitService {
       const sharpHelper = new SharpHelper();
       const data = [];
 
-      // ← changed: upload original only, no resizing
       for (const file of files) {
         const uploadFile = await sharpHelper.resizeAndUpload(file, {
           path: Permit.imageOption.path,
@@ -180,9 +179,7 @@ export class PermitService {
         });
       }
 
-      // Handle permit images update
       if (files && files.length > 0) {
-        // Remove old images from AWS S3 and DB
         const oldImages = await PermitImage.findAll({
           where: { permit_id: permit.id },
         });
@@ -193,14 +190,12 @@ export class PermitService {
             try {
               await s3Helper.deleteFile(img.file_path);
             } catch (e) {
-              // log error but continue
               console.error("Failed to delete S3 file", img.file_path, e);
             }
           }
           await img.destroy({ transaction });
         }
 
-        // Upload new images
         const sharpHelper = new SharpHelper();
         const data = [];
         for (const file of files) {

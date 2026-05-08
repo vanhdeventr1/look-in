@@ -19,7 +19,6 @@ import { DatasetModule } from "./features/dataset/dataset.module";
 import { NotificationModule } from "./features/notification/public/notification.module";
 import { PermitImageModule } from "./features/permit-image/permit-image.module";
 import { PermitModule } from "./features/permit/permit.module";
-import { UserDeviceModule } from "./features/user-device/user-device.module";
 import { UserModule } from "./features/user/user.module";
 
 @Module({
@@ -37,8 +36,6 @@ import { UserModule } from "./features/user/user.module";
     ResponseModule,
     UserModule,
     NotificationModule,
-    // WhatsappWebModule,
-    UserDeviceModule,
     ScheduleModule.forRoot(),
     PermitModule,
     PermitImageModule,

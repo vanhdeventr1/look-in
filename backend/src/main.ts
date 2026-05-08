@@ -20,6 +20,6 @@ async function bootstrap() {
   app.useGlobalFilters(new Handler(httpAdapter));
   app.useGlobalInterceptors(new Response());
 
-  await app.listen(3000, "0.0.0.0"); // ← only this line changed
+  await app.listen(3000, "0.0.0.0");
 }
 bootstrap();

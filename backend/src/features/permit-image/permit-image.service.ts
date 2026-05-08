@@ -39,7 +39,6 @@ export class PermitImageService {
           return this.response.fail(`Image at index ${index} is required`, 400);
         }
 
-        // ← changed: no more resizing, just upload original
         const uploadResult = await sharpHelper.resizeAndUpload(files[index], {
           path: PermitImage.imageOption.path,
         });
@@ -105,7 +104,6 @@ export class PermitImageService {
   async remove(permitImage: PermitImage) {
     const transaction = await this.sequelize.transaction();
     try {
-      // ← changed: simpler delete, no dimension needed
       if (permitImage.file_path) {
         const sharpHelper = new SharpHelper();
         await sharpHelper.delete(permitImage.file_path);
