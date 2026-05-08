@@ -387,14 +387,14 @@
         </button>
         <button
           @click="isConfirmApproveOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer"
         >
           Batalkan
         </button>
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isConfirmRejectOpen" class="z-[100]">
+    <AlertLayout v-if="isConfirmRejectOpen" class="z-[100]" variant="error">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
@@ -412,7 +412,7 @@
         </button>
         <button
           @click="isConfirmRejectOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer"
         >
           Batalkan
         </button>
@@ -500,7 +500,7 @@ const isViewModalOpen = ref(false);
 const isConfirmApproveOpen = ref(false);
 const isConfirmRejectOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
-const isProcessing = ref(false); // Optimization: Prevent multiple clicks
+const isProcessing = ref(false);
 const fullScreenImg = ref<string | null>(null);
 const searchQuery = ref("");
 const selectedPermit = ref<PermitRow | null>(null);

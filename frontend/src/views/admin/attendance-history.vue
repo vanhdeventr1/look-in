@@ -1,7 +1,6 @@
 <template>
   <SidebarLayout>
     <div class="space-y-6 animate-in">
-      <!-- Stats Cards -->
       <div class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div
@@ -31,12 +30,10 @@
         </div>
       </div>
 
-      <!-- Filters and Search -->
       <div
         class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4"
       >
         <div class="flex flex-wrap items-center gap-3">
-          <!-- FIXED CALENDAR FILTER -->
           <div
             class="relative flex items-center gap-2 px-4 py-2 border border-[#8C352D] rounded-xl text-[#8C352D] bg-white hover:bg-[#8C352D]/5 transition-colors font-bold text-sm cursor-pointer overflow-hidden group"
           >
@@ -51,7 +48,6 @@
             />
           </div>
 
-          <!-- Month Filter -->
           <div class="relative">
             <CalendarIcon
               :size="18"
@@ -72,7 +68,6 @@
             </select>
           </div>
 
-          <!-- Year Filter -->
           <div class="relative">
             <select
               v-model="selectedYear"
@@ -85,7 +80,6 @@
             </select>
           </div>
 
-          <!-- Sort Toggle -->
           <div
             @click="toggleSort"
             class="flex items-center gap-2 px-4 py-2 border border-transparent rounded-xl text-[#8C352D] cursor-pointer hover:bg-[#8C352D]/5 transition-all font-bold text-sm"
@@ -99,12 +93,22 @@
           </div>
         </div>
 
-        <!-- Download & Search -->
         <div class="flex items-center gap-3">
           <button
-            class="bg-[#8C352D] text-white p-2.5 rounded-xl hover:bg-[#a24a42] transition-colors shadow-md"
+            @click="downloadAttendanceTable"
+            :disabled="isExportDisabled"
+            class="inline-flex items-center gap-2 bg-[#8C352D] text-white px-4 py-2.5 rounded-xl hover:bg-[#a24a42] transition-colors shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold"
           >
-            <DownloadIcon :size="20" />
+            <DownloadIcon :size="18" />
+            <span>Tabel</span>
+          </button>
+          <button
+            @click="downloadAttendancePdf"
+            :disabled="isExportDisabled"
+            class="inline-flex items-center gap-2 bg-white text-[#8C352D] border border-[#8C352D] px-4 py-2.5 rounded-xl hover:bg-[#8C352D]/5 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold"
+          >
+            <FileTextIcon :size="18" />
+            <span>PDF</span>
           </button>
           <div class="relative w-full md:w-64">
             <span
@@ -122,7 +126,6 @@
         </div>
       </div>
 
-      <!-- Table Section -->
       <div
         class="bg-white border border-[#E8D5D2] rounded-2xl overflow-hidden shadow-sm"
       >
@@ -132,9 +135,7 @@
               <tr class="bg-[#8C352D] text-white">
                 <th class="px-6 py-4 font-bold text-sm text-center">No</th>
                 <th class="px-6 py-4 font-bold text-sm">Nama Lengkap</th>
-                <th class="px-6 py-4 font-bold text-sm text-center">
-                  Tanggal
-                </th>
+                <th class="px-6 py-4 font-bold text-sm text-center">Tanggal</th>
                 <th class="px-6 py-4 font-bold text-sm text-center">
                   Jam Masuk
                 </th>
@@ -225,7 +226,6 @@
           </table>
         </div>
 
-        <!-- Pagination Controls -->
         <div
           v-if="filteredRecords.length > 0"
           class="flex items-center justify-between px-6 py-4 bg-[#FFF0EE]/30 border-t border-[#E8D5D2]"
@@ -279,13 +279,9 @@
         <div
           class="bg-white w-full max-w-lg rounded-2xl border border-[#E8D5D2] shadow-2xl animate-in overflow-hidden"
         >
-          <div
-            class="bg-[#8C352D] px-6 py-4 flex items-center justify-between"
-          >
+          <div class="bg-[#8C352D] px-6 py-4 flex items-center justify-between">
             <div>
-              <h3 class="text-white font-bold text-base">
-                Catatan Terlambat
-              </h3>
+              <h3 class="text-white font-bold text-base">Catatan Terlambat</h3>
               <p class="text-white/70 text-xs font-medium">
                 {{ viewLateNoteModal.record?.name ?? "-" }} -
                 {{ viewLateNoteModal.record?.displayDate ?? "-" }}
@@ -352,7 +348,6 @@ type AttendanceRecord = {
   raw: any;
 };
 
-// State
 const today = new Date().toISOString().split("T")[0] ?? "";
 const searchQuery = ref("");
 const selectedDate = ref<string | null>(null);
@@ -366,7 +361,6 @@ const viewLateNoteModal = ref({
   record: null as AttendanceRecord | null,
 });
 
-// Pagination
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
@@ -391,7 +385,6 @@ const years = Array.from(
 
 const attendanceRecords = ref<AttendanceRecord[]>([]);
 
-// Actions
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === "newest" ? "oldest" : "newest";
 };
@@ -420,6 +413,150 @@ const closeViewLateNoteModal = () => {
     visible: false,
     record: null,
   };
+};
+
+const exportColumns = [
+  "No",
+  "Nama Lengkap",
+  "Tanggal",
+  "Jam Masuk",
+  "Jam Keluar",
+  "Status",
+  "Catatan",
+  "Latitude",
+  "Longitude",
+];
+
+const getExportRows = () => {
+  return filteredRecords.value.map((record, index) => [
+    String(index + 1),
+    record.name,
+    record.displayDate,
+    record.checkIn,
+    record.checkOut,
+    record.info,
+    hasSubmittedLateNote(record) ? record.note : getNoteTableText(record),
+    record.lat,
+    record.lng,
+  ]);
+};
+
+const escapeHtml = (value: unknown) => {
+  return String(value ?? "-")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+const getExportTitle = () => {
+  if (selectedDate.value) {
+    return `Riwayat Absensi ${formatDate(selectedDate.value)}`;
+  }
+
+  if (selectedMonth.value !== null && selectedYear.value !== null) {
+    return `Riwayat Absensi ${months[selectedMonth.value]} ${selectedYear.value}`;
+  }
+
+  if (selectedYear.value !== null) {
+    return `Riwayat Absensi ${selectedYear.value}`;
+  }
+
+  return "Riwayat Absensi";
+};
+
+const getExportFileName = (extension: string) => {
+  const slug = getExportTitle()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `${slug || "riwayat-absensi"}.${extension}`;
+};
+
+const buildExportTableHtml = () => {
+  const header = exportColumns
+    .map((column) => `<th>${escapeHtml(column)}</th>`)
+    .join("");
+  const rows = getExportRows()
+    .map(
+      (row) =>
+        `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`,
+    )
+    .join("");
+
+  return `
+    <table>
+      <thead><tr>${header}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+};
+
+const downloadBlob = (content: BlobPart, filename: string, type: string) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const downloadAttendanceTable = () => {
+  const content = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+          th { background: #8C352D; color: #ffffff; font-weight: 700; }
+          th, td { border: 1px solid #E8D5D2; padding: 8px; text-align: left; vertical-align: top; }
+        </style>
+      </head>
+      <body>
+        <h2>${escapeHtml(getExportTitle())}</h2>
+        ${buildExportTableHtml()}
+      </body>
+    </html>
+  `;
+
+  downloadBlob(
+    content,
+    getExportFileName("xls"),
+    "application/vnd.ms-excel;charset=utf-8",
+  );
+};
+
+const downloadAttendancePdf = () => {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${escapeHtml(getExportTitle())}</title>
+        <style>
+          @page { size: A4 landscape; margin: 12mm; }
+          body { font-family: Arial, sans-serif; color: #2F211F; }
+          h1 { color: #8C352D; font-size: 18px; margin: 0 0 12px; }
+          table { border-collapse: collapse; width: 100%; font-size: 10px; }
+          th { background: #8C352D; color: #ffffff; font-weight: 700; }
+          th, td { border: 1px solid #E8D5D2; padding: 6px; text-align: left; vertical-align: top; }
+          td:nth-child(7) { white-space: pre-wrap; max-width: 240px; }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(getExportTitle())}</h1>
+        ${buildExportTableHtml()}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
 };
 
 const formatDate = (dateStr: string) => {
@@ -555,7 +692,6 @@ const fetchAttendanceHistory = async () => {
   }
 };
 
-// Logic
 const filteredRecords = computed(() => {
   let result = attendanceRecords.value.filter((record) => {
     const recordDate = new Date(record.date);
@@ -610,6 +746,10 @@ const paginatedRecords = computed(() => {
   const end = start + itemsPerPage;
   return filteredRecords.value.slice(start, end);
 });
+
+const isExportDisabled = computed(
+  () => isLoading.value || filteredRecords.value.length === 0,
+);
 
 watch([searchQuery, selectedDate, selectedMonth, selectedYear], () => {
   currentPage.value = 1;

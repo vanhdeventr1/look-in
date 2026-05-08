@@ -395,7 +395,7 @@
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isDeleteAlertOpen" class="z-[999]">
+    <AlertLayout v-if="isDeleteAlertOpen" class="z-[999]" variant="error">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>

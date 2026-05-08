@@ -85,7 +85,6 @@
             </table>
           </div>
 
-          <!-- Pagination logic remains same -->
           <div
             v-if="filteredDataset.length > 0"
             class="flex items-center justify-between px-6 py-4 bg-[#FFF0EE]/30 border-t border-[#E8D5D2]"
@@ -130,7 +129,6 @@
         </div>
       </div>
 
-      <!-- Add Form State -->
       <div v-if="viewState === 'form'" class="space-y-6 animate-in">
         <button
           @click="viewState = 'list'"
@@ -250,9 +248,10 @@
             <div class="flex justify-end pt-4">
               <button
                 @click="submitData"
+                :disabled="isUploading"
                 class="bg-[#8C352D] text-white px-10 py-4 rounded-2xl font-bold hover:bg-[#a24a42] transition-all cursor-pointer shadow-lg active:scale-95"
               >
-                Tambah Data Pengguna
+                {{ isUploading ? "Mengunggah..." : "Tambah Data Pengguna" }}
               </button>
             </div>
           </div>
@@ -260,8 +259,7 @@
       </div>
     </div>
 
-    <!-- Alert Components -->
-    <AlertLayout v-if="isDeleteAlertOpen">
+    <AlertLayout v-if="isDeleteAlertOpen" variant="error">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
@@ -273,16 +271,76 @@
       <template #actions>
         <button
           @click="handleDelete"
-          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold cursor-pointer"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42] cursor-pointer"
         >
           Ya, Hapus!
         </button>
         <button
           @click="isDeleteAlertOpen = false"
-          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold cursor-pointer"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer"
         >
           Batalkan
         </button>
+      </template>
+    </AlertLayout>
+
+    <AlertLayout v-if="isValidationAlertOpen" variant="error">
+      <template #icon>
+        <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
+      </template>
+      <template #title>
+        Pilih pengguna dan minimal satu foto terlebih dahulu.
+      </template>
+      <template #actions>
+        <button
+          @click="isValidationAlertOpen = false"
+          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold"
+        >
+          OK
+        </button>
+      </template>
+    </AlertLayout>
+
+    <AlertLayout v-if="isErrorAlertOpen" variant="error">
+      <template #icon>
+        <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
+      </template>
+      <template #title>
+        <div class="whitespace-pre-line text-center">
+          {{ errorAlertTitle }}
+        </div>
+      </template>
+      <template #actions>
+        <button
+          @click="isErrorAlertOpen = false"
+          class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold"
+        >
+          OK
+        </button>
+      </template>
+    </AlertLayout>
+
+    <AlertLayout v-if="isUploading">
+      <template #icon>
+        <Loader2Icon :size="80" class="text-[#8C352D] animate-spin" />
+      </template>
+      <template #title>
+        <div class="space-y-4 text-center">
+          <p>
+            Mengunggah {{ uploadCurrentFile }} dari {{ uploadTotalFiles }} file
+          </p>
+          <div
+            class="h-3 w-64 max-w-full rounded-full bg-[#FFF0EE] border border-[#E8D5D2] overflow-hidden"
+          >
+            <div
+              class="h-full bg-[#8C352D] transition-all"
+              :style="{ width: `${uploadProgress}%` }"
+            ></div>
+          </div>
+          <p class="text-sm font-bold text-[#8C352D]/70">
+            {{ uploadProgress }}%
+          </p>
+        </div>
       </template>
     </AlertLayout>
 
@@ -320,6 +378,7 @@ import {
   AlertTriangle as AlertTriangleIcon,
   ArrowLeft as ArrowLeftIcon,
   ChevronDown as ChevronDownIcon,
+  Loader2 as Loader2Icon,
   Plus as PlusIcon,
   Search as SearchIcon,
   Trash2 as TrashIcon,
@@ -345,9 +404,15 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const isDeleteAlertOpen = ref(false);
 const isValidationAlertOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
+const isErrorAlertOpen = ref(false);
 const successAlertTitle = ref("");
+const errorAlertTitle = ref("");
 const selectedId = ref<number | null>(null);
 const searchQuery = ref("");
+const isUploading = ref(false);
+const uploadProgress = ref(0);
+const uploadCurrentFile = ref(0);
+const uploadTotalFiles = ref(0);
 
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
@@ -436,12 +501,42 @@ const submitData = async () => {
   }
 
   try {
-    await createDataset({ user_id: Number(selectedUser.value), files });
+    isUploading.value = true;
+    uploadProgress.value = 0;
+    uploadTotalFiles.value = files.length;
+    uploadCurrentFile.value = files.length > 0 ? 1 : 0;
+
+    await createDataset(
+      { user_id: Number(selectedUser.value), files },
+      {
+        onUploadProgress: (event) => {
+          const total = event.total ?? 0;
+          const loaded = event.loaded ?? 0;
+          const percent = total > 0 ? Math.round((loaded / total) * 100) : 0;
+
+          uploadProgress.value = Math.min(percent, 99);
+          uploadCurrentFile.value = Math.min(
+            files.length,
+            Math.max(1, Math.ceil((uploadProgress.value / 100) * files.length)),
+          );
+        },
+      },
+    );
+
+    uploadProgress.value = 100;
+    uploadCurrentFile.value = files.length;
     successAlertTitle.value = "Gambar Dataset\nBerhasil Ditambahkan!";
     await fetchDatasets();
+    selectedUser.value = "";
+    uploadedFiles.value = [];
+    viewState.value = "list";
     isSuccessAlertOpen.value = true;
   } catch (error) {
     console.error(error);
+    errorAlertTitle.value = "Gagal mengunggah dataset.\nSilakan coba lagi.";
+    isErrorAlertOpen.value = true;
+  } finally {
+    isUploading.value = false;
   }
 };
 

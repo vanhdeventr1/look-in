@@ -223,6 +223,25 @@
           </button>
         </template>
       </AlertLayout>
+
+      <AlertLayout v-if="isLocationErrorAlertOpen" variant="error">
+        <template #icon>
+          <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
+        </template>
+        <template #title>
+          Tidak dapat mengakses lokasi.
+          <br />
+          Pastikan GPS aktif dan izin lokasi diberikan.
+        </template>
+        <template #actions>
+          <button
+            @click="isLocationErrorAlertOpen = false"
+            class="bg-[#8C352D] text-white px-12 py-2.5 rounded-2xl font-bold hover:bg-[#a24a42] transition-all cursor-pointer shadow-md"
+          >
+            OK
+          </button>
+        </template>
+      </AlertLayout>
     </Teleport>
   </SidebarLayout>
 </template>
@@ -237,6 +256,7 @@ import SidebarLayout from "@/layout/sidebar.vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
+  AlertTriangle as AlertTriangleIcon,
   Check as CheckIcon,
   Clock as ClockIcon,
   Info as InfoIcon,
@@ -256,6 +276,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const isSuccessAlertOpen = ref(false);
+const isLocationErrorAlertOpen = ref(false);
 const isUpdating = ref(false);
 const isLocating = ref(false);
 const errorMessage = ref("");
@@ -368,9 +389,7 @@ const recenterMap = async () => {
     updateMapPosition(position.coords.latitude, position.coords.longitude);
   } catch (err) {
     console.error("GPS Error:", err);
-    alert(
-      "Tidak dapat mengakses lokasi. Pastikan GPS aktif dan izin lokasi diberikan.",
-    );
+    isLocationErrorAlertOpen.value = true;
   } finally {
     isLocating.value = false;
   }

@@ -194,13 +194,9 @@
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isErrorAlertOpen">
+    <AlertLayout v-if="isErrorAlertOpen" variant="error">
       <template #icon>
-        <div
-          class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
-        >
-          <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
-        </div>
+        <TriangleAlertIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
       <template #title>
         Kata Sandi Lama
@@ -217,13 +213,9 @@
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isMismatchAlertOpen">
+    <AlertLayout v-if="isMismatchAlertOpen" variant="error">
       <template #icon>
-        <div
-          class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
-        >
-          <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
-        </div>
+        <TriangleAlertIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
       <template #title>
         Konfirmasi Kata Sandi
@@ -240,13 +232,9 @@
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isLengthAlertOpen">
+    <AlertLayout v-if="isLengthAlertOpen" variant="error">
       <template #icon>
-        <div
-          class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
-        >
-          <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
-        </div>
+        <TriangleAlertIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
       <template #title>
         Kata Sandi Minimal
@@ -263,13 +251,9 @@
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isMissingFieldsAlertOpen">
+    <AlertLayout v-if="isMissingFieldsAlertOpen" variant="error">
       <template #icon>
-        <div
-          class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
-        >
-          <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
-        </div>
+        <TriangleAlertIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
       <template #title>
         Lengkapi Semua Field
@@ -286,13 +270,9 @@
       </template>
     </AlertLayout>
 
-    <AlertLayout v-if="isSamePasswordAlertOpen">
+    <AlertLayout v-if="isSamePasswordAlertOpen" variant="error">
       <template #icon>
-        <div
-          class="w-20 h-20 rounded-full border-8 border-[#8C352D] flex items-center justify-center"
-        >
-          <TriangleAlertIcon :size="40" class="text-[#8C352D] stroke-[4]" />
-        </div>
+        <TriangleAlertIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
       <template #title>
         Kata Sandi Baru Tidak Boleh
@@ -399,7 +379,6 @@ const updateProfile = async () => {
         return;
       }
 
-      // Local check: Old and New password must be different
       if (passwordForm.old_password === passwordForm.new_password) {
         isSamePasswordAlertOpen.value = true;
         return;
