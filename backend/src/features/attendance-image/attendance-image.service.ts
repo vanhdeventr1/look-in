@@ -39,7 +39,7 @@ export class AttendanceImageService {
 
         const uploadResult = await sharpHelper.resizeAndUpload(
           file,
-          this.attendanceImageModel.imageDimension.attendanceImage,
+          AttendanceImage.imageOption,
         );
 
         const imageUrl = new URL(uploadResult.url);
