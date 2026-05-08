@@ -46,7 +46,9 @@
             </button>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,420px)_1fr] gap-6 p-5 sm:p-8 bg-white">
+          <div
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,420px)_1fr] gap-6 p-5 sm:p-8 bg-white"
+          >
             <div
               class="border border-[#E8D5D2] bg-[#FFF0EE]/50 rounded-2xl p-3 relative aspect-[3/4] w-full overflow-hidden"
             >
@@ -85,13 +87,13 @@
             </div>
 
             <div class="flex flex-col justify-between gap-6">
-              <div
-                class="space-y-5"
-              >
+              <div class="space-y-5">
                 <div
                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-100"
                 >
-                  <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                  <span
+                    class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"
+                  ></span>
                   <span class="text-[10px] font-bold text-green-700 uppercase">
                     Sistem Siap
                   </span>
@@ -113,9 +115,7 @@
                   >
                     <div class="flex items-center gap-2 text-[#8C352D]">
                       <ShieldCheckIcon :size="16" />
-                      <span class="text-xs font-bold uppercase">
-                        Kamera
-                      </span>
+                      <span class="text-xs font-bold uppercase">Kamera</span>
                     </div>
                     <p class="mt-1 text-sm font-semibold text-[#8C352D]/80">
                       {{ isStreaming ? "Aktif" : "Memuat..." }}
@@ -131,7 +131,9 @@
                         Location IP
                       </span>
                     </div>
-                    <p class="mt-1 text-sm font-mono font-semibold text-[#8C352D]/80">
+                    <p
+                      class="mt-1 text-sm font-mono font-semibold text-[#8C352D]/80"
+                    >
                       {{ userIp || "Fetching..." }}
                     </p>
                   </div>
@@ -149,7 +151,9 @@
                   class="animate-spin"
                 />
                 <CameraIcon v-else :size="18" />
-                <span>{{ isLocating ? "Mengamankan Lokasi..." : "Kirim Absensi" }}</span>
+                <span>
+                  {{ isLocating ? "Mengamankan Lokasi..." : "Kirim Absensi" }}
+                </span>
               </button>
             </div>
           </div>
@@ -219,10 +223,14 @@
 
                 <div class="grid grid-cols-[150px_1fr] gap-y-3.5 text-[15px]">
                   <span class="font-bold text-[#8C352D]">Nama Lengkap</span>
-                  <span class="text-[#2F211F]">: {{ attendanceData.name }}</span>
+                  <span class="text-[#2F211F]">
+                    : {{ attendanceData.name }}
+                  </span>
 
                   <span class="font-bold text-[#8C352D]">Jam Masuk</span>
-                  <span class="text-[#2F211F]">: {{ attendanceData.time }}</span>
+                  <span class="text-[#2F211F]">
+                    : {{ attendanceData.time }}
+                  </span>
 
                   <span class="font-bold text-[#8C352D]">Terlambat</span>
                   <span class="text-[#2F211F]">
@@ -254,8 +262,44 @@
       </Transition>
     </div>
 
+    <AlertLayout
+      v-if="
+        alert.visible && (alert.type === 'error' || alert.type === 'no-face')
+      "
+      variant="error"
+    >
+      <template #icon>
+        <TriangleAlertIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
+      </template>
+      <template #title>
+        <span v-if="alert.type === 'error'">
+          {{ alert.message || "Absen gagal ditambahkan" }}
+        </span>
+        <span v-if="alert.type === 'no-face'">
+          Wajah tidak terdeteksi, pastikan wajah terlihat jelas di kamera
+        </span>
+      </template>
+      <template #actions>
+        <button
+          @click="alert.visible = false"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42] cursor-pointer"
+        >
+          Ambil Ulang
+        </button>
+        <button
+          @click="alert.visible = false"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer"
+        >
+          Batalkan
+        </button>
+      </template>
+    </AlertLayout>
+
     <div
-      v-if="alert.visible"
+      v-if="
+        alert.visible &&
+        (alert.type === 'processing' || alert.type === 'success')
+      "
       class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/20 backdrop-blur-[2px]"
     >
       <div
@@ -274,12 +318,6 @@
           >
             <CheckIcon :size="32" class="text-[#8C352D]" />
           </div>
-          <div
-            v-if="alert.type === 'error' || alert.type === 'no-face'"
-            class="w-16 h-16 bg-white border-4 border-[#8C352D] rounded-full flex items-center justify-center"
-          >
-            <TriangleAlertIcon :size="32" class="text-[#8C352D]" />
-          </div>
         </div>
 
         <h3 class="text-[#8C352D] text-lg font-bold mb-4 leading-tight px-4">
@@ -289,37 +327,15 @@
           <span v-if="alert.type === 'success'">
             Wajah terdeteksi, absensi berhasil ditambahkan
           </span>
-          <span v-if="alert.type === 'error'">
-            Wajah tidak dikenali, absen gagal ditambahkan
-          </span>
-          <span v-if="alert.type === 'no-face'">
-            Wajah tidak terdeteksi, pastikan wajah terlihat jelas di kamera
-          </span>
         </h3>
-
-        <div
-          v-if="alert.type === 'error' || alert.type === 'no-face'"
-          class="flex gap-4 w-full justify-center mt-4"
-        >
-          <button
-            @click="alert.visible = false"
-            class="flex-1 py-3 bg-[#8C352D] text-white rounded-xl text-sm font-bold active:scale-95 transition-all"
-          >
-            Ambil Ulang
-          </button>
-          <button
-            @click="alert.visible = false"
-            class="flex-1 py-3 bg-[#F6EBE8] text-[#8C352D] rounded-xl text-sm font-bold border border-[#E8D5D2] active:scale-95 transition-all"
-          >
-            Batalkan
-          </button>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { quickCheckInAttendance } from "@/api/attendance.api";
+import AlertLayout from "@/layout/alert.vue";
 import {
   Camera as CameraIcon,
   Check as CheckIcon,
@@ -348,6 +364,7 @@ let timerInterval: any = null;
 const alert = reactive({
   visible: false,
   type: "processing" as "processing" | "success" | "error" | "no-face",
+  message: "",
 });
 
 const attendanceData = reactive({
@@ -387,6 +404,28 @@ const formatTimeLabel = (date: Date) => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+};
+
+const dataUrlToFile = (dataUrl: string, filename: string) => {
+  const [header = "", base64 = ""] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new File([bytes], filename, { type: mime });
+};
+
+const getErrorText = (error: any, fallback: string) => {
+  return (
+    error?.response?.data?.response ??
+    error?.response?.data?.message ??
+    error?.message ??
+    fallback
+  );
 };
 
 const updateTime = () => {
@@ -465,21 +504,51 @@ const takeAbsence = () => {
   }
 };
 
-const triggerVerification = () => {
+const triggerVerification = async () => {
   isLocating.value = false;
   alert.type = "processing";
+  alert.message = "";
   alert.visible = true;
 
-  setTimeout(() => {
-    // --- TESTING: Change this value to 'no-face' to test the specific alert ---
-    alert.type = "success";
+  try {
+    const canvas = document.createElement("canvas");
+    if (!videoElement.value) throw new Error("No video");
 
-    if (alert.type === "success") {
-      setTimeout(() => {
-        finalizeAbsence();
-      }, 1500);
+    canvas.width = videoElement.value.videoWidth;
+    canvas.height = videoElement.value.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("No canvas context");
+
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(videoElement.value, 0, 0);
+
+    const imageBase64 = canvas.toDataURL("image/jpeg", 0.8);
+    attendanceData.photo = imageBase64;
+
+    const checkInRes = await quickCheckInAttendance({
+      gps_lat: attendanceData.lat,
+      gps_lng: attendanceData.lng,
+      image: dataUrlToFile(imageBase64, "attendance.jpg"),
+    });
+
+    if (checkInRes.data?.statusCode === 201) {
+      attendanceData.name =
+        checkInRes.data?.data?.recognized_user?.name ?? attendanceData.name;
+      attendanceData.isLate = !!checkInRes.data?.data?.attendance?.is_late;
+      attendanceData.lateDuration =
+        checkInRes.data?.data?.attendance?.late_duration ?? 0;
+      alert.type = "success";
+      setTimeout(() => finalizeAbsence(), 1500);
+    } else {
+      alert.type = "error";
+      alert.message = "Absen gagal ditambahkan";
     }
-  }, 2000);
+  } catch (err) {
+    console.error(err);
+    alert.type = "error";
+    alert.message = getErrorText(err, "Absen gagal ditambahkan");
+  }
 };
 
 const finalizeAbsence = () => {
