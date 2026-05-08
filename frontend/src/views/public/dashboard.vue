@@ -1,7 +1,6 @@
 <template>
   <SidebarLayout>
     <div class="flex flex-col gap-y-6 animate-in">
-      <!-- TOP STATS -->
       <div class="bg-white border border-[#8C352D] rounded-2xl p-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div

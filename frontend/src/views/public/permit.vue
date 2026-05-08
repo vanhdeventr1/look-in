@@ -536,7 +536,7 @@
         @click.stop
       />
     </div>
-    <AlertLayout v-if="isDeleteAlertOpen">
+    <AlertLayout v-if="isDeleteAlertOpen" variant="error">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
@@ -560,7 +560,7 @@
         </button>
       </template>
     </AlertLayout>
-    <AlertLayout v-if="isValidationAlertOpen">
+    <AlertLayout v-if="isValidationAlertOpen" variant="error">
       <template #icon>
         <InfoIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
@@ -686,7 +686,6 @@ const checkDeepLink = () => {
   }
 };
 
-// Computed
 const computedTotalDays = computed(() => {
   if (!newPermit.value.startDate || !newPermit.value.endDate) return 0;
   const start = new Date(newPermit.value.startDate);
@@ -734,7 +733,6 @@ const approvedCount = computed(
 const startDateInput = ref<HTMLInputElement | null>(null);
 const endDateInput = ref<HTMLInputElement | null>(null);
 
-// ADD THIS HELPER FUNCTION
 const openPicker = (inputRef: HTMLInputElement | null) => {
   if (inputRef && typeof inputRef.showPicker === "function") {
     inputRef.showPicker();

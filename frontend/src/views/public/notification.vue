@@ -94,7 +94,7 @@ type NotificationRow = {
   type?: string | null;
   message: string;
   date: string;
-  rawDate: Date; // For sorting
+  rawDate: Date;
   isUnread: boolean;
   permitId?: number | null;
 };
@@ -102,7 +102,6 @@ type NotificationRow = {
 const notifications = ref<NotificationRow[]>([]);
 const router = useRouter();
 
-// Added sorting computed property
 const sortedNotifications = computed(() => {
   return [...notifications.value].sort(
     (a, b) => b.rawDate.getTime() - a.rawDate.getTime(),
@@ -137,7 +136,7 @@ const mapNotification = (note: NotificationApi): NotificationRow => {
     type: note.type ?? null,
     message: translatedMessage,
     date: formatDate(note.created_at),
-    rawDate: new Date(note.created_at || ""), // Store date object
+    rawDate: new Date(note.created_at || ""),
     isUnread: !note.read_at,
     permitId: (() => {
       if (!note.data) return null;
