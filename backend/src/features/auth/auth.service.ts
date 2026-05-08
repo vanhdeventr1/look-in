@@ -6,6 +6,7 @@ import { Sequelize } from "sequelize-typescript";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { CreateUserDto } from "src/features/auth/dto/create-user.dto";
 import { User } from "../user/entities/user.entity";
+import UserRoleEnum from "../user/enums/user-role.enum";
 
 @Injectable()
 export class AuthService {
@@ -65,7 +66,13 @@ export class AuthService {
         cost: 10,
       });
       const user = await this.userModel
-        .create({ ...createUserDto })
+        .create(
+          {
+            ...createUserDto,
+            role: UserRoleEnum.HIRING_MANAGER,
+          },
+          { transaction },
+        )
         .then((value) => value.toJSON());
 
       delete user.password;
@@ -77,7 +84,7 @@ export class AuthService {
       );
     } catch (error) {
       await transaction.rollback();
-      return this.response.fail(error.message, HttpStatus.BAD_REQUEST);
+      return this.response.fail(error, 400);
     }
   }
 

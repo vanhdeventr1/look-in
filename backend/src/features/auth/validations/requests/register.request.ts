@@ -1,6 +1,7 @@
 import * as Joi from "joi";
 import { JoiException } from "src/cores/helpers/joi-exception.helper";
 import { User } from "src/features/user/entities/user.entity";
+import UserRoleEnum from "src/features/user/enums/user-role.enum";
 
 export const registerSchema = Joi.object({
   name: Joi.string().required(),
@@ -29,5 +30,5 @@ export const registerSchema = Joi.object({
       return value;
     }),
   password: Joi.string().min(8).required(),
-  role: Joi.number().optional().allow(null).default(0),
+  role: Joi.number().optional().allow(null).default(UserRoleEnum.HIRING_MANAGER),
 }).options({ abortEarly: false });
