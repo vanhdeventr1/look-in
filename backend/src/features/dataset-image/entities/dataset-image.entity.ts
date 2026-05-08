@@ -12,6 +12,8 @@ import { Dataset } from "src/features/dataset/entities/dataset.entity";
 @Table({
   createdAt: "created_at",
   updatedAt: "updated_at",
+  deletedAt: "deleted_at",
+  paranoid: true,
   timestamps: true,
   tableName: "dataset_images",
   modelName: "dataset_images",
