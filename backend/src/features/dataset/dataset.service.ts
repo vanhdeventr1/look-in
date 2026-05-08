@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Sequelize } from "sequelize-typescript";
+import { EncryptionHelper } from "src/cores/helpers/encryption.helper"; // ✅
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { SharpHelper } from "src/cores/helpers/sharp.helper";
@@ -37,7 +38,7 @@ export class DatasetService {
 
     try {
       const imageData = [];
-      const s3Urls = []; // ✅ collect S3 URLs
+      const s3Urls = [];
       const sharpHelper = new SharpHelper();
 
       for (const file of files) {
@@ -48,13 +49,12 @@ export class DatasetService {
         const image = new URL(uploadFile.url);
 
         imageData.push({
-          file_path: image.pathname.substring(1),
+          file_path: EncryptionHelper.encrypt(image.pathname.substring(1)),
         });
 
-        s3Urls.push(uploadFile.url); // ✅ save public S3 URL
+        s3Urls.push(uploadFile.url);
       }
 
-      // ✅ get target user name for AI model folder
       const targetUser = await this.userModel.findByPk(
         createDatasetDto.user_id,
         { attributes: ["id", "name"] },
@@ -79,7 +79,6 @@ export class DatasetService {
 
       await transaction.commit();
 
-      // ✅ trigger AI service to retrain
       try {
         await fetch("http://localhost:8000/train", {
           method: "POST",
@@ -184,7 +183,11 @@ export class DatasetService {
               name: dataset.created_by_user.name,
             }
           : null,
-        image_count: dataset.dataset_images ? dataset.dataset_images.length : 0,
+        images: dataset.dataset_images?.map((img) => ({
+          id: img.id,
+          file_path: EncryptionHelper.decrypt(img.file_path),
+        })),
+        image_count: dataset.dataset_images?.length ?? 0,
         created_at: dataset.createdAt,
         updated_at: dataset.updatedAt,
       };
