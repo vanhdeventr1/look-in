@@ -11,6 +11,46 @@ export const getAttendanceHistory = (params: {
   return api.get("/attendances/history", { params });
 };
 
+export const checkInAttendance = (params: {
+  gps_lat: string;
+  gps_lng: string;
+  face_confidence?: number;
+  image?: File;
+  note?: string;
+}) => {
+  const formData = new FormData();
+  if (params.image) {
+    formData.append("image", params.image);
+  }
+
+  return api.post("/attendances/check-in", formData, {
+    params: {
+      gps_lat: params.gps_lat,
+      gps_lng: params.gps_lng,
+      face_confidence: params.face_confidence,
+      note: params.note,
+    },
+  });
+};
+
+export const quickCheckInAttendance = (params: {
+  gps_lat: string;
+  gps_lng: string;
+  image: File;
+  note?: string;
+}) => {
+  const formData = new FormData();
+  formData.append("image", params.image);
+
+  return api.post("/attendances/quick-check-in", formData, {
+    params: {
+      gps_lat: params.gps_lat,
+      gps_lng: params.gps_lng,
+      note: params.note,
+    },
+  });
+};
+
 export const checkOutAttendance = (params: {
   gps_lat: string;
   gps_lng: string;
