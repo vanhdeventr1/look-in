@@ -31,7 +31,7 @@ face_cascade = cv2.CascadeClassifier(
 
 MODEL_PATH = "face_model.xml"
 DATABASE_PATH = "database"
-yolo = YOLO("yolov8n.pt")
+yolo = YOLO("yolo11n.pt")
 history = deque(maxlen=5)
 recognizer = None
 id_to_name = {}
@@ -209,10 +209,33 @@ def list_dataset():
 @app.delete("/dataset/{name}")
 def delete_person(name: str):
     import shutil
+    global recognizer, id_to_name
+
     person_dir = os.path.join(DATABASE_PATH, name)
     if os.path.exists(person_dir):
         shutil.rmtree(person_dir)
-        return JSONResponse({"message": f"Deleted {name}"})
+
+        success, result = build_db()
+        if success:
+            load_recognizer()
+            return JSONResponse({
+                "message": f"Deleted {name}",
+                "retrained": True,
+                "labels": result
+            })
+
+        for path in (MODEL_PATH, "labels.npy"):
+            if os.path.exists(path):
+                os.remove(path)
+
+        recognizer = None
+        id_to_name = {}
+        return JSONResponse({
+            "message": f"Deleted {name}",
+            "retrained": False,
+            "labels": {}
+        })
+
     return JSONResponse(status_code=404, content={"error": "Person not found"})
 
 
@@ -328,7 +351,7 @@ def verify(body: VerifyRequest):
 
         name, conf, _ = best_result
         matched = conf < 65
-        score = round(max(0, 100 - conf), 2)
+        score = round(float(conf), 2)
 
         if not matched:
             name = None

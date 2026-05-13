@@ -122,9 +122,10 @@ export class AttendanceController {
   @UseGuards(JwtAuthGuard)
   @Delete(":id")
   remove(
+    @CurrentUser() user: User,
     @Param("id", new JoiValidationParamPipe(attendanceIdParamSchema))
     attendance: Attendance,
   ) {
-    return this.attendanceService.remove(attendance);
+    return this.attendanceService.remove(attendance, user);
   }
 }

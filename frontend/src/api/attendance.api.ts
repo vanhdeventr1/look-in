@@ -66,3 +66,7 @@ export const updateAttendanceLateNote = (id: number | string, note: string) => {
     { timeout: 30000 },
   );
 };
+
+export const deleteAttendance = (id: number | string) => {
+  return api.delete(`/attendances/${id}`);
+};

@@ -5,6 +5,7 @@ import { EncryptionHelper } from "src/cores/helpers/encryption.helper"; // ✅
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
 import { SharpHelper } from "src/cores/helpers/sharp.helper";
+import { DatasetImage } from "src/features/dataset-image/entities/dataset-image.entity";
 import { User } from "src/features/user/entities/user.entity";
 import UserRoleEnum from "../user/enums/user-role.enum";
 import { CreateDatasetDto } from "./dto/create-dataset.dto";
@@ -17,9 +18,57 @@ export class DatasetService {
     private readonly sequelize: Sequelize,
     @InjectModel(Dataset)
     private readonly datasetModel: typeof Dataset,
+    @InjectModel(DatasetImage)
+    private readonly datasetImageModel: typeof DatasetImage,
     @InjectModel(User)
     private readonly userModel: typeof User,
   ) {}
+
+  private getAiUrl() {
+    return process.env.AI_SERVICE_URL || "http://localhost:8000";
+  }
+
+  private async deleteAiDataset(personName: string) {
+    const response = await fetch(
+      `${this.getAiUrl()}/dataset/${encodeURIComponent(personName)}`,
+      { method: "DELETE" },
+    );
+
+    if (!response.ok && response.status !== 404) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error || "Failed to delete AI dataset");
+    }
+  }
+
+  private async trainAiDataset(personName: string, s3Urls: string[]) {
+    await this.deleteAiDataset(personName).catch((error) => {
+      console.warn("[AI] Existing dataset cleanup skipped:", error.message);
+    });
+
+    const response = await fetch(`${this.getAiUrl()}/train`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        person_name: personName,
+        s3_urls: s3Urls,
+      }),
+    });
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error || "Failed to train AI dataset");
+    }
+  }
+
+  private deleteAiDatasetInBackground(personName: string) {
+    void this.deleteAiDataset(personName)
+      .then(() => {
+        console.log(`[AI] Deleted dataset for ${personName}`);
+      })
+      .catch((aiError: any) => {
+        console.warn("[AI] Delete dataset failed:", aiError.message);
+      });
+  }
 
   async create(
     createDatasetDto: CreateDatasetDto,
@@ -80,17 +129,14 @@ export class DatasetService {
       await transaction.commit();
 
       try {
-        await fetch("http://localhost:8000/train", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            person_name: targetUser.name,
-            s3_urls: s3Urls,
-          }),
-        });
+        await this.trainAiDataset(targetUser.name, s3Urls);
         console.log(`[AI] Retrained model for ${targetUser.name}`);
       } catch (aiError: any) {
         console.warn("[AI] Train trigger failed:", aiError.message);
+        return this.response.fail(
+          "Dataset tersimpan, tetapi model AI gagal dilatih. Silakan coba lagi.",
+          400,
+        );
       }
 
       return this.response.success(
@@ -206,8 +252,28 @@ export class DatasetService {
     const transaction = await this.sequelize.transaction();
 
     try {
+      await dataset.reload({
+        include: [
+          {
+            association: "user",
+            attributes: ["id", "name"],
+          },
+        ],
+        transaction,
+      });
+
+      const personName = dataset.user?.name;
+
+      await this.datasetImageModel.destroy({
+        where: { dataset_id: dataset.id },
+        transaction,
+      });
       await dataset.destroy({ transaction });
       await transaction.commit();
+
+      if (personName) {
+        this.deleteAiDatasetInBackground(personName);
+      }
 
       return this.response.success({}, 200, "Successfully delete dataset");
     } catch (error) {

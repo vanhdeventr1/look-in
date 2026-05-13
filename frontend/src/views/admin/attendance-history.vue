@@ -146,6 +146,7 @@
                 <th class="px-6 py-4 font-bold text-sm">Catatan</th>
                 <th class="px-6 py-4 font-bold text-sm">Latitude</th>
                 <th class="px-6 py-4 font-bold text-sm">Longitude</th>
+                <th class="px-6 py-4 font-bold text-sm text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-[#E8D5D2]">
@@ -197,10 +198,21 @@
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80 font-mono">
                   {{ record.lng }}
                 </td>
+                <td class="px-6 py-4 text-sm text-center">
+                  <button
+                    v-if="canDeleteAttendance(record)"
+                    @click="confirmDeleteAttendance(record)"
+                    class="inline-flex items-center justify-center text-[#8C352D] hover:scale-110 transition-transform cursor-pointer"
+                    title="Hapus absensi"
+                  >
+                    <TrashIcon :size="18" />
+                  </button>
+                  <span v-else class="text-[#8C352D]/30">-</span>
+                </td>
               </tr>
               <tr v-if="isLoading">
                 <td
-                  colspan="9"
+                  colspan="10"
                   class="px-6 py-10 text-center text-[#8C352D]/50 italic"
                 >
                   Memuat data absensi...
@@ -208,7 +220,7 @@
               </tr>
               <tr v-else-if="errorMessage">
                 <td
-                  colspan="9"
+                  colspan="10"
                   class="px-6 py-10 text-center text-[#8C352D]/50 italic"
                 >
                   {{ errorMessage }}
@@ -216,7 +228,7 @@
               </tr>
               <tr v-else-if="filteredRecords.length === 0">
                 <td
-                  colspan="9"
+                  colspan="10"
                   class="px-6 py-10 text-center text-[#8C352D]/50 italic"
                 >
                   Tidak ada data yang ditemukan.
@@ -313,14 +325,46 @@
           </div>
         </div>
       </div>
+
+      <AlertLayout v-if="deleteAttendanceModal.visible" variant="error">
+        <template #icon>
+          <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
+        </template>
+        <template #title>
+          Hapus Absensi
+          <br />
+          {{ deleteAttendanceModal.record?.name ?? "-" }}?
+        </template>
+        <template #actions>
+          <button
+            @click="handleDeleteAttendance"
+            :disabled="isDeletingAttendance"
+            class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ isDeletingAttendance ? "Menghapus..." : "Ya, Hapus!" }}
+          </button>
+          <button
+            @click="closeDeleteAttendanceModal"
+            :disabled="isDeletingAttendance"
+            class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Batalkan
+          </button>
+        </template>
+      </AlertLayout>
     </div>
   </SidebarLayout>
 </template>
 
 <script setup lang="ts">
-import { getAttendanceHistory } from "@/api/attendance.api";
+import {
+  deleteAttendance,
+  getAttendanceHistory,
+} from "@/api/attendance.api";
+import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebar.vue";
 import {
+  AlertTriangle as AlertTriangleIcon,
   Calendar as CalendarIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
@@ -328,6 +372,7 @@ import {
   FileText as FileTextIcon,
   Settings2 as FilterIcon,
   Search as SearchIcon,
+  Trash2 as TrashIcon,
   X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
@@ -360,6 +405,11 @@ const viewLateNoteModal = ref({
   visible: false,
   record: null as AttendanceRecord | null,
 });
+const deleteAttendanceModal = ref({
+  visible: false,
+  record: null as AttendanceRecord | null,
+});
+const isDeletingAttendance = ref(false);
 
 const currentPage = ref(1);
 const itemsPerPage = 10;
@@ -401,6 +451,14 @@ const getNoteTableText = (record: AttendanceRecord) => {
   return isLateRecord(record) ? "-" : record.note;
 };
 
+const canDeleteAttendance = (record: AttendanceRecord) => {
+  return (
+    record.raw?.source === "attendance" &&
+    record.raw?.attendance_id !== undefined &&
+    record.raw?.attendance_id !== null
+  );
+};
+
 const openViewLateNoteModal = (record: AttendanceRecord) => {
   viewLateNoteModal.value = {
     visible: true,
@@ -413,6 +471,43 @@ const closeViewLateNoteModal = () => {
     visible: false,
     record: null,
   };
+};
+
+const confirmDeleteAttendance = (record: AttendanceRecord) => {
+  deleteAttendanceModal.value = {
+    visible: true,
+    record,
+  };
+};
+
+const closeDeleteAttendanceModal = () => {
+  if (isDeletingAttendance.value) return;
+
+  deleteAttendanceModal.value = {
+    visible: false,
+    record: null,
+  };
+};
+
+const handleDeleteAttendance = async () => {
+  const record = deleteAttendanceModal.value.record;
+  const attendanceId = record?.raw?.attendance_id;
+  if (!attendanceId) return;
+
+  isDeletingAttendance.value = true;
+  try {
+    await deleteAttendance(attendanceId);
+    deleteAttendanceModal.value = {
+      visible: false,
+      record: null,
+    };
+    await fetchAttendanceHistory();
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = "Gagal menghapus absensi.";
+  } finally {
+    isDeletingAttendance.value = false;
+  }
 };
 
 const exportColumns = [

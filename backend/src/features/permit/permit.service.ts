@@ -37,19 +37,31 @@ export class PermitService {
     user: User,
     files: Array<Express.Multer.File>,
   ) {
-    const transaction = await this.sequelize.transaction();
-    try {
-      const sharpHelper = new SharpHelper();
-      const data = [];
+    // upload + resize images in parallel BEFORE transaction
+    let permitImages: Array<{ url: string; file_path: string }> = [];
 
-      for (const file of files) {
-        const uploadFile = await sharpHelper.resizeAndUpload(file, {
-          path: Permit.imageOption.path,
-        });
-        const image = new URL(uploadFile.url);
-        data.push({
-          url: image.href,
-          file_path: image.pathname.substring(1),
+    try {
+      if (files && files.length > 0) {
+        const sharpHelper = new SharpHelper();
+
+        const uploadedFiles = await Promise.all(
+          files.map((file) =>
+            sharpHelper.resizeAndUpload(file, {
+              path: Permit.imageOption.path,
+              width: 800,
+              height: 800,
+              quality: 70,
+            }),
+          ),
+        );
+
+        permitImages = uploadedFiles.map((uploadFile) => {
+          const image = new URL(uploadFile.url);
+
+          return {
+            url: image.href,
+            file_path: image.pathname.substring(1),
+          };
         });
       }
 
@@ -58,33 +70,45 @@ export class PermitService {
         createPermitDto.date_end,
       );
 
-      const permit = await this.permitModel.create(
-        {
-          ...createPermitDto,
-          total_days: totalDays,
-          created_by: user.id,
-          user_id: user.id,
-          permit_images: data,
-        },
-        {
-          transaction,
-          include: ["permit_images"],
-        },
-      );
+      // start transaction AFTER uploads completed
+      const transaction = await this.sequelize.transaction();
 
-      await transaction.commit();
+      try {
+        const permit = await this.permitModel.create(
+          {
+            ...createPermitDto,
+            total_days: totalDays,
+            created_by: user.id,
+            user_id: user.id,
+            permit_images: permitImages,
+          },
+          {
+            transaction,
+            include: ["permit_images"],
+          },
+        );
 
-      this.eventEmitter.emit("notification", ["system"], {
-        type: "PERMIT",
-        data: { id: permit.id },
-        role: UserRoleEnum.HIRING_MANAGER,
-        message: `${user.name || "Seorang karyawan"} telah mengajukan izin baru. Silakan lakukan persetujuan atau penolakan atas permohonan ini`,
-        title: "New Permit Pending Approval",
-      });
+        await transaction.commit();
 
-      return this.response.success(permit, 201, "Successfully create permit");
+        // emit notification asynchronously
+        setImmediate(() => {
+          this.eventEmitter.emit("notification", ["system"], {
+            type: "PERMIT",
+            data: { id: permit.id },
+            role: UserRoleEnum.HIRING_MANAGER,
+            message: `${
+              user.name || "Seorang karyawan"
+            } telah mengajukan izin baru. Silakan lakukan persetujuan atau penolakan atas permohonan ini`,
+            title: "New Permit Pending Approval",
+          });
+        });
+
+        return this.response.success(permit, 201, "Successfully create permit");
+      } catch (error) {
+        await transaction.rollback();
+        return this.response.fail(error, 400);
+      }
     } catch (error) {
-      await transaction.rollback();
       return this.response.fail(error, 400);
     }
   }

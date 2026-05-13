@@ -27,7 +27,7 @@ export const createDataset = (
 
   return api.post("/datasets", formData, {
     headers: { "Content-Type": "multipart/form-data" },
-    timeout: 120000,
+    timeout: 600000,
     ...config,
   });
 };

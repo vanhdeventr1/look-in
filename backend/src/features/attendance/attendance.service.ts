@@ -16,7 +16,7 @@ import { Attendance } from "./entities/attendance.entity";
 
 const ALLOWED_ROLES = [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN];
 const WORDS_PER_LATE_MINUTE = 60;
-const FACE_CONFIDENCE_THRESHOLD = 50;
+const FACE_CONFIDENCE_THRESHOLD = 70;
 
 @Injectable()
 export class AttendanceService {
@@ -175,7 +175,10 @@ export class AttendanceService {
     try {
       verifyResult = await this.verifyFaceWithAi(image);
     } catch (error: any) {
-      return this.response.fail(error.message || "Face verification failed", 400);
+      return this.response.fail(
+        error.message || "Face verification failed",
+        400,
+      );
     }
 
     if (verifyResult.error === "no_face") {
@@ -264,7 +267,8 @@ export class AttendanceService {
         clock_in: { [Op.gte]: this.getTodayStart() },
       },
     });
-    if (existing) return this.response.fail("Anda sudah check in hari ini", 400);
+    if (existing)
+      return this.response.fail("Anda sudah check in hari ini", 400);
 
     const clockIn = this.getNow();
     const lateDuration = this.getLateDuration(clockIn, setting.check_in_time);
@@ -659,7 +663,11 @@ export class AttendanceService {
     }
   }
 
-  async remove(attendance: Attendance) {
+  async remove(attendance: Attendance, user: User) {
+    if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+      return this.response.fail("Only hiring manager can delete attendance", 403);
+    }
+
     const transaction = await this.sequelize.transaction();
     try {
       await attendance.destroy({ transaction });

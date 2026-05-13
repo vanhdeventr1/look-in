@@ -251,7 +251,7 @@
                 :disabled="isUploading"
                 class="bg-[#8C352D] text-white px-10 py-4 rounded-2xl font-bold hover:bg-[#a24a42] transition-all cursor-pointer shadow-lg active:scale-95"
               >
-                {{ isUploading ? "Mengunggah..." : "Tambah Data Pengguna" }}
+                {{ isUploading ? uploadButtonText : "Tambah Data Pengguna" }}
               </button>
             </div>
           </div>
@@ -326,9 +326,7 @@
       </template>
       <template #title>
         <div class="space-y-4 text-center">
-          <p>
-            Mengunggah {{ uploadCurrentFile }} dari {{ uploadTotalFiles }} file
-          </p>
+          <p>{{ uploadStatusText }}</p>
           <div
             class="h-3 w-64 max-w-full rounded-full bg-[#FFF0EE] border border-[#E8D5D2] overflow-hidden"
           >
@@ -413,6 +411,7 @@ const isUploading = ref(false);
 const uploadProgress = ref(0);
 const uploadCurrentFile = ref(0);
 const uploadTotalFiles = ref(0);
+const uploadPhase = ref<"uploading" | "training">("uploading");
 
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
@@ -491,6 +490,18 @@ const handleFileUpload = (event: Event) => {
 
 const removeFile = (index: number) => uploadedFiles.value.splice(index, 1);
 
+const uploadStatusText = computed(() => {
+  if (uploadPhase.value === "training") {
+    return "Melatih model wajah, mohon tunggu...";
+  }
+
+  return `Mengunggah ${uploadCurrentFile.value} dari ${uploadTotalFiles.value} file`;
+});
+
+const uploadButtonText = computed(() =>
+  uploadPhase.value === "training" ? "Melatih Model..." : "Mengunggah...",
+);
+
 const submitData = async () => {
   const files = uploadedFiles.value
     .map((f) => f.file)
@@ -505,6 +516,7 @@ const submitData = async () => {
     uploadProgress.value = 0;
     uploadTotalFiles.value = files.length;
     uploadCurrentFile.value = files.length > 0 ? 1 : 0;
+    uploadPhase.value = "uploading";
 
     await createDataset(
       { user_id: Number(selectedUser.value), files },
@@ -519,6 +531,12 @@ const submitData = async () => {
             files.length,
             Math.max(1, Math.ceil((uploadProgress.value / 100) * files.length)),
           );
+
+          if (percent >= 100) {
+            uploadPhase.value = "training";
+            uploadProgress.value = 99;
+            uploadCurrentFile.value = files.length;
+          }
         },
       },
     );
