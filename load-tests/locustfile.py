@@ -4,14 +4,23 @@ import time
 from datetime import date, timedelta
 from uuid import uuid4
 
-from locust import HttpUser, between, task
+from locust import HttpUser, between, events, task
+from locust.exception import StopUser
 
 
 API_PREFIX = os.getenv("LOCUST_API_PREFIX", "/api/v1")
 LOGIN_USERNAME = os.getenv("LOCUST_USERNAME", "hiringmanager@gmail.com")
-LOGIN_PASSWORD = os.getenv("LOCUST_PASSWORD", "asdqwe123")
+LOGIN_PASSWORD = os.getenv("LOCUST_PASSWORD", "asdqwe1234")
 ENABLE_WRITES = os.getenv("LOCUST_ENABLE_WRITES", "false").lower() == "true"
 ENABLE_REGISTER = os.getenv("LOCUST_ENABLE_REGISTER", "false").lower() == "true"
+
+
+@events.init.add_listener
+def validate_locust_config(environment, **kwargs):
+    if not LOGIN_USERNAME or not LOGIN_PASSWORD:
+        raise RuntimeError(
+            "Set LOCUST_USERNAME and LOCUST_PASSWORD before starting Locust."
+        )
 
 
 class LookInApiUser(HttpUser):
@@ -46,16 +55,21 @@ class LookInApiUser(HttpUser):
             catch_response=True,
         ) as response:
             if response.status_code not in (200, 201):
-                response.failure(f"Login failed: {response.status_code}")
-                return
+                response.failure(
+                    f"Login failed: {response.status_code}. "
+                    "Check LOCUST_USERNAME/LOCUST_PASSWORD and confirm this account can log in."
+                )
+                raise StopUser()
 
             try:
                 data = response.json()
                 self.token = data.get("data", {}).get("access_token")
                 if not self.token:
                     response.failure("Login response missing access_token")
+                    raise StopUser()
             except Exception as error:
                 response.failure(f"Login response missing token: {error}")
+                raise StopUser()
 
     def get_response_data(self, response):
         try:

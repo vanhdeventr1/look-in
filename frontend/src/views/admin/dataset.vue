@@ -2,29 +2,40 @@
   <SidebarLayout>
     <div class="space-y-6 animate-in">
       <div v-if="viewState === 'list'" class="space-y-6">
-        <div
-          class="flex flex-col md:flex-row md:items-center justify-between gap-4"
-        >
-          <button
-            @click="openAddForm"
-            class="flex items-center justify-center gap-2 bg-[#8C352D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#a24a42] transition-colors w-fit cursor-pointer"
-          >
-            <PlusIcon :size="20" />
-            Tambah Data
-          </button>
-
-          <div class="relative w-full md:w-80">
-            <span
-              class="absolute inset-y-0 left-4 flex items-center text-[#8C352D]/40"
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              @click="openAddForm"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#8C352D] px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#a24a42] cursor-pointer"
             >
-              <SearchIcon :size="18" />
-            </span>
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="Cari data pengguna"
-              class="w-full pl-12 pr-4 py-3 rounded-full border border-[#E8D5D2] bg-white text-[#8C352D] focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20 transition-all placeholder:text-[#8C352D]/30"
-            />
+              <PlusIcon :size="18" />
+              <span class="whitespace-nowrap">Tambah Data</span>
+            </button>
+          </div>
+
+          <div class="grid w-full grid-cols-1 gap-3 sm:grid-cols-[auto_minmax(260px,320px)] lg:w-auto">
+            <button
+              @click="confirmDeleteAll"
+              :disabled="dataset.length === 0 || isDeletingAll"
+              title="Hapus semua dataset"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#8C352D] text-white shadow-sm transition-colors hover:bg-[#a24a42] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <TrashIcon :size="18" />
+            </button>
+
+            <label class="relative block min-w-0">
+              <span
+                class="absolute inset-y-0 left-4 flex items-center text-[#8C352D]/40"
+              >
+                <SearchIcon :size="18" />
+              </span>
+              <input
+                type="text"
+                v-model="searchQuery"
+                placeholder="Cari data pengguna"
+                class="h-11 w-full rounded-full border border-[#E8D5D2] bg-white pl-12 pr-4 text-sm text-[#8C352D] transition-all placeholder:text-[#8C352D]/30 focus:outline-none focus:ring-2 focus:ring-[#8C352D]/20"
+              />
+            </label>
           </div>
         </div>
 
@@ -87,7 +98,7 @@
 
           <div
             v-if="filteredDataset.length > 0"
-            class="flex items-center justify-between px-6 py-4 bg-[#FFF0EE]/30 border-t border-[#E8D5D2]"
+            class="flex flex-col gap-4 px-6 py-4 bg-[#FFF0EE]/30 border-t border-[#E8D5D2] md:flex-row md:items-center md:justify-between"
           >
             <span class="text-sm text-[#8C352D] font-medium">
               Menampilkan {{ (currentPage - 1) * itemsPerPage + 1 }} -
@@ -284,6 +295,33 @@
       </template>
     </AlertLayout>
 
+    <AlertLayout v-if="isDeleteAllAlertOpen" variant="error">
+      <template #icon>
+        <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
+      </template>
+      <template #title>
+        Anda Ingin Menghapus
+        <br />
+        Semua Dataset?
+      </template>
+      <template #actions>
+        <button
+          @click="handleDeleteAll"
+          :disabled="isDeletingAll"
+          class="flex-1 bg-[#8C352D] text-white py-3 rounded-2xl font-bold hover:bg-[#a24a42] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {{ isDeletingAll ? "Menghapus..." : "Ya, Hapus!" }}
+        </button>
+        <button
+          @click="isDeleteAllAlertOpen = false"
+          :disabled="isDeletingAll"
+          class="flex-1 bg-white text-[#8C352D] border border-[#E8D5D2] py-3 rounded-2xl font-bold hover:bg-[#FFF0EE]/50 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          Batalkan
+        </button>
+      </template>
+    </AlertLayout>
+
     <AlertLayout v-if="isValidationAlertOpen" variant="error">
       <template #icon>
         <AlertTriangleIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
@@ -368,7 +406,12 @@
 </template>
 
 <script setup lang="ts">
-import { createDataset, deleteDataset, getDatasets } from "@/api/dataset.api";
+import {
+  createDataset,
+  deleteAllDatasets,
+  deleteDataset,
+  getDatasets,
+} from "@/api/dataset.api";
 import { getUsers } from "@/api/users.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebar.vue";
@@ -400,6 +443,7 @@ const viewState = ref<"list" | "form">("list");
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const isDeleteAlertOpen = ref(false);
+const isDeleteAllAlertOpen = ref(false);
 const isValidationAlertOpen = ref(false);
 const isSuccessAlertOpen = ref(false);
 const isErrorAlertOpen = ref(false);
@@ -408,6 +452,7 @@ const errorAlertTitle = ref("");
 const selectedId = ref<number | null>(null);
 const searchQuery = ref("");
 const isUploading = ref(false);
+const isDeletingAll = ref(false);
 const uploadProgress = ref(0);
 const uploadCurrentFile = ref(0);
 const uploadTotalFiles = ref(0);
@@ -568,6 +613,10 @@ const confirmDelete = (id: number) => {
   isDeleteAlertOpen.value = true;
 };
 
+const confirmDeleteAll = () => {
+  isDeleteAllAlertOpen.value = true;
+};
+
 const handleDelete = async () => {
   if (!selectedId.value) return;
   try {
@@ -575,6 +624,24 @@ const handleDelete = async () => {
     await fetchDatasets();
   } finally {
     isDeleteAlertOpen.value = false;
+  }
+};
+
+const handleDeleteAll = async () => {
+  try {
+    isDeletingAll.value = true;
+    await deleteAllDatasets();
+    await fetchDatasets();
+    currentPage.value = 1;
+    successAlertTitle.value = "Semua Dataset\nBerhasil Dihapus!";
+    isSuccessAlertOpen.value = true;
+  } catch (error) {
+    console.error(error);
+    errorAlertTitle.value = "Gagal menghapus semua dataset.\nSilakan coba lagi.";
+    isErrorAlertOpen.value = true;
+  } finally {
+    isDeletingAll.value = false;
+    isDeleteAllAlertOpen.value = false;
   }
 };
 </script>

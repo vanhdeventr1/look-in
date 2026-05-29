@@ -206,6 +206,28 @@ def list_dataset():
     return {"people": people}
 
 
+@app.delete("/dataset")
+def delete_all_dataset():
+    import shutil
+    global recognizer, id_to_name
+
+    if os.path.exists(DATABASE_PATH):
+        shutil.rmtree(DATABASE_PATH)
+
+    for path in (MODEL_PATH, "labels.npy", "label.npy"):
+        if os.path.exists(path):
+            os.remove(path)
+
+    recognizer = None
+    id_to_name = {}
+
+    return JSONResponse({
+        "message": "Deleted all datasets",
+        "retrained": False,
+        "labels": {}
+    })
+
+
 @app.delete("/dataset/{name}")
 def delete_person(name: str):
     import shutil

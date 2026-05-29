@@ -23,7 +23,11 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { User } from "./entities/user.entity";
 import { UserService } from "./user.service";
 import { changePasswordSchema } from "./validations/requests/change-password.request";
-import { updateUserSchema } from "./validations/requests/update-user.request";
+import { createEmployeeSchema } from "./validations/requests/create-employee.request";
+import {
+  updateProfileSchema,
+  updateUserSchema,
+} from "./validations/requests/update-user.request";
 
 @Controller()
 export class UserController {
@@ -47,7 +51,8 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(
-    @Body() createEmployeeDto: CreateEmployeeDto,
+    @Body(new JoiValidationPipe(createEmployeeSchema))
+    createEmployeeDto: CreateEmployeeDto,
     @CurrentUser() hrManager: User,
   ) {
     return this.userService.create(createEmployeeDto, hrManager);
@@ -58,9 +63,11 @@ export class UserController {
   @Post(":id/image")
   async uploadProfilePhoto(
     @UploadedFile() file: Express.Multer.File,
-    @Param("id", new JoiValidationParamPipe(userIdParamSchema)) user: User,
+    @Param("id", new JoiValidationParamPipe(userIdParamSchema))
+    targetUser: User,
+    @CurrentUser() user: User,
   ) {
-    return this.userService.updatePhotoProfile(user, file);
+    return this.userService.updatePhotoProfile(targetUser, file, user);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -76,11 +83,11 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Put()
   update(
-    @Body(new JoiValidationPipe(updateUserSchema))
+    @Body(new JoiValidationPipe(updateProfileSchema))
     updateUserDto: UpdateUserDto,
     @CurrentUser() user: User,
   ) {
-    return this.userService.update(user, updateUserDto);
+    return this.userService.updateProfile(user, updateUserDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -98,8 +105,9 @@ export class UserController {
   @Delete(":id")
   async remove(
     @Param("id", new JoiValidationParamPipe(userIdParamSchema))
-    user: User,
+    targetUser: User,
+    @CurrentUser() user: User,
   ) {
-    return this.userService.remove(user);
+    return this.userService.remove(targetUser, user);
   }
 }

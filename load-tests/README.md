@@ -1,53 +1,121 @@
 # Locust Load Test
 
-This folder contains Locust load tests for the Look-In API.
+This folder contains a Locust load test for the Look-In API.
 
-- `locustfile.py`: Hiring Manager / HR scenario.
-- `locustfile_employee.py`: Employee / Intern scenario.
+The current test file is:
 
-## Install
+- `locustfile.py`: Hiring Manager / HR API scenario.
+
+## 1. Install Locust
+
+Run this once:
 
 ```powershell
 pip install locust
 ```
 
-## Run
+Check that Locust is available:
+
+```powershell
+locust --version
+```
+
+## 2. Start The Backend
+
+In another terminal, start the Look-In backend and make sure it is listening on port `3000`.
+
+The Locust command below targets:
+
+```text
+http://localhost:3000/api/v1
+```
+
+Quick backend check:
+
+```powershell
+Invoke-WebRequest http://localhost:3000
+```
+
+If the backend is not running, Locust will show 100% failures because every request cannot connect.
+
+## 3. Prepare A Working Login
+
+Locust logs in before it calls protected endpoints. If login returns `401 Unauthorized`, all useful testing stops.
+
+First, use an account that can log in normally from the app. Then set it in PowerShell:
+
+```powershell
+$env:LOCUST_USERNAME="your-email-or-username"
+$env:LOCUST_PASSWORD="your-password"
+```
+
+You can test the login directly:
+
+```powershell
+Invoke-WebRequest `
+  -Uri "http://localhost:3000/api/v1/auth/login" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"username":"your-email-or-username","password":"your-password"}'
+```
+
+Expected result: HTTP `200` with an `access_token` inside `data`.
+
+If you get `401`, fix the username/password first. Locust cannot test protected routes without a valid token.
+
+## 4. Run Locust With The Web UI
+
+From the project root:
 
 ```powershell
 cd C:\Users\scree\look-in
-$env:LOCUST_USERNAME="hiringmanager@gmail.com"
-$env:LOCUST_PASSWORD="asdqwe123"
 locust -f .\load-tests\locustfile.py --host http://localhost:3000
 ```
 
-Open `http://localhost:8089`, set the number of users and spawn rate, then start.
+Open:
 
-## Headless Example
+```text
+http://localhost:8089
+```
+
+Recommended first test:
+
+- Number of users: `1`
+- Spawn rate: `1`
+- Run time: about `1` minute
+
+If that works, increase slowly, for example:
+
+- Number of users: `10`
+- Spawn rate: `2`
+
+## 5. Run Headless
+
+After the web UI test works, you can run without the browser:
 
 ```powershell
 locust -f .\load-tests\locustfile.py --host http://localhost:3000 --headless -u 20 -r 5 -t 2m
 ```
 
-If your API prefix is different:
+Meaning:
+
+- `-u 20`: simulate 20 users
+- `-r 5`: add 5 users per second
+- `-t 2m`: run for 2 minutes
+
+## 6. Optional Settings
+
+The default API prefix is `/api/v1`. Override it only if the backend changes:
 
 ```powershell
 $env:LOCUST_API_PREFIX="/api/v1"
 ```
 
-## Test POST / PUT / DELETE
-
-Write tests are disabled by default. Enable them only against a development database because they create, update, and delete test records.
+Write tests are disabled by default. Enable them only against a development database because they create, update, and delete records:
 
 ```powershell
 $env:LOCUST_ENABLE_WRITES="true"
-locust -f .\load-tests\locustfile.py --host http://localhost:3000
 ```
-
-Covered write flows:
-
-- `POST /users`, `GET /users/:id`, `PUT /users/:id`, `DELETE /users/:id`
-- `POST /attendance-settings`, `GET /attendance-settings/:id`, `PUT /attendance-settings/:id`, `DELETE /attendance-settings/:id`
-- `POST /permits`, `GET /permits/:id`, `PUT /permits/:id`, `DELETE /permits/:id`
 
 Optional register test:
 
@@ -56,27 +124,21 @@ $env:LOCUST_ENABLE_WRITES="true"
 $env:LOCUST_ENABLE_REGISTER="true"
 ```
 
-`POST /auth/register` creates Hiring Manager users, so keep it disabled unless you really want that data.
+`POST /auth/register` creates Hiring Manager users, so keep it disabled unless you want that data.
 
-## Employee / Intern Scenario
+## Troubleshooting 100% Failures
 
-Use an existing employee or intern account:
+Most common causes:
 
-```powershell
-cd C:\Users\scree\look-in
-$env:LOCUST_EMPLOYEE_USERNAME="employee@example.com"
-$env:LOCUST_EMPLOYEE_PASSWORD="asdqwe123"
-locust -f .\load-tests\locustfile_employee.py --host http://localhost:3000
+- `401 Unauthorized` on `POST /auth/login`: wrong `LOCUST_USERNAME` or `LOCUST_PASSWORD`.
+- Connection errors: backend is not running on `http://localhost:3000`.
+- `404 Not Found`: wrong `LOCUST_API_PREFIX`.
+- Many `403 Forbidden` responses: the account role is not allowed to access one or more endpoints.
+
+For your latest check, this default credential failed:
+
+```text
+hiringmanager@gmail.com / asdqwe123
 ```
 
-Employee write tests are also disabled by default. Enable them only against a development database:
-
-```powershell
-$env:LOCUST_ENABLE_WRITES="true"
-locust -f .\load-tests\locustfile_employee.py --host http://localhost:3000
-```
-
-Employee write flows:
-
-- `PUT /users` to update own profile.
-- `POST /permits`, `GET /permits/:id`, `PUT /permits/:id`, `DELETE /permits/:id`.
+Use a real account from your local database or register a new Hiring Manager account through the app/API, then set `LOCUST_USERNAME` and `LOCUST_PASSWORD` to that account.

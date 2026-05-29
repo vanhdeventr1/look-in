@@ -15,8 +15,8 @@ import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
 import { Attendance } from "./entities/attendance.entity";
 
 const ALLOWED_ROLES = [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN];
-const WORDS_PER_LATE_MINUTE = 60;
-const FACE_CONFIDENCE_THRESHOLD = 70;
+const WORDS_PER_LATE_MINUTE = 1;
+const FACE_CONFIDENCE_THRESHOLD = 65;
 
 @Injectable()
 export class AttendanceService {
@@ -129,7 +129,7 @@ export class AttendanceService {
   }
 
   private lateNoteResult(lateDuration: number, note: string) {
-    const requiredWords = lateDuration * WORDS_PER_LATE_MINUTE;
+    const requiredWords = Math.min(lateDuration * WORDS_PER_LATE_MINUTE, 100);
     const currentWords = this.countWords(note || "");
     const missingWords =
       lateDuration > 0 ? Math.max(requiredWords - currentWords, 0) : 0;
@@ -166,7 +166,11 @@ export class AttendanceService {
     };
   }
 
-  async quickCheckIn(dto: CreateAttendanceDto, image?: Express.Multer.File) {
+  async quickCheckIn(
+    dto: CreateAttendanceDto,
+    image?: Express.Multer.File,
+    actor?: User,
+  ) {
     if (!image) {
       return this.response.fail("Attendance image is required", 400);
     }
@@ -210,6 +214,17 @@ export class AttendanceService {
       );
     }
 
+    if (
+      actor &&
+      actor?.role !== UserRoleEnum.HIRING_MANAGER &&
+      actor?.id !== attendanceUser.id
+    ) {
+      return this.response.fail(
+        "Face verification matched a different user",
+        403,
+      );
+    }
+
     const response: any = await this.checkIn(
       attendanceUser,
       {
@@ -250,10 +265,9 @@ export class AttendanceService {
       return this.response.fail("Face confidence is required", 400);
     }
 
-    if (dto.face_confidence <= FACE_CONFIDENCE_THRESHOLD) {
+    if (dto.face_confidence >= FACE_CONFIDENCE_THRESHOLD) {
       return this.response.fail("Face verification failed", 400);
     }
-
     if (!image) {
       return this.response.fail("Attendance image is required", 400);
     }
@@ -296,7 +310,7 @@ export class AttendanceService {
           note: dto.note ?? null,
           attendance_setting_id: setting.id,
           face_confidence: dto.face_confidence ?? null,
-          is_face_verified: dto.face_confidence > FACE_CONFIDENCE_THRESHOLD,
+          is_face_verified: dto.face_confidence < FACE_CONFIDENCE_THRESHOLD,
         },
         { transaction },
       );
@@ -545,6 +559,7 @@ export class AttendanceService {
         users = await User.findAll({
           where: {
             role: [UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN],
+            created_by: user.id,
           },
         });
       } else {
@@ -665,7 +680,15 @@ export class AttendanceService {
 
   async remove(attendance: Attendance, user: User) {
     if (user.role !== UserRoleEnum.HIRING_MANAGER) {
-      return this.response.fail("Only hiring manager can delete attendance", 403);
+      return this.response.fail(
+        "Only hiring manager can delete attendance",
+        403,
+      );
+    }
+
+    await attendance.reload({ include: ["user"] });
+    if (attendance.user?.created_by !== user.id) {
+      return this.response.fail("Forbidden", 403);
     }
 
     const transaction = await this.sequelize.transaction();

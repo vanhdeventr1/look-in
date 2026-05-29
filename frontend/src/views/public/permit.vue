@@ -191,10 +191,15 @@
             <div class="flex justify-end pt-4">
               <button
                 @click="submitForm"
+                :disabled="isSubmitting"
                 class="bg-[#8C352D] text-white px-10 py-4 rounded-2xl font-bold hover:bg-[#a24a42] transition-all cursor-pointer"
               >
                 {{
-                  formMode === "add" ? "Tambah Perizinan" : "Simpan Perubahan"
+                  isSubmitting
+                    ? "Menyimpan..."
+                    : formMode === "add"
+                      ? "Tambah Perizinan"
+                      : "Simpan Perubahan"
                 }}
               </button>
             </div>
@@ -564,11 +569,7 @@
       <template #icon>
         <InfoIcon :size="80" class="text-[#8C352D] stroke-[1.5]" />
       </template>
-      <template #title>
-        Mohon Lengkapi
-        <br />
-        Data Perizinan!
-      </template>
+      <template #title>{{ validationAlertTitle }}</template>
       <template #actions>
         <button
           @click="isValidationAlertOpen = false"
@@ -634,8 +635,10 @@ const isSuccessAlertOpen = ref(false);
 const isViewModalOpen = ref(false);
 const fullScreenImg = ref<string | null>(null);
 const successAlertTitle = ref("");
+const validationAlertTitle = ref("Mohon Lengkapi\nData Perizinan!");
 const selectedId = ref<number | null>(null);
 const selectedPermit = ref<any>(null);
+const isSubmitting = ref(false);
 const router = useRouter();
 const currentPage = ref(1);
 const itemsPerPage = 10;
@@ -817,6 +820,18 @@ const handleFileUpload = (event: Event) => {
 const removeFile = (index: number) => {
   uploadedFiles.value.splice(index, 1);
 };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as {
+    response?: { data?: { message?: string } | string };
+    message?: string;
+  };
+  const data = apiError.response?.data;
+
+  if (typeof data === "string") return data;
+  return data?.message ?? apiError.message ?? fallback;
+};
+
 const openFullScreen = (url: string) => {
   fullScreenImg.value = url;
 };
@@ -871,9 +886,11 @@ const cancelForm = () => {
 
 const submitForm = async () => {
   if (!newPermit.value.reason || !newPermit.value.startDate) {
+    validationAlertTitle.value = "Mohon Lengkapi\nData Perizinan!";
     isValidationAlertOpen.value = true;
     return;
   }
+  isSubmitting.value = true;
   try {
     const typeValue = typeValueMap[newPermit.value.reason] ?? 0;
     const dateStart = newPermit.value.startDate;
@@ -908,6 +925,13 @@ const submitForm = async () => {
     isSuccessAlertOpen.value = true;
   } catch (error) {
     console.error(error);
+    validationAlertTitle.value = getErrorMessage(
+      error,
+      "Gagal Menyimpan\nData Perizinan!",
+    );
+    isValidationAlertOpen.value = true;
+  } finally {
+    isSubmitting.value = false;
   }
 };
 

@@ -35,3 +35,7 @@ export const createDataset = (
 export const deleteDataset = (id: number) => {
   return api.delete(`/datasets/${id}`);
 };
+
+export const deleteAllDatasets = () => {
+  return api.delete("/datasets");
+};

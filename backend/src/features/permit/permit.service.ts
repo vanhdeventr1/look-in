@@ -187,6 +187,16 @@ export class PermitService {
         );
       }
 
+      if (!statusChanged) {
+        if (permit.user_id !== user.id) {
+          throw this.response.fail("You can only update your own permit", 403);
+        }
+
+        if (permit.status !== 0) {
+          throw this.response.fail("Only pending permits can be updated", 400);
+        }
+      }
+
       if (updatePermitDto.date_start || updatePermitDto.date_end) {
         const start = updatePermitDto.date_start ?? permit.date_start;
         const end = updatePermitDto.date_end ?? permit.date_end;

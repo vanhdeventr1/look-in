@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
+import { Op } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
@@ -42,9 +43,30 @@ export class UserService {
     return this.response.success(user, 200, "Successfully get user");
   }
 
-  async update(user: User, updateUserDto: UpdateUserDto) {
+  async update(user: User, updateUserDto: Partial<UpdateUserDto>) {
     const transaction = await this.sequelize.transaction();
     try {
+      if (updateUserDto.email || updateUserDto.username) {
+        const duplicate = await this.userModel.findOne({
+          where: {
+            id: { [Op.ne]: user.id },
+            [Op.or]: [
+              ...(updateUserDto.email ? [{ email: updateUserDto.email }] : []),
+              ...(updateUserDto.username
+                ? [{ username: updateUserDto.username }]
+                : []),
+            ],
+          },
+          paranoid: false,
+          transaction,
+        });
+
+        if (duplicate) {
+          await transaction.rollback();
+          return this.response.fail("Email or username already exists", 400);
+        }
+      }
+
       await user.update(updateUserDto, { transaction });
       await transaction.commit();
       return this.response.success({ user }, 200, "Successfully updated user");
@@ -54,20 +76,51 @@ export class UserService {
     }
   }
 
+  async updateProfile(user: User, updateUserDto: UpdateUserDto) {
+    const { name, email, username, phone_no } = updateUserDto;
+    const profileDto = Object.fromEntries(
+      Object.entries({ name, email, username, phone_no }).filter(
+        ([, value]) => value !== undefined,
+      ),
+    );
+    return this.update(user, profileDto);
+  }
+
   async updateById(targetUser: User, updateUserDto: UpdateUserDto, user: User) {
-    if (
-      user.role === UserRoleEnum.HIRING_MANAGER &&
-      targetUser.created_by !== user.id
-    ) {
+    if (user.role !== UserRoleEnum.HIRING_MANAGER) {
       return this.response.fail("Forbidden", HttpStatus.FORBIDDEN);
+    }
+
+    if (targetUser.created_by !== user.id) {
+      return this.response.fail("Forbidden", HttpStatus.FORBIDDEN);
+    }
+
+    if (targetUser.id === user.id) {
+      return this.response.fail("Cannot manage your own account here", 400);
     }
 
     return this.update(targetUser, updateUserDto);
   }
 
   async create(dto: CreateEmployeeDto, creator: User) {
+    if (creator.role !== UserRoleEnum.HIRING_MANAGER) {
+      return this.response.fail("Only hiring manager can create employee", 403);
+    }
+
     const transaction = await this.sequelize.transaction();
     try {
+      const existing = await this.userModel.findOne({
+        where: {
+          [Op.or]: [{ email: dto.email }, { username: dto.username }],
+        },
+        paranoid: false,
+        transaction,
+      });
+      if (existing) {
+        await transaction.rollback();
+        return this.response.fail("Email or username already exists", 400);
+      }
+
       const hashedPassword = await Bun.password.hash(dto.password, {
         algorithm: "bcrypt",
         cost: 10,
@@ -101,7 +154,19 @@ export class UserService {
     }
   }
 
-  async updatePhotoProfile(user: User, file: Express.Multer.File) {
+  async updatePhotoProfile(
+    user: User,
+    file: Express.Multer.File,
+    actor: User,
+  ) {
+    if (
+      actor.id !== user.id &&
+      (actor.role !== UserRoleEnum.HIRING_MANAGER ||
+        user.created_by !== actor.id)
+    ) {
+      return this.response.fail("Forbidden", HttpStatus.FORBIDDEN);
+    }
+
     const transaction = await this.sequelize.transaction();
     try {
       const s3Helper = new S3Helper();
@@ -178,7 +243,19 @@ export class UserService {
     }
   }
 
-  async remove(user: User) {
+  async remove(user: User, actor: User) {
+    if (actor.role !== UserRoleEnum.HIRING_MANAGER) {
+      return this.response.fail("Only hiring manager can delete user", 403);
+    }
+
+    if (user.created_by !== actor.id) {
+      return this.response.fail("Forbidden", HttpStatus.FORBIDDEN);
+    }
+
+    if (user.id === actor.id) {
+      return this.response.fail("Cannot delete your own account", 400);
+    }
+
     await user.destroy();
     return this.response.success({}, 200, "Successfully delete user");
   }

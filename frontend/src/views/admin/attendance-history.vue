@@ -7,9 +7,9 @@
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
             <p class="text-3xl font-bold text-[#8C352D]">
-              {{ todayAttendanceCount }}
+              {{ totalAttendanceCount }}
             </p>
-            <p class="text-[#8C352D] font-medium">Absen Hari Ini</p>
+            <p class="text-[#8C352D] font-medium">Total Data</p>
           </div>
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
@@ -146,7 +146,7 @@
                 <th class="px-6 py-4 font-bold text-sm">Catatan</th>
                 <th class="px-6 py-4 font-bold text-sm">Latitude</th>
                 <th class="px-6 py-4 font-bold text-sm">Longitude</th>
-                <th class="px-6 py-4 font-bold text-sm text-center">Aksi</th>
+                <!-- <th class="px-6 py-4 font-bold text-sm text-center">Aksi</th> -->
               </tr>
             </thead>
             <tbody class="divide-y divide-[#E8D5D2]">
@@ -198,7 +198,7 @@
                 <td class="px-6 py-4 text-sm text-[#8C352D]/80 font-mono">
                   {{ record.lng }}
                 </td>
-                <td class="px-6 py-4 text-sm text-center">
+                <!-- <td class="px-6 py-4 text-sm text-center">
                   <button
                     v-if="canDeleteAttendance(record)"
                     @click="confirmDeleteAttendance(record)"
@@ -208,11 +208,11 @@
                     <TrashIcon :size="18" />
                   </button>
                   <span v-else class="text-[#8C352D]/30">-</span>
-                </td>
+                </td> -->
               </tr>
               <tr v-if="isLoading">
                 <td
-                  colspan="10"
+                  colspan="9"
                   class="px-6 py-10 text-center text-[#8C352D]/50 italic"
                 >
                   Memuat data absensi...
@@ -220,7 +220,7 @@
               </tr>
               <tr v-else-if="errorMessage">
                 <td
-                  colspan="10"
+                  colspan="9"
                   class="px-6 py-10 text-center text-[#8C352D]/50 italic"
                 >
                   {{ errorMessage }}
@@ -228,7 +228,7 @@
               </tr>
               <tr v-else-if="filteredRecords.length === 0">
                 <td
-                  colspan="10"
+                  colspan="9"
                   class="px-6 py-10 text-center text-[#8C352D]/50 italic"
                 >
                   Tidak ada data yang ditemukan.
@@ -357,10 +357,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  deleteAttendance,
-  getAttendanceHistory,
-} from "@/api/attendance.api";
+import { deleteAttendance, getAttendanceHistory } from "@/api/attendance.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebar.vue";
 import {
@@ -372,7 +369,7 @@ import {
   FileText as FileTextIcon,
   Settings2 as FilterIcon,
   Search as SearchIcon,
-  Trash2 as TrashIcon,
+  // Trash2 as TrashIcon,
   X as XIcon,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
@@ -393,7 +390,6 @@ type AttendanceRecord = {
   raw: any;
 };
 
-const today = new Date().toISOString().split("T")[0] ?? "";
 const searchQuery = ref("");
 const selectedDate = ref<string | null>(null);
 const selectedMonth = ref<number | null>(new Date().getMonth());
@@ -451,13 +447,13 @@ const getNoteTableText = (record: AttendanceRecord) => {
   return isLateRecord(record) ? "-" : record.note;
 };
 
-const canDeleteAttendance = (record: AttendanceRecord) => {
-  return (
-    record.raw?.source === "attendance" &&
-    record.raw?.attendance_id !== undefined &&
-    record.raw?.attendance_id !== null
-  );
-};
+// const canDeleteAttendance = (record: AttendanceRecord) => {
+//   return (
+//     record.raw?.source === "attendance" &&
+//     record.raw?.attendance_id !== undefined &&
+//     record.raw?.attendance_id !== null
+//   );
+// };
 
 const openViewLateNoteModal = (record: AttendanceRecord) => {
   viewLateNoteModal.value = {
@@ -473,12 +469,12 @@ const closeViewLateNoteModal = () => {
   };
 };
 
-const confirmDeleteAttendance = (record: AttendanceRecord) => {
-  deleteAttendanceModal.value = {
-    visible: true,
-    record,
-  };
-};
+// const confirmDeleteAttendance = (record: AttendanceRecord) => {
+//   deleteAttendanceModal.value = {
+//     visible: true,
+//     record,
+//   };
+// };
 
 const closeDeleteAttendanceModal = () => {
   if (isDeletingAttendance.value) return;
@@ -818,20 +814,17 @@ const totalPages = computed(() =>
   Math.ceil(filteredRecords.value.length / itemsPerPage),
 );
 
-const todayAttendanceCount = computed(
-  () =>
-    attendanceRecords.value.filter((record) => record.date === today).length,
-);
+const totalAttendanceCount = computed(() => filteredRecords.value.length);
 
 const lateAttendanceCount = computed(
   () =>
-    attendanceRecords.value.filter((record) => record.status === "Terlambat")
+    filteredRecords.value.filter((record) => record.status === "Terlambat")
       .length,
 );
 
 const permitAttendanceCount = computed(
   () =>
-    attendanceRecords.value.filter((record) =>
+    filteredRecords.value.filter((record) =>
       ["Izin", "Sakit", "Cuti"].includes(record.status),
     ).length,
 );

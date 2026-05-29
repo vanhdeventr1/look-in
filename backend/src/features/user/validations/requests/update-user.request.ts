@@ -1,7 +1,5 @@
 import * as Joi from "joi";
-import { getUserRoleEnums } from "../../enums/user-role.enum";
-
-const userRoleEnum = getUserRoleEnums().map((value) => +value.id);
+import UserRoleEnum from "../../enums/user-role.enum";
 
 export const updateUserSchema = Joi.object({
   name: Joi.string().optional(),
@@ -10,6 +8,13 @@ export const updateUserSchema = Joi.object({
   phone_no: Joi.string().optional().allow(null, ""),
   role: Joi.number()
     .optional()
-    .valid(...userRoleEnum),
-  is_active: Joi.boolean().optional().default(true),
+    .valid(UserRoleEnum.EMPLOYEE, UserRoleEnum.INTERN),
+  is_active: Joi.boolean().optional(),
+});
+
+export const updateProfileSchema = Joi.object({
+  name: Joi.string().optional(),
+  email: Joi.string().email().optional(),
+  username: Joi.string().optional(),
+  phone_no: Joi.string().optional().allow(null, ""),
 });

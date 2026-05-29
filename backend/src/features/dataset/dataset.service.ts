@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
+import { Transaction } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { EncryptionHelper } from "src/cores/helpers/encryption.helper"; // ✅
 import { QueryBuilderHelper } from "src/cores/helpers/query-builder.helper";
@@ -40,6 +41,17 @@ export class DatasetService {
     }
   }
 
+  private async deleteAllAiDatasets() {
+    const response = await fetch(`${this.getAiUrl()}/dataset`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok && response.status !== 404) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error || "Failed to delete all AI datasets");
+    }
+  }
+
   private async trainAiDataset(personName: string, s3Urls: string[]) {
     await this.deleteAiDataset(personName).catch((error) => {
       console.warn("[AI] Existing dataset cleanup skipped:", error.message);
@@ -68,6 +80,23 @@ export class DatasetService {
       .catch((aiError: any) => {
         console.warn("[AI] Delete dataset failed:", aiError.message);
       });
+  }
+
+  private async deleteStoredDatasetImages(filePaths: string[]) {
+    const sharpHelper = new SharpHelper();
+
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        try {
+          await sharpHelper.delete(filePath);
+        } catch (error: any) {
+          console.warn(
+            `[Dataset] Failed to delete stored image ${filePath}:`,
+            error?.message || error,
+          );
+        }
+      }),
+    );
   }
 
   async create(
@@ -278,6 +307,59 @@ export class DatasetService {
       return this.response.success({}, 200, "Successfully delete dataset");
     } catch (error) {
       await transaction.rollback();
+      return this.response.fail(error, 400);
+    }
+  }
+
+  async removeAll(user: User) {
+    if (user.role !== UserRoleEnum.HIRING_MANAGER) {
+      return this.response.fail("Only hiring manager can delete dataset", 403);
+    }
+
+    let transaction: Transaction | null = null;
+
+    try {
+      await this.deleteAllAiDatasets();
+
+      transaction = await this.sequelize.transaction();
+
+      const datasetImages = await this.datasetImageModel.findAll({
+        attributes: ["file_path"],
+        transaction,
+      });
+      const filePaths = datasetImages
+        .map((image) => {
+          try {
+            return EncryptionHelper.decrypt(image.file_path);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean) as string[];
+
+      await this.deleteStoredDatasetImages(filePaths);
+
+      const deletedImageCount = await this.datasetImageModel.destroy({
+        where: {},
+        transaction,
+      });
+      const deletedDatasetCount = await this.datasetModel.destroy({
+        where: {},
+        transaction,
+      });
+
+      await transaction.commit();
+
+      return this.response.success(
+        {
+          deleted_datasets: deletedDatasetCount,
+          deleted_images: deletedImageCount,
+        },
+        200,
+        "Successfully delete all datasets",
+      );
+    } catch (error) {
+      if (transaction) await transaction.rollback();
       return this.response.fail(error, 400);
     }
   }

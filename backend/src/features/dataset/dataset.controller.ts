@@ -67,6 +67,12 @@ export class DatasetController {
   // }
 
   @UseGuards(JwtAuthGuard)
+  @Delete()
+  removeAll(@CurrentUser() user: User) {
+    return this.datasetService.removeAll(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(":id")
   remove(
     @CurrentUser() user: User,

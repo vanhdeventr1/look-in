@@ -6,21 +6,27 @@
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
-            <p class="text-3xl font-bold text-[#8C352D]">24</p>
-            <p class="text-[#8C352D] font-medium">Absen Hari Ini</p>
+            <p class="text-3xl font-bold text-[#8C352D]">
+              {{ weeklyAttendanceCount }}
+            </p>
+            <p class="text-[#8C352D] font-medium">Absen Minggu Ini</p>
           </div>
 
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
-            <p class="text-3xl font-bold text-[#8C352D]">12</p>
+            <p class="text-3xl font-bold text-[#8C352D]">
+              {{ monthlyLateCount }}
+            </p>
             <p class="text-[#8C352D] font-medium">Terlambat</p>
           </div>
 
           <div
             class="bg-[#FFF0EE] border border-[#8C352D] p-6 rounded-2xl shadow-sm"
           >
-            <p class="text-3xl font-bold text-[#8C352D]">3</p>
+            <p class="text-3xl font-bold text-[#8C352D]">
+              {{ monthlySickCount }}
+            </p>
             <p class="text-[#8C352D] font-medium">Sakit</p>
           </div>
         </div>
@@ -35,8 +41,10 @@
               <p class="text-[#8C352D] font-bold">
                 Selamat Datang, {{ user?.name }}
               </p>
-              <p class="text-sm text-[#8C352D]/60">10 Oktober 2025</p>
-              <h1 class="text-5xl font-black text-[#8C352D] py-4">08:00 PM</h1>
+              <p class="text-sm text-[#8C352D]/60">{{ currentDate }}</p>
+              <h1 class="text-5xl font-black text-[#8C352D] py-4">
+                {{ currentTime }}
+              </h1>
               <div class="h-10 bg-[#8C352D] rounded-xl w-full"></div>
             </div>
 
@@ -58,9 +66,16 @@
               <div class="flex items-center gap-6">
                 <div class="w-1/2 relative h-40">
                   <div
-                    class="w-full h-full rounded-full border-[16px] border-[#00E396] border-l-[#FEB019] border-b-[#FF4560] flex items-center justify-center"
+                    class="w-full h-full rounded-full flex items-center justify-center"
+                    :style="attendanceDonutStyle"
                   >
-                    <span class="text-2xl font-bold text-[#8C352D]">70%</span>
+                    <div
+                      class="w-[calc(100%-32px)] h-[calc(100%-32px)] rounded-full bg-white flex items-center justify-center"
+                    >
+                      <span class="text-2xl font-bold text-[#8C352D]">
+                        {{ monthlyAttendancePercent }}%
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -99,7 +114,16 @@
                 </button>
               </div>
 
-              <div class="h-[400px] flex items-end justify-between gap-3 px-4">
+              <div
+                v-if="isLoading"
+                class="h-[400px] flex items-center justify-center text-sm text-[#8C352D]/50 italic"
+              >
+                Memuat data dashboard...
+              </div>
+              <div
+                v-else
+                class="h-[400px] flex items-end justify-between gap-3 px-4"
+              >
                 <div
                   v-for="bar in barData"
                   :key="bar.month"
@@ -128,12 +152,32 @@
 </template>
 
 <script setup lang="ts">
+import { getAttendanceHistory } from "@/api/attendance.api";
 import { useAuth } from "@/composables/useAuth";
 import SidebarLayout from "@/layout/sidebarpublic.vue";
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+
+type AttendanceHistory = {
+  date: string;
+  status: string;
+  source?: string;
+  permit_type_name?: string;
+};
+
+type BarSummary = {
+  month: string;
+  value: number;
+  color: string;
+};
 
 const { user: userState } = useAuth();
 const user = computed(() => userState.value);
+const isLoading = ref(false);
+const now = ref(new Date());
+const weeklyHistory = ref<AttendanceHistory[]>([]);
+const monthlyHistory = ref<AttendanceHistory[]>([]);
+const monthlyBarHistory = ref<Record<string, AttendanceHistory[]>>({});
+let timer: ReturnType<typeof setInterval> | undefined;
 
 const chartLabels = [
   { text: "Hadir", color: "bg-[#00E396]" },
@@ -141,13 +185,169 @@ const chartLabels = [
   { text: "Tidak Absen", color: "bg-[#FF4560]" },
 ];
 
-const barData = [
-  { month: "Sep", value: 50, color: "bg-[#FEB019]" },
-  { month: "Oct", value: 80, color: "bg-[#00E396]" },
-  { month: "Nov", value: 60, color: "bg-[#FEB019]" },
-  { month: "Dec", value: 40, color: "bg-[#FF4560]" },
-  { month: "Jan", value: 100, color: "bg-[#00E396]" },
-];
+const formatDateKey = (date: Date) => date.toLocaleDateString("en-CA");
+
+const currentDate = computed(() =>
+  now.value.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }),
+);
+
+const currentTime = computed(() =>
+  now.value.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+);
+
+const getMonthRange = (date: Date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  return {
+    start_date: formatDateKey(new Date(year, month, 1)),
+    end_date: formatDateKey(new Date(year, month + 1, 0)),
+  };
+};
+
+const getCurrentWeekRange = () => {
+  const start = new Date();
+  const day = start.getDay();
+  start.setDate(start.getDate() - day);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+
+  return {
+    start_date: formatDateKey(start),
+    end_date: formatDateKey(end),
+  };
+};
+
+const isAttendanceStatus = (status: string) =>
+  ["present", "late"].includes(status);
+
+const isWorkingDayRecord = (record: AttendanceHistory) => {
+  return record.status !== "weekend";
+};
+
+const getAttendancePercent = (records: AttendanceHistory[]) => {
+  const workingDays = records.filter(isWorkingDayRecord).length;
+  if (workingDays === 0) return 0;
+
+  const attended = records.filter((record) =>
+    isAttendanceStatus(record.status),
+  ).length;
+  return Math.round((attended / workingDays) * 100);
+};
+
+const weeklyAttendanceCount = computed(
+  () =>
+    weeklyHistory.value.filter((record) => isAttendanceStatus(record.status))
+      .length,
+);
+
+const monthlyLateCount = computed(
+  () =>
+    monthlyHistory.value.filter((record) => record.status === "late").length,
+);
+
+const monthlySickCount = computed(
+  () =>
+    monthlyHistory.value.filter(
+      (record) =>
+        record.status === "permit" &&
+        (record.permit_type_name === "Sick" || record.permit_type_name === "Sakit"),
+    ).length,
+);
+
+const monthlyAttendancePercent = computed(() =>
+  getAttendancePercent(monthlyHistory.value),
+);
+
+const attendanceDonutStyle = computed(() => {
+  const present = monthlyHistory.value.filter(
+    (record) => record.status === "present",
+  ).length;
+  const late = monthlyHistory.value.filter(
+    (record) => record.status === "late",
+  ).length;
+  const missed = monthlyHistory.value.filter((record) =>
+    ["absent", "permit"].includes(record.status),
+  ).length;
+  const total = present + late + missed;
+
+  if (total === 0) {
+    return { background: "#E8D5D2" };
+  }
+
+  const presentDeg = (present / total) * 360;
+  const lateDeg = presentDeg + (late / total) * 360;
+  return {
+    background: `conic-gradient(#00E396 0deg ${presentDeg}deg, #FEB019 ${presentDeg}deg ${lateDeg}deg, #FF4560 ${lateDeg}deg 360deg)`,
+  };
+});
+
+const getBarColor = (value: number) => {
+  if (value >= 80) return "bg-[#00E396]";
+  if (value >= 50) return "bg-[#FEB019]";
+  return "bg-[#FF4560]";
+};
+
+const barData = computed<BarSummary[]>(() => {
+  return Object.entries(monthlyBarHistory.value).map(([month, records]) => {
+    const value = getAttendancePercent(records);
+    return {
+      month,
+      value,
+      color: getBarColor(value),
+    };
+  });
+});
+
+const fetchDashboardData = async () => {
+  isLoading.value = true;
+  try {
+    const monthDates = Array.from({ length: 5 }, (_, index) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (4 - index));
+      return date;
+    });
+
+    const [weekResponse, monthResponse, ...barResponses] = await Promise.all([
+      getAttendanceHistory(getCurrentWeekRange()),
+      getAttendanceHistory(getMonthRange(new Date())),
+      ...monthDates.map((date) => getAttendanceHistory(getMonthRange(date))),
+    ]);
+
+    weeklyHistory.value = weekResponse?.data?.data?.history ?? [];
+    monthlyHistory.value = monthResponse?.data?.data?.history ?? [];
+    monthlyBarHistory.value = Object.fromEntries(
+      monthDates.map((date, index) => [
+        date.toLocaleDateString("id-ID", { month: "short" }),
+        barResponses[index]?.data?.data?.history ?? [],
+      ]),
+    );
+  } catch (error) {
+    console.error(error);
+    weeklyHistory.value = [];
+    monthlyHistory.value = [];
+    monthlyBarHistory.value = {};
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchDashboardData();
+  timer = setInterval(() => {
+    now.value = new Date();
+  }, 30000);
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 <style>
 .animate-in {
