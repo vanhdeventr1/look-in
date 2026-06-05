@@ -90,18 +90,19 @@ export class PermitService {
 
         await transaction.commit();
 
-        // emit notification asynchronously
-        setImmediate(() => {
-          this.eventEmitter.emit("notification", ["system"], {
-            type: "PERMIT",
-            data: { id: permit.id },
-            role: UserRoleEnum.HIRING_MANAGER,
-            message: `${
-              user.name || "Seorang karyawan"
-            } telah mengajukan izin baru. Silakan lakukan persetujuan atau penolakan atas permohonan ini`,
-            title: "New Permit Pending Approval",
+        if (user.created_by && user.created_by !== user.id) {
+          setImmediate(() => {
+            this.eventEmitter.emit("notification", ["system"], {
+              type: "PERMIT",
+              data: { id: permit.id },
+              notified_user_id: user.created_by,
+              message: `${
+                user.name || "Seorang karyawan"
+              } telah mengajukan izin baru. Silakan lakukan persetujuan atau penolakan atas permohonan ini`,
+              title: "New Permit Pending Approval",
+            });
           });
-        });
+        }
 
         return this.response.success(permit, 201, "Successfully create permit");
       } catch (error) {

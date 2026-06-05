@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectModel } from "@nestjs/sequelize";
+import { randomUUID } from "crypto";
 import { Op } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { ResponseHelper } from "src/cores/helpers/response.helper";
@@ -10,6 +11,8 @@ import UserRoleEnum from "../user/enums/user-role.enum";
 
 @Injectable()
 export class AuthService {
+  private readonly revokedJwtIds = new Map<string, number>();
+
   constructor(
     private response: ResponseHelper,
     private sequelize: Sequelize,
@@ -18,7 +21,8 @@ export class AuthService {
   ) {}
 
   login(user: any) {
-    const payload = { email: user.email, sub: user.id };
+    const jwtId = randomUUID();
+    const payload = { email: user.email, sub: user.id, jti: jwtId };
     const result = {
       user,
       access_token: this.jwtService.sign(payload),
@@ -55,10 +59,40 @@ export class AuthService {
 
   async validateJwt(id: number) {
     const user = await this.userModel.findByPk(id);
+    if (!user?.is_active) return false;
     return user;
   }
 
+  isJwtRevoked(jwtId?: string) {
+    if (!jwtId) return true;
+
+    const expiresAt = this.revokedJwtIds.get(jwtId);
+    if (!expiresAt) return false;
+
+    if (expiresAt < Date.now()) {
+      this.revokedJwtIds.delete(jwtId);
+      return false;
+    }
+
+    return true;
+  }
+
+  logout(token: string) {
+    const decoded = token
+      ? (this.jwtService.decode(token) as { exp?: number; jti?: string } | null)
+      : null;
+    if (decoded?.jti) {
+      this.revokedJwtIds.set(decoded.jti, (decoded.exp ?? 0) * 1000);
+    }
+
+    return this.response.success({}, 200, "Successfully logout");
+  }
+
   async register(createUserDto: CreateUserDto) {
+    if (process.env.ALLOW_PUBLIC_REGISTER !== "true") {
+      return this.response.fail("Registration is disabled", 403);
+    }
+
     const transaction = await this.sequelize.transaction();
     try {
       createUserDto.password = await Bun.password.hash(createUserDto.password, {

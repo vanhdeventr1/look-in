@@ -135,7 +135,11 @@ const mapNotification = (note: NotificationApi): NotificationRow => {
 
 const fetchNotifications = async () => {
   try {
-    const response = await getNotifications({ limit: 1000 });
+    const response = await getNotifications({
+      limit: 20,
+      order_by: "created_at",
+      direction: "DESC",
+    });
     const data = response?.data?.data?.notifications ?? [];
     notifications.value = data.map(mapNotification);
   } catch (error) {

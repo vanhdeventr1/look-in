@@ -4,15 +4,18 @@ import time
 from datetime import date, timedelta
 from uuid import uuid4
 
+from gevent.lock import Semaphore
 from locust import HttpUser, between, events, task
-from locust.exception import StopUser
 
 
 API_PREFIX = os.getenv("LOCUST_API_PREFIX", "/api/v1")
 LOGIN_USERNAME = os.getenv("LOCUST_USERNAME", "hiringmanager@gmail.com")
-LOGIN_PASSWORD = os.getenv("LOCUST_PASSWORD", "asdqwe1234")
+LOGIN_PASSWORD = os.getenv("LOCUST_PASSWORD", "asdqwe123")
 ENABLE_WRITES = os.getenv("LOCUST_ENABLE_WRITES", "false").lower() == "true"
 ENABLE_REGISTER = os.getenv("LOCUST_ENABLE_REGISTER", "false").lower() == "true"
+SHARED_TOKEN: str | None = None
+LOGIN_ERROR: str | None = None
+LOGIN_LOCK = Semaphore()
 
 
 @events.init.add_listener
@@ -35,7 +38,7 @@ class LookInApiUser(HttpUser):
         self.created_user_ids = []
         self.created_permit_ids = []
         self.created_attendance_setting_ids = []
-        self.login()
+        self.token = self.get_shared_token()
 
     @property
     def auth_headers(self):
@@ -44,7 +47,21 @@ class LookInApiUser(HttpUser):
 
         return {"Authorization": f"Bearer {self.token}"}
 
+    def get_shared_token(self):
+        global SHARED_TOKEN, LOGIN_ERROR
+
+        if SHARED_TOKEN or LOGIN_ERROR:
+            return SHARED_TOKEN
+
+        with LOGIN_LOCK:
+            if SHARED_TOKEN or LOGIN_ERROR:
+                return SHARED_TOKEN
+
+            return self.login()
+
     def login(self):
+        global SHARED_TOKEN, LOGIN_ERROR
+
         with self.client.post(
             f"{API_PREFIX}/auth/login",
             json={
@@ -55,21 +72,30 @@ class LookInApiUser(HttpUser):
             catch_response=True,
         ) as response:
             if response.status_code not in (200, 201):
-                response.failure(
+                LOGIN_ERROR = (
                     f"Login failed: {response.status_code}. "
                     "Check LOCUST_USERNAME/LOCUST_PASSWORD and confirm this account can log in."
                 )
-                raise StopUser()
+                response.failure(LOGIN_ERROR)
+                return None
 
             try:
                 data = response.json()
                 self.token = data.get("data", {}).get("access_token")
                 if not self.token:
-                    response.failure("Login response missing access_token")
-                    raise StopUser()
+                    LOGIN_ERROR = "Login response missing access_token"
+                    response.failure(LOGIN_ERROR)
+                    return None
+
+                SHARED_TOKEN = self.token
+                return SHARED_TOKEN
             except Exception as error:
-                response.failure(f"Login response missing token: {error}")
-                raise StopUser()
+                LOGIN_ERROR = f"Login response missing token: {error}"
+                response.failure(LOGIN_ERROR)
+                return None
+
+    def is_authenticated(self):
+        return bool(self.token)
 
     def get_response_data(self, response):
         try:
@@ -82,6 +108,9 @@ class LookInApiUser(HttpUser):
 
     @task(4)
     def get_profile(self):
+        if not self.is_authenticated():
+            return
+
         self.client.get(
             f"{API_PREFIX}/auth/profile",
             headers=self.auth_headers,
@@ -90,6 +119,9 @@ class LookInApiUser(HttpUser):
 
     @task(4)
     def get_attendance_history(self):
+        if not self.is_authenticated():
+            return
+
         today = date.today()
         start_date = today.replace(day=1).isoformat()
         end_date = today.isoformat()
@@ -106,6 +138,9 @@ class LookInApiUser(HttpUser):
 
     @task(3)
     def get_permits(self):
+        if not self.is_authenticated():
+            return
+
         self.client.get(
             f"{API_PREFIX}/permits",
             params={"limit": 10},
@@ -115,6 +150,9 @@ class LookInApiUser(HttpUser):
 
     @task(2)
     def get_users(self):
+        if not self.is_authenticated():
+            return
+
         self.client.get(
             f"{API_PREFIX}/users",
             params={"limit": 10},
@@ -124,6 +162,9 @@ class LookInApiUser(HttpUser):
 
     @task(2)
     def get_datasets(self):
+        if not self.is_authenticated():
+            return
+
         self.client.get(
             f"{API_PREFIX}/datasets",
             params={"limit": 10},
@@ -133,6 +174,9 @@ class LookInApiUser(HttpUser):
 
     @task(2)
     def get_attendance_settings(self):
+        if not self.is_authenticated():
+            return
+
         self.client.get(
             f"{API_PREFIX}/attendance-settings",
             headers=self.auth_headers,
@@ -141,6 +185,9 @@ class LookInApiUser(HttpUser):
 
     @task(1)
     def get_notifications(self):
+        if not self.is_authenticated():
+            return
+
         self.client.get(
             f"{API_PREFIX}/notifications",
             params={"limit": 10},
@@ -150,7 +197,7 @@ class LookInApiUser(HttpUser):
 
     @task(1)
     def write_user_flow(self):
-        if not ENABLE_WRITES:
+        if not ENABLE_WRITES or not self.is_authenticated():
             return
 
         suffix = self.unique_suffix()
@@ -203,7 +250,7 @@ class LookInApiUser(HttpUser):
 
     @task(1)
     def write_attendance_setting_flow(self):
-        if not ENABLE_WRITES:
+        if not ENABLE_WRITES or not self.is_authenticated():
             return
 
         payload = {
@@ -255,7 +302,7 @@ class LookInApiUser(HttpUser):
 
     @task(1)
     def write_permit_flow(self):
-        if not ENABLE_WRITES:
+        if not ENABLE_WRITES or not self.is_authenticated():
             return
 
         start = date.today() + timedelta(days=random.randint(1, 14))
@@ -307,7 +354,7 @@ class LookInApiUser(HttpUser):
 
     @task(1)
     def register_hiring_manager(self):
-        if not (ENABLE_WRITES and ENABLE_REGISTER):
+        if not (ENABLE_WRITES and ENABLE_REGISTER) or not self.is_authenticated():
             return
 
         suffix = self.unique_suffix()

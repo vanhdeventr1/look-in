@@ -14,9 +14,16 @@ export class NotificationService {
   ) {}
 
   async findAll(query: any, user: User) {
+    const safeQuery = {
+      ...query,
+      limit: Math.min(Number(query?.limit) || 20, 50),
+      order_by: query?.order_by || "created_at",
+      direction: query?.direction || "DESC",
+    };
+
     const { count, data } = await new QueryBuilderHelper(
       this.notificationModel,
-      query,
+      safeQuery,
     )
       .where({ notified_user_id: user.id })
       .getResult();
@@ -62,6 +69,10 @@ export class NotificationService {
           notified_user_id: user.id,
         },
       });
+
+      if (!notification) {
+        return this.response.fail("Notification not found", 404);
+      }
 
       await notification.update({ read_at: new Date() });
 

@@ -1,9 +1,13 @@
-import { login as loginApi, register as registerApi } from "@/api/auth.api";
+import {
+  login as loginApi,
+  logout as logoutApi,
+  register as registerApi,
+} from "@/api/auth.api";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const user = ref<any>(JSON.parse(localStorage.getItem("user") || "null"));
-const isAuthenticated = ref(!!localStorage.getItem("access_token"));
+const isAuthenticated = ref(!!user.value);
 
 export function useAuth() {
   const router = useRouter();
@@ -16,9 +20,8 @@ export function useAuth() {
 
     try {
       const res = await loginApi({ username, password });
-      const { access_token, user: userData } = res.data.data;
+      const { user: userData } = res.data.data;
 
-      localStorage.setItem("access_token", access_token);
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("user_role", String(userData.role));
 
@@ -67,7 +70,12 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    localStorage.removeItem("access_token");
+    try {
+      await logoutApi();
+    } catch (error) {
+      console.error(error);
+    }
+
     localStorage.removeItem("user");
     localStorage.removeItem("user_role");
     user.value = null;

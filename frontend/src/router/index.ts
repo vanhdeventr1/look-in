@@ -123,11 +123,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _, next) => {
-  const token = localStorage.getItem("access_token");
+  const user = localStorage.getItem("user");
   const userRole = Number(localStorage.getItem("user_role"));
   const requiredRoles = to.meta.roles as number[] | undefined;
 
-  if (to.meta.requiresAuth && !token) {
+  if (to.meta.requiresAuth && !user) {
     next("/login");
   } else if (requiredRoles && !requiredRoles.includes(userRole)) {
     next(roleDefaultRoute[userRole] ?? "/login");

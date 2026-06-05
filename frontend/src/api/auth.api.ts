@@ -11,6 +11,10 @@ export const getProfile = () => {
     return api.get('/auth/profile');
 };
 
+export const logout = () => {
+    return api.post('/auth/logout');
+};
+
 
 export const register = (payload: {
     username: string;

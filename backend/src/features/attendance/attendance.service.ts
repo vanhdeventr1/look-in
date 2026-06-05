@@ -142,6 +142,14 @@ export class AttendanceService {
     return day === 0 || day === 6;
   }
 
+  private getAiHeaders(extraHeaders: Record<string, string> = {}) {
+    const apiKey = process.env.AI_SERVICE_API_KEY;
+    return {
+      ...extraHeaders,
+      ...(apiKey ? { "X-AI-API-Key": apiKey } : {}),
+    };
+  }
+
   private async verifyFaceWithAi(image: Express.Multer.File) {
     const aiUrl = process.env.AI_SERVICE_URL || "http://localhost:8000";
     const mime = image.mimetype || "image/jpeg";
@@ -149,7 +157,7 @@ export class AttendanceService {
 
     const response = await fetch(`${aiUrl}/verify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: this.getAiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ image_base64: imageBase64 }),
     });
 

@@ -1,7 +1,7 @@
 import requests
 import cv2
 import numpy as np
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,8 +10,25 @@ from ultralytics import YOLO
 from collections import deque
 import os
 import base64
-from fastapi import FastAPI
-from pydantic import BaseModel
+
+
+def load_local_env():
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if not os.path.exists(env_path):
+        return
+
+    with open(env_path, "r", encoding="utf-8") as env_file:
+        for line in env_file:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+load_local_env()
+
 
 class VerifyRequest(BaseModel):
     image_base64: str  
@@ -35,6 +52,18 @@ yolo = YOLO("yolo11n.pt")
 history = deque(maxlen=5)
 recognizer = None
 id_to_name = {}
+
+
+def require_ai_api_key(x_ai_api_key: str | None = Header(default=None)):
+    expected = os.getenv("AI_SERVICE_API_KEY")
+    if not expected:
+        raise HTTPException(
+            status_code=500,
+            detail="AI_SERVICE_API_KEY is not configured",
+        )
+
+    if x_ai_api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid AI API key")
 
 
 def load_recognizer():
@@ -146,7 +175,7 @@ class TrainRequest(BaseModel):
     s3_urls: List[str]
 
 
-@app.post("/train")
+@app.post("/train", dependencies=[Depends(require_ai_api_key)])
 def train(body: TrainRequest):
     print(f"[AI] Received train request for: {body.person_name}")
     print(f"[AI] S3 URLs: {body.s3_urls}")
@@ -191,7 +220,7 @@ def train(body: TrainRequest):
     })
 
 
-@app.get("/dataset")
+@app.get("/dataset", dependencies=[Depends(require_ai_api_key)])
 def list_dataset():
     if not os.path.exists(DATABASE_PATH):
         return {"people": []}
@@ -206,7 +235,7 @@ def list_dataset():
     return {"people": people}
 
 
-@app.delete("/dataset")
+@app.delete("/dataset", dependencies=[Depends(require_ai_api_key)])
 def delete_all_dataset():
     import shutil
     global recognizer, id_to_name
@@ -228,7 +257,7 @@ def delete_all_dataset():
     })
 
 
-@app.delete("/dataset/{name}")
+@app.delete("/dataset/{name}", dependencies=[Depends(require_ai_api_key)])
 def delete_person(name: str):
     import shutil
     global recognizer, id_to_name
@@ -324,7 +353,7 @@ def generate_frames():
 
     cap.release()
 
-@app.post("/verify")
+@app.post("/verify", dependencies=[Depends(require_ai_api_key)])
 def verify(body: VerifyRequest):
     try:
         img_data = base64.b64decode(body.image_base64.split(",")[-1])

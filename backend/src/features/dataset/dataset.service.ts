@@ -29,10 +29,18 @@ export class DatasetService {
     return process.env.AI_SERVICE_URL || "http://localhost:8000";
   }
 
+  private getAiHeaders(extraHeaders: Record<string, string> = {}) {
+    const apiKey = process.env.AI_SERVICE_API_KEY;
+    return {
+      ...extraHeaders,
+      ...(apiKey ? { "X-AI-API-Key": apiKey } : {}),
+    };
+  }
+
   private async deleteAiDataset(personName: string) {
     const response = await fetch(
       `${this.getAiUrl()}/dataset/${encodeURIComponent(personName)}`,
-      { method: "DELETE" },
+      { method: "DELETE", headers: this.getAiHeaders() },
     );
 
     if (!response.ok && response.status !== 404) {
@@ -44,6 +52,7 @@ export class DatasetService {
   private async deleteAllAiDatasets() {
     const response = await fetch(`${this.getAiUrl()}/dataset`, {
       method: "DELETE",
+      headers: this.getAiHeaders(),
     });
 
     if (!response.ok && response.status !== 404) {
@@ -59,7 +68,7 @@ export class DatasetService {
 
     const response = await fetch(`${this.getAiUrl()}/train`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: this.getAiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         person_name: personName,
         s3_urls: s3Urls,

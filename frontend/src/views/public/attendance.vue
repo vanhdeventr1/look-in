@@ -381,7 +381,7 @@
 </template>
 
 <script setup lang="ts">
-import { checkInAttendance } from "@/api/attendance.api";
+import { quickCheckInAttendance } from "@/api/attendance.api";
 import AlertLayout from "@/layout/alert.vue";
 import SidebarLayout from "@/layout/sidebarpublic.vue";
 import {
@@ -578,35 +578,15 @@ const triggerVerification = async () => {
     const imageBase64 = canvas.toDataURL("image/jpeg", 0.8);
     attendanceData.photo = imageBase64;
 
-    const verifyRes = await fetch("http://localhost:8000/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_base64: imageBase64 }),
-    });
-
-    const verifyData = await verifyRes.json();
-    console.log("[AI] Verify response:", verifyData);
-
-    if (verifyData.error === "no_face") {
-      alert.type = "no-face";
-      return;
-    }
-
-    if (!verifyData.matched) {
-      alert.type = "error";
-      alert.message = "Wajah tidak dikenali, absen gagal ditambahkan";
-      return;
-    }
-
-    const checkInRes = await checkInAttendance({
+    const checkInRes = await quickCheckInAttendance({
       gps_lat: attendanceData.lat,
       gps_lng: attendanceData.lng,
-      face_confidence: verifyData.confidence,
       image: dataUrlToFile(imageBase64, "attendance.jpg"),
     });
 
     if (checkInRes.data?.statusCode === 201) {
-      attendanceData.name = verifyData.name;
+      attendanceData.name =
+        checkInRes.data?.data?.recognized_user?.name ?? attendanceData.name;
       attendanceData.isLate = !!checkInRes.data?.data?.attendance?.is_late;
       attendanceData.lateDuration =
         checkInRes.data?.data?.attendance?.late_duration ?? 0;
