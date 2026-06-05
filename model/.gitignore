@@ -1,0 +1,6 @@
+.env
+face_model.xml
+labels.npy
+
+__pycache__/
+*.pyc
