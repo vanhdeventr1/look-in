@@ -114,7 +114,7 @@
           {{ error }}
         </p>
 
-        <p
+        <!-- <p
           class="text-center text-[11px] md:text-xs text-gray-500 mt-6 md:mt-8"
         >
           Belum punya akun?
@@ -124,7 +124,7 @@
           >
             Daftar di sini
           </a>
-        </p>
+        </p> -->
       </div>
     </div>
   </div>

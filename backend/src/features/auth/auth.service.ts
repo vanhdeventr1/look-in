@@ -89,12 +89,24 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
-    if (process.env.ALLOW_PUBLIC_REGISTER !== "true") {
-      return this.response.fail("Registration is disabled", 403);
+    const hiringManagerCount = await this.userModel.count({
+      where: { role: UserRoleEnum.HIRING_MANAGER },
+    });
+
+    if (hiringManagerCount > 0) {
+      const expectedInviteCode = process.env.HR_REGISTER_INVITE_CODE;
+      if (!expectedInviteCode) {
+        return this.response.fail("Registration invite code is not configured", 403);
+      }
+
+      if (createUserDto.invite_code !== expectedInviteCode) {
+        return this.response.fail("Invalid registration invite code", 403);
+      }
     }
 
     const transaction = await this.sequelize.transaction();
     try {
+      delete createUserDto.invite_code;
       createUserDto.password = await Bun.password.hash(createUserDto.password, {
         algorithm: "bcrypt",
         cost: 10,

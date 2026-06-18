@@ -48,6 +48,7 @@ export function useAuth() {
     password: string;
     name: string;
     email: string;
+    invite_code?: string;
   }) => {
     loading.value = true;
     error.value = null;

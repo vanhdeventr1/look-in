@@ -22,6 +22,7 @@ export const register = (payload: {
     name: string;
     email: string;
     role?: number;
+    invite_code?: string;
 }) => {
     return api.post('/auth/register', payload);
 };

@@ -93,6 +93,20 @@
               </button>
             </div>
 
+            <div class="relative">
+              <input
+                v-model="form.inviteCode"
+                type="text"
+                placeholder="Kode Undangan"
+                class="w-full h-11 pl-11 pr-4 rounded-lg border border-[#e6bdb7] bg-[#fff3f1] text-sm focus:outline-none focus:ring-2 focus:ring-[#8b3a32]"
+              />
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-[#8b3a32]"
+              >
+                <KeyIcon :size="18" />
+              </span>
+            </div>
+
             <button
               type="submit"
               :disabled="loading"
@@ -140,6 +154,7 @@ import {
   Contact as ContactIcon,
   Eye as EyeIcon,
   EyeOff as EyeOffIcon,
+  Key as KeyIcon,
   Lock as LockIcon,
   Mail as MailIcon,
   User as UserIcon,
@@ -155,6 +170,7 @@ const form = reactive({
   fullName: "",
   email: "",
   password: "",
+  inviteCode: "",
 });
 
 watch(form, () => clearError());
@@ -165,6 +181,7 @@ const handleRegister = () => {
     password: form.password,
     name: form.fullName,
     email: form.email,
+    invite_code: form.inviteCode || undefined,
   });
 };
 </script>

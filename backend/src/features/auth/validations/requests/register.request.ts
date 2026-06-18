@@ -31,4 +31,5 @@ export const registerSchema = Joi.object({
     }),
   password: Joi.string().min(8).required(),
   role: Joi.number().optional().allow(null).default(UserRoleEnum.HIRING_MANAGER),
+  invite_code: Joi.string().optional().allow("", null),
 }).options({ abortEarly: false });

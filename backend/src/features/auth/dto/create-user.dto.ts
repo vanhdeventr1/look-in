@@ -6,4 +6,5 @@ export class CreateUserDto {
   is_verified: boolean;
   phone_no: string;
   role: number;
+  invite_code?: string;
 }
