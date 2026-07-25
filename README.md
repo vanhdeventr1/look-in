@@ -1,73 +1,124 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Look-in
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Look-in is a web-based attendance management system for organizations that want to track employee presence digitally with location-based check-in, attendance history, permits, notifications, and face verification support.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## What this project is for
 
-## Description
+This project helps companies or teams manage daily attendance in a modern and more reliable way. Instead of relying only on manual attendance sheets, Look-in allows users to:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- check in and check out through a web app
+- verify attendance using face recognition
+- use GPS-based attendance settings to confirm the user is in the right location
+- submit and manage leave or permit requests
+- view attendance records and notifications
+- manage users, datasets, and attendance settings from an admin dashboard
+
+## Main features
+
+- Role-based access for hiring managers, employees, and interns
+- Admin dashboard for managing users, attendance records, permits, and settings
+- Public dashboard for employees to track their attendance and permits
+- Attendance check-in and check-out workflow with optional face verification
+- Permit request and approval flow
+- Notification system for important updates
+
+## Tech stack
+
+- Backend: NestJS + Bun + Sequelize + MySQL
+- Frontend: Vue 3 + Vite + TypeScript
+- AI/face verification: Python-based model under the model folder
+
+## Project structure
+
+- backend: NestJS API server
+- frontend: Vue web application
+- model: face recognition model and related files
+
+## Requirements
+
+Before running the project, make sure you have:
+
+- Node.js and npm
+- Bun
+- MySQL database
+- Python 3 (for the face recognition model support)
 
 ## Installation
 
-```bash
-$ npm install
-```
-
-## Running the app
+1. Clone the repository
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone <your-repo-url>
+cd look-in
 ```
 
-## Test
+2. Install backend dependencies
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cd backend
+bun install
 ```
 
-## Support
+3. Install frontend dependencies
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+cd ../frontend
+npm install
+```
 
-## Stay in touch
+4. Prepare the environment
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Create a .env file inside the backend folder and configure at least the following values:
 
-## License
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=look_in
+SECRET_KEY=your_jwt_secret
+ENCRYPTION_KEY=your_encryption_key
+FRONTEND_URL=http://localhost:5173
+CORS_ORIGIN=http://localhost:5173
+```
 
-Nest is [MIT licensed](LICENSE).
+5. Create the database and run migrations
+
+```bash
+cd backend
+bun run migrate
+bun run seed
+```
+
+## Running the project
+
+### Start the backend
+
+```bash
+cd backend
+bun run start:dev
+```
+
+The API will run on http://localhost:3000
+
+### Start the frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+The web app will run on http://localhost:5173
+
+## Optional: run with Docker
+
+If you prefer Docker, you can run the backend container from the backend folder:
+
+```bash
+cd backend
+docker compose up --build
+```
+
+## Default access
+
+After the app is running, open the frontend in your browser and log in or register an account. The system is designed for different roles such as hiring manager and employee.
